@@ -1552,3 +1552,199 @@ path.leaflet-emergency-marker {
 .credPanel label {
   font-size: 12px;
 }
+
+/* ── Demo Slot Modal ──────────────────────────────── */
+#slotModal {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+#slotModal[hidden] { display: none !important; }
+
+.slotModalBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.slotModalPanel {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #0d1828;
+  border: 1px solid #2b4070;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.55);
+}
+
+.slotModalTopbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.slotModalHospitalName {
+  font-size: 18px;
+  font-weight: 900;
+  color: #eef2ff;
+  letter-spacing: 0.5px;
+}
+.slotModalHospitalSub {
+  font-size: 12px;
+  color: #6a7899;
+  margin-top: 2px;
+}
+.slotModalCloseBtn {
+  flex-shrink: 0;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+}
+
+/* ── Slip body ──── */
+.slotSlip {
+  background: #060e1a;
+  border: 1px solid #1a2e4a;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.slotSlipBanner {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #3f7cff;
+  border: 1px solid #1a2e4a;
+  border-radius: 6px;
+  padding: 6px 0;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.slotSlipDivider {
+  border-top: 1px dashed #1a2e4a;
+  margin: 14px 0;
+}
+
+.slotSlipSection { margin-bottom: 4px; }
+
+.slotSlipSectionTitle {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #4a7399;
+  margin-bottom: 10px;
+}
+
+.slotSlipGrid4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 14px;
+}
+
+@media (max-width: 600px) {
+  .slotSlipGrid4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+.slotSlipField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.slotSlipFieldSpan2 { grid-column: span 2; }
+.slotSlipFieldSpan4 { grid-column: span 4; }
+
+.slotSlipLabel {
+  font-size: 10px;
+  color: #4a6080;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+.slotSlipValue {
+  font-size: 13px;
+  color: #c5d0ec;
+  line-height: 1.35;
+}
+.slotSlipBold { font-weight: 800; color: #eef2ff; }
+.slotSlipMono { font-family: 'Courier New', monospace; font-size: 12px; }
+.slotSlipGreen { color: #35c97a; }
+.slotSlipEmg   { color: #f5a623; font-weight: 700; }
+.slotSlipAmountBig { font-size: 17px; color: #35c97a; }
+
+.slotSlipQrRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.slotSlipQrBlock {
+  color: #4ddb8e;
+  font-size: 10px;
+  background: #040b14;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 0;
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.slotSlipQrLabel {
+  font-size: 11px;
+  color: #4a6080;
+}
+.slotSlipFooter {
+  margin-top: 14px;
+  font-size: 10px;
+  color: #2b3d56;
+  text-align: center;
+  border-top: 1px solid #0f1f35;
+  padding-top: 10px;
+}
+
+/* ── Appointment history list ──────────────────────── */
+.historyCard {
+  background: #0a1525;
+  border: 1px solid #1a2e47;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.historyCard:hover { border-color: #3f7cff; }
+.historyCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.historyCardName {
+  font-weight: 800;
+  font-size: 13px;
+  color: #eef2ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.historyCardAmount {
+  font-size: 12px;
+  font-weight: 700;
+  color: #35c97a;
+  flex-shrink: 0;
+}
+.historyCardSub {
+  font-size: 11px;
+  color: #5a7090;
+  line-height: 1.35;
+}

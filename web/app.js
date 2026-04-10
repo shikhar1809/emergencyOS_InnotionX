@@ -1205,12 +1205,6 @@ function renderDemoAdminAlertStrip() {
 }
 
 bindOpsActionsOnce();
-seedOpsFeed();
-renderOpsFeed();
-renderOpsDetailById(opsState.selectedId);
-refreshOpsKpis();
-renderDemoAdminAlertStrip();
-renderAdminDemoShiftPanels();
 
 // ── Management side navigation (Patients / Staff) ──
 const mgmtBtns = Array.from(document.querySelectorAll(".mgmtNavBtn"));
@@ -1244,7 +1238,7 @@ function switchMgmtView(name) {
 }
 
 mgmtBtns.forEach((b) => b.addEventListener("click", () => switchMgmtView(b.dataset.mview)));
-switchMgmtView("patients");
+// switchMgmtView("patients") called in eosBootAll at end of file
 
 // ── Management tab ────────────────────────────────────────────
 const staffOnDutyDemo = demoState.staff.filter((s) => s.onDuty).length;
@@ -1922,9 +1916,10 @@ document.getElementById("fleetCredResetBtn")?.addEventListener("click", () => {
 
 // ── Open-source maps (Leaflet + raster tiles) ─────────────────
 function eosL() {
-  if (typeof EOSLeafletMaps !== "undefined" && EOSLeafletMaps.getL) {
-    return EOSLeafletMaps.getL();
-  }
+  // Normalise: some Leaflet builds expose window.leaflet instead of window.L.
+  if (window.L && typeof window.L.map === "function") return window.L;
+  var pack = window.leaflet || (typeof globalThis !== "undefined" ? globalThis.leaflet : null);
+  if (pack && typeof pack.map === "function") { window.L = pack; return pack; }
   return null;
 }
 
@@ -2384,53 +2379,39 @@ function initLeafletMapsIfNeeded() {
     return;
   }
   if (!osmMain && document.getElementById("mapMain")) {
-    osmMain = initLeafletMap("mapMain", "mapError", true);
+    try { osmMain = initLeafletMap("mapMain", "mapError", true); } catch (e) { console.error("[EOS] osmMain init:", e); osmMain = null; }
     if (osmMain) {
-      addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: true, includePatients: true });
-      try {
-        addHexGridToMainMap(osmMain);
-      } catch (err) {
+      try { addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: true, includePatients: true }); } catch (e) { console.error("[EOS] markers:", e); }
+      try { addHexGridToMainMap(osmMain); } catch (err) {
         console.error("[EmergencyOS] Hex grid failed:", err);
         showMapError("mapError", "Hex grid failed to render (see browser console).");
       }
     }
   }
   if (!osmMgmt && document.getElementById("mapMgmt")) {
-    osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false);
-    if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt, { includeFleet: false, includePatients: true });
+    try { osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false); } catch (e) { console.error("[EOS] osmMgmt init:", e); osmMgmt = null; }
+    if (osmMgmt) { try { addLeafletMarkers(osmMgmt, osmMarkersMgmt, { includeFleet: false, includePatients: true }); } catch (_) {} }
   }
 }
 
 function runMapLifecycle() {
-  try {
-    lucknowHexZones = buildLucknowHexZones();
-    renderOverviewZoneList();
-  } catch (err) {
-    console.error("[EmergencyOS] Zone list failed:", err);
-    lucknowHexZones = [];
-  }
-  initLeafletMapsIfNeeded();
-  try {
-    renderMgmtFleetSidebar();
-    renderMgmtStaffList();
-  } catch (_) {}
-  tryResizeMapsSoon();
+  try { lucknowHexZones = buildLucknowHexZones(); } catch (e) { console.error("[EOS] zones:", e); lucknowHexZones = []; }
+  try { renderOverviewZoneList(); } catch (e) { console.error("[EOS] zoneList:", e); }
+  try { initLeafletMapsIfNeeded(); } catch (e) { console.error("[EOS] mapInit:", e); }
+  try { renderMgmtFleetSidebar(); } catch (_) {}
+  try { renderMgmtStaffList(); } catch (_) {}
+  try { tryResizeMapsSoon(); } catch (_) {}
 }
 
 function scheduleMapBoot() {
-  function tick() {
-    runMapLifecycle();
-  }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", tick);
-  } else {
-    tick();
-  }
+  function tick() { try { runMapLifecycle(); } catch (e) { console.error("[EOS] tick:", e); } }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", tick);
+  else tick();
   function late() {
     tick();
     requestAnimationFrame(tick);
-    [120, 400, 900, 1800].forEach((ms) => setTimeout(tick, ms));
-    [200, 600, 1400].forEach((ms) => setTimeout(tryResizeMapsSoon, ms));
+    [150, 450, 900, 2000].forEach(function (ms) { setTimeout(tick, ms); });
+    [200, 700, 1600].forEach(function (ms) { setTimeout(tryResizeMapsSoon, ms); });
   }
   if (document.readyState === "complete") late();
   else window.addEventListener("load", late);
@@ -3193,8 +3174,7 @@ const billingSendPatientBtn = document.getElementById("billingSendPatientBtn");
 billingSendPatientBtn && billingSendPatientBtn.addEventListener("click", () => {
   sendBillingRequestToPatientApp();
 });
-
-renderBillingIncidentList();
+// renderBillingIncidentList() called in eosBootAll at end of file
 
 let billId = 90;
 let currentBill = "";
@@ -3210,6 +3190,7 @@ function addBillLog(text) {
 /** Static demo lines shown when Billings tab loads (newest first after seed). */
 function seedDemoBillLogs() {
   if (!billLogsEl) return;
+  if (billLogsEl.children.length) return; // already seeded
   const lines = [
     "[06:12:08] Night batch: queued 12 OPD settlements for finance review",
     "[07:45:22] Insurance pre-auth received for BL-2026-0074 (cardiology)",
@@ -3228,7 +3209,7 @@ function seedDemoBillLogs() {
     billLogsEl.prepend(li);
   }
 }
-seedDemoBillLogs();
+// seedDemoBillLogs() called in eosBootAll at end of file
 
 function isoDateOnly(d) {
   const x = new Date(d.getTime());
@@ -3302,6 +3283,181 @@ reportLast7DaysBtn &&
     if (chatListEl) addChat("System", "Last 7 days report created — " + n + " billing incidents in window.");
   });
 
+// ── Demo slot data + modal ────────────────────────────────────
+
+const DEMO_SLOT_DOCTORS = [
+  { name: "Dr. Aanya Verma",   dept: "Emergency Medicine",  ward: "ER Bay 2",       bed: "Bay 2-A" },
+  { name: "Dr. Rohan Mehta",   dept: "Cardiology",          ward: "Cardiology suite",bed: "Suite 4" },
+  { name: "Dr. Neha Kapoor",   dept: "General Medicine",    ward: "Ward A",         bed: "Bed A-12" },
+  { name: "Dr. Isha Tandon",   dept: "Anaesthesiology",     ward: "ICU",            bed: "ICU-5"   },
+  { name: "Dr. Sameer Ali",    dept: "Orthopedics",         ward: "Ortho OPD",      bed: "OPD-7"   },
+  { name: "Dr. Manish Agarwal",dept: "Pulmonology",         ward: "Pulm Suite",     bed: "Suite 2" },
+  { name: "Dr. Pooja Menon",   dept: "Hospitalist",         ward: "Ward B",         bed: "Bed B-6" },
+  { name: "Dr. Karan Bedi",    dept: "Neurology",           ward: "Neuro OPD",      bed: "OPD-11"  },
+];
+
+const DEMO_PAY_MODES   = ["UPI", "Cash", "Card / POS", "NEFT", "Insurance direct", "TPA cashless"];
+const DEMO_TRIAGE      = ["ESI-2", "ESI-3", "ESI-4", "ESI-5"];
+const DEMO_INSURANCE   = ["Star Health", "Apollo Munich", "ICICI Lombard", "Govt scheme", "Self-pay", "Niva Bupa"];
+const DEMO_SLOT_TIMES  = ["08:30 AM","09:00 AM","09:30 AM","10:15 AM","10:45 AM",
+                           "11:15 AM","11:45 AM","12:30 PM","02:00 PM","03:15 PM",
+                           "04:00 PM","05:30 PM"];
+
+let _lastGeneratedSlotData = null;
+
+function _pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function _token()   { return "T-" + String(100 + Math.floor(Math.random() * 900)); }
+function _mrn()     { return "MRN-" + String(10000 + Math.floor(Math.random() * 2000)); }
+function _age()     { return 18 + Math.floor(Math.random() * 65); }
+
+function openSlotModal(data) {
+  const modal = document.getElementById("slotModal");
+  if (!modal) return;
+
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+  const timeStr = now.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+
+  set("slotBillRef",     data.billRef);
+  set("slotDateTime",    dateStr + " " + timeStr);
+  set("slotMrn",         data.mrn);
+  set("slotPatientName", data.patient);
+  set("slotPatientAge",  data.age + " yrs");
+  set("slotDiagnosis",   data.diagnosis);
+  set("slotDoctor",      data.doctor.name);
+  set("slotDept",        data.doctor.dept);
+  set("slotWard",        data.doctor.ward);
+  set("slotBed",         data.doctor.bed);
+  set("slotTime",        data.slotTime);
+  set("slotDate",        dateStr);
+  set("slotToken",       data.token);
+  set("slotTriage",      data.triage);
+  set("slotAmount",      "₹ " + Number(data.amountInr).toLocaleString("en-IN"));
+  set("slotPayMode",     data.payMode);
+  set("slotInsurance",   data.insurance);
+  set("slotAuthority",   "Nurse → Finance Manager → Admin Final");
+
+  const statusBadge = document.getElementById("slotStatusBadge");
+  if (statusBadge) {
+    statusBadge.textContent = data.status === "completed" ? "Cleared" : "Pending Finance";
+    statusBadge.className   = "badge " + (data.status === "completed" ? "green" : "red");
+  }
+
+  const qrEl = document.getElementById("slotQrBlock");
+  if (qrEl) {
+    qrEl.textContent =
+      "QR: [ " + data.billRef + " | " + data.patient + " | " + data.mrn + " ]\n" +
+      "    [ DOC: " + data.doctor.name + " | SLOT: " + data.slotTime + " | TOKEN: " + data.token + " ]\n" +
+      "    [ AMT: INR " + data.amountInr + " | " + data.payMode + " | " + data.insurance + " ]";
+  }
+
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeSlotModal() {
+  const modal = document.getElementById("slotModal");
+  if (modal) modal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+document.getElementById("slotModalBackdrop")?.addEventListener("click", closeSlotModal);
+document.getElementById("slotModalClose")?.addEventListener("click",  closeSlotModal);
+document.getElementById("slotModalClose2")?.addEventListener("click", closeSlotModal);
+document.getElementById("slotPrintBtn")?.addEventListener("click", () => {
+  const slip = document.getElementById("slotSlip");
+  if (!slip) { window.print(); return; }
+  const w = window.open("", "_blank");
+  if (!w) { window.print(); return; }
+  w.document.write(
+    "<!doctype html><html><head><title>Appointment Slip</title>" +
+    "<style>body{font-family:sans-serif;background:#fff;color:#111;padding:24px;font-size:13px}" +
+    "table{width:100%}td{padding:4px 8px}" +
+    ".banner{text-align:center;border:1px solid #ccc;border-radius:4px;padding:8px;letter-spacing:3px;font-size:10px;font-weight:700;margin-bottom:14px}" +
+    ".sec{border-top:1px dashed #ccc;padding-top:10px;margin-top:10px}" +
+    ".lbl{font-size:10px;color:#666;text-transform:uppercase;font-weight:700}" +
+    ".val{font-size:13px;color:#111}" +
+    ".grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 14px;margin-top:6px}" +
+    ".bold{font-weight:800}.green{color:#1a7a3c}.amount{font-size:17px;font-weight:800;color:#1a7a3c}" +
+    ".footer{text-align:center;font-size:10px;color:#aaa;margin-top:18px;border-top:1px solid #eee;padding-top:10px}" +
+    "</style></head><body>"
+  );
+  w.document.write("<h2 style='margin:0 0 4px'>Goel Hospital — Emergency &amp; Specialty Care</h2>");
+  w.document.write("<p style='margin:0 0 14px;color:#555'>Lucknow · emergencyos-innovationx.web.app</p>");
+  w.document.write("<div class='banner'>APPOINTMENT &amp; BILLING SLIP (DEMO)</div>");
+  const rows = [
+    ["Bill ref", slip.querySelector("#slotBillRef")?.textContent || "—"],
+    ["MRN",      slip.querySelector("#slotMrn")?.textContent    || "—"],
+    ["Patient",  slip.querySelector("#slotPatientName")?.textContent || "—"],
+    ["Age",      slip.querySelector("#slotPatientAge")?.textContent  || "—"],
+    ["Triage",   slip.querySelector("#slotTriage")?.textContent      || "—"],
+    ["Diagnosis",slip.querySelector("#slotDiagnosis")?.textContent   || "—"],
+    ["Doctor",   slip.querySelector("#slotDoctor")?.textContent      || "—"],
+    ["Dept",     slip.querySelector("#slotDept")?.textContent        || "—"],
+    ["Ward/Room",slip.querySelector("#slotWard")?.textContent        || "—"],
+    ["Bed/Bay",  slip.querySelector("#slotBed")?.textContent         || "—"],
+    ["Token",    slip.querySelector("#slotToken")?.textContent       || "—"],
+    ["Slot time",slip.querySelector("#slotTime")?.textContent        || "—"],
+    ["Date",     slip.querySelector("#slotDate")?.textContent        || "—"],
+    ["Amount",   slip.querySelector("#slotAmount")?.textContent      || "—"],
+    ["Pay mode", slip.querySelector("#slotPayMode")?.textContent     || "—"],
+    ["Insurance",slip.querySelector("#slotInsurance")?.textContent   || "—"],
+  ];
+  w.document.write("<table>");
+  rows.forEach(([l, v]) => w.document.write("<tr><td class='lbl'>" + l + "</td><td class='val'>" + v + "</td></tr>"));
+  w.document.write("</table>");
+  w.document.write("<div class='footer'>Demo slip · Goel Hospital Emergency OS · " + new Date().toLocaleString() + "</div>");
+  w.document.write("</body></html>");
+  w.document.close();
+  w.focus();
+  w.print();
+});
+
+document.getElementById("viewSlotBtn")?.addEventListener("click", () => {
+  if (_lastGeneratedSlotData) openSlotModal(_lastGeneratedSlotData);
+});
+
+// ── Demo appointment history ──────────────────────────────────
+const DEMO_SLOT_HISTORY = [
+  { billRef:"BL-2026-0038", patient:"Sunita Agarwal",  mrn:"MRN-10023", age:58, diagnosis:"Type 2 diabetes — insulin adjustment",       doctor:{ name:"Dr. Neha Kapoor",   dept:"Endocrinology",   ward:"OPD-3",      bed:"OPD-3A" }, slotTime:"09:15 AM", token:"T-041", triage:"ESI-4", amountInr:3200,  payMode:"UPI",         insurance:"Star Health",    status:"completed", date:"2026-04-03" },
+  { billRef:"BL-2026-0039", patient:"Prakash Dubey",   mrn:"MRN-10044", age:67, diagnosis:"COPD exacerbation",                            doctor:{ name:"Dr. Manish Agarwal",dept:"Pulmonology",     ward:"Pulm Suite", bed:"Suite 2-B" }, slotTime:"10:00 AM", token:"T-068", triage:"ESI-3", amountInr:18500, payMode:"Card / POS",  insurance:"ICICI Lombard",  status:"completed", date:"2026-04-04" },
+  { billRef:"BL-2026-0041", patient:"Meena Rawat",     mrn:"MRN-10122", age:39, diagnosis:"Acute appendicitis — laparoscopy",             doctor:{ name:"Dr. Isha Tandon",   dept:"Anaesthesiology", ward:"OT Block",   bed:"OT-3"  }, slotTime:"07:30 AM", token:"T-002", triage:"ESI-2", amountInr:95000, payMode:"TPA cashless", insurance:"Niva Bupa",       status:"completed", date:"2026-04-05" },
+  { billRef:"BL-2026-0043", patient:"Vikas Sharma",    mrn:"MRN-10209", age:51, diagnosis:"Hypertensive urgency — BP management",         doctor:{ name:"Dr. Rohan Mehta",   dept:"Cardiology",      ward:"Cardio suite",bed:"Suite 4-B" }, slotTime:"11:30 AM", token:"T-109", triage:"ESI-3", amountInr:6400,  payMode:"UPI",         insurance:"Self-pay",        status:"completed", date:"2026-04-05" },
+  { billRef:"BL-2026-0046", patient:"Anita Joshi",     mrn:"MRN-10355", age:43, diagnosis:"Cholecystitis — laparoscopic cholecystectomy",  doctor:{ name:"Dr. Isha Tandon",   dept:"General Surgery", ward:"Ward C",     bed:"Bed C-4" }, slotTime:"08:00 AM", token:"T-007", triage:"ESI-2", amountInr:148000,payMode:"NEFT",        insurance:"Apollo Munich",   status:"completed", date:"2026-04-06" },
+  { billRef:"BL-2026-0049", patient:"Rajesh Tiwari",   mrn:"MRN-10502", age:44, diagnosis:"Inguinal hernia repair",                        doctor:{ name:"Dr. Pooja Menon",   dept:"General Surgery", ward:"Ward B",     bed:"Bed B-9" }, slotTime:"02:30 PM", token:"T-145", triage:"ESI-4", amountInr:75000, payMode:"Card / POS",  insurance:"Star Health",    status:"completed", date:"2026-04-06" },
+  { billRef:"BL-2026-0054", patient:"Kaveri Singh",    mrn:"MRN-10744", age:28, diagnosis:"Viral fever — IV fluids + obs",                 doctor:{ name:"Dr. Aanya Verma",   dept:"Emergency Medicine",ward:"ER Bay 2",  bed:"Bay 2-B" }, slotTime:"04:15 PM", token:"T-221", triage:"ESI-4", amountInr:4800,  payMode:"Cash",        insurance:"Self-pay",        status:"completed", date:"2026-04-07" },
+  { billRef:"BL-2026-0057", patient:"Suresh Pandey",   mrn:"MRN-10912", age:72, diagnosis:"Ischaemic stroke — TIA workup",                 doctor:{ name:"Dr. Karan Bedi",    dept:"Neurology",       ward:"Neuro ICU",  bed:"NICU-2" }, slotTime:"06:45 AM", token:"T-003", triage:"ESI-2", amountInr:42000, payMode:"NEFT",        insurance:"Govt scheme",     status:"completed", date:"2026-04-07" },
+  { billRef:"BL-2026-0061", patient:"Pooja Ahluwalia", mrn:"MRN-11044", age:32, diagnosis:"Threatened miscarriage — obs",                  doctor:{ name:"Dr. Aanya Verma",   dept:"Obstetrics / ER", ward:"Obs Bay",    bed:"Bay 1-A" }, slotTime:"12:00 PM", token:"T-188", triage:"ESI-3", amountInr:11500, payMode:"UPI",         insurance:"ICICI Lombard",  status:"completed", date:"2026-04-08" },
+  { billRef:"BL-2026-0063", patient:"Deepak Khanna",   mrn:"MRN-11132", age:55, diagnosis:"Lumbar disc prolapse — MRI + physio",           doctor:{ name:"Dr. Sameer Ali",    dept:"Orthopedics",     ward:"Ortho OPD",  bed:"OPD-7B"}, slotTime:"03:00 PM", token:"T-204", triage:"ESI-4", amountInr:19200, payMode:"Card / POS",  insurance:"Niva Bupa",       status:"completed", date:"2026-04-08" },
+  { billRef:"BL-2026-0065", patient:"Lalita Dixit",    mrn:"MRN-11201", age:61, diagnosis:"Urinary tract infection — culture + abx",       doctor:{ name:"Dr. Neha Kapoor",   dept:"General Medicine",ward:"Ward A",     bed:"Bed A-8" }, slotTime:"10:45 AM", token:"T-117", triage:"ESI-4", amountInr:2900,  payMode:"Cash",        insurance:"Self-pay",        status:"completed", date:"2026-04-09" },
+  { billRef:"BL-2026-0066", patient:"Nitesh Kumar",    mrn:"MRN-11380", age:36, diagnosis:"Asthma attack — nebulisation + review",         doctor:{ name:"Dr. Manish Agarwal",dept:"Pulmonology",     ward:"ER Bay 3",   bed:"Bay 3-B" }, slotTime:"01:30 PM", token:"T-167", triage:"ESI-3", amountInr:5600,  payMode:"UPI",         insurance:"Star Health",    status:"completed", date:"2026-04-09" },
+];
+
+function renderSlotHistory() {
+  const listEl = document.getElementById("slotHistoryList");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+  const entries = DEMO_SLOT_HISTORY.slice().reverse();
+  entries.forEach((h) => {
+    const card = document.createElement("div");
+    card.className = "historyCard";
+    card.innerHTML =
+      '<div class="historyCardTop">' +
+      '<span class="historyCardName">' + billingEscapeHtml(h.patient) + '</span>' +
+      '<span class="historyCardAmount">₹' + Number(h.amountInr).toLocaleString("en-IN") + '</span>' +
+      '</div>' +
+      '<div class="historyCardSub">' +
+      billingEscapeHtml(h.doctor.name) + ' · ' + billingEscapeHtml(h.doctor.dept) + '<br>' +
+      billingEscapeHtml(h.date) + ' · ' + billingEscapeHtml(h.slotTime) + ' · ' + billingEscapeHtml(h.billRef) +
+      '</div>';
+    card.addEventListener("click", () => openSlotModal(h));
+    listEl.appendChild(card);
+  });
+}
+renderSlotHistory();
+
 document.getElementById("createBillBtn").addEventListener("click", () => {
   const patient   = document.getElementById("billPatient").value.trim();
   const diagnosis = document.getElementById("billDiagnosis").value.trim();
@@ -3315,9 +3471,32 @@ document.getElementById("createBillBtn").addEventListener("click", () => {
   document.getElementById("approvalStatus").textContent = "Pending Finance";
   document.getElementById("finBadge").style.background = "";
   document.getElementById("adminBadge").style.background = "";
-  addBillLog("Created " + currentBill + " for " + patient + " (" + diagnosis + ") INR " + amount);
+  addBillLog("Created " + currentBill + " for " + patient + " (" + (diagnosis || "—") + ") INR " + amount);
   const c = Number(document.getElementById("pendingApprovalCount").textContent);
   document.getElementById("pendingApprovalCount").textContent = String(c + 1);
+
+  // Build slot data and open modal
+  const doc = _pick(DEMO_SLOT_DOCTORS);
+  const slotData = {
+    billRef: currentBill,
+    patient: patient,
+    mrn: _mrn(),
+    age: _age(),
+    diagnosis: diagnosis || "General consultation",
+    doctor: doc,
+    slotTime: _pick(DEMO_SLOT_TIMES),
+    token: _token(),
+    triage: _pick(DEMO_TRIAGE),
+    amountInr: Number(amount),
+    payMode: _pick(DEMO_PAY_MODES),
+    insurance: _pick(DEMO_INSURANCE),
+    status: "pending",
+    date: new Date().toISOString().slice(0, 10),
+  };
+  _lastGeneratedSlotData = slotData;
+  const viewBtn = document.getElementById("viewSlotBtn");
+  if (viewBtn) viewBtn.style.display = "block";
+  openSlotModal(slotData);
 });
 
 document.getElementById("financeApproveBtn").addEventListener("click", () => {
@@ -3798,9 +3977,48 @@ window.addEventListener("beforeunload", () => {
   } catch (_) {}
 });
 
-// init
-subscribeCommsChannel(commsActiveChannel);
-subscribeRoster();
-startPresenceHeartbeat();
-opsSubscribeAppointmentsIfPossible();
+// ── Final boot: safe-seed every section (replaces scattered init calls above) ───
+// Runs here (end of script) so even if something above threw, all
+// demo-data sections still get populated.
+(function eosBootAll() {
+  function safe(fn, label) { try { fn(); } catch (e) { console.error("[EOS boot] " + label + ":", e); } }
+
+  // Operations feed
+  safe(function () {
+    if (!opsState.items.length) seedOpsFeed();
+    renderOpsFeed();
+    renderOpsDetailById(opsState.selectedId);
+    refreshOpsKpis();
+  }, "opsFeed");
+  // Demo alert strip
+  safe(renderDemoAdminAlertStrip, "alertStrip");
+  // Report: shift panels
+  safe(renderAdminDemoShiftPanels, "shiftPanels");
+  // Management: patients default view
+  safe(function () { switchMgmtView("patients"); }, "mgmtView");
+  // Billings: incident list + demo logs
+  safe(renderBillingIncidentList, "billingList");
+  safe(seedDemoBillLogs, "billLogs");
+  // KPIs
+  safe(refreshOverviewKpis, "ovKpis");
+  safe(function () {
+    var el = document.getElementById("pendingApprovalCount");
+    if (el) {
+      var n = demoState.billings.filter(function (b) { return b.status === "pending_finance" || b.status === "pending_admin"; }).length;
+      el.textContent = String(n);
+    }
+  }, "pendingKpi");
+  // Overview zone list
+  safe(function () {
+    if (!Array.isArray(lucknowHexZones) || !lucknowHexZones.length) {
+      lucknowHexZones = buildLucknowHexZones();
+    }
+    renderOverviewZoneList();
+  }, "zoneList");
+  // Comms
+  safe(function () { subscribeCommsChannel(commsActiveChannel); }, "commsChannel");
+  safe(subscribeRoster, "commsRoster");
+  safe(startPresenceHeartbeat, "presence");
+  safe(opsSubscribeAppointmentsIfPossible, "opsSubscribe");
+})();
 

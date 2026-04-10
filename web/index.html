@@ -431,6 +431,7 @@
                 </div>
               </div>
               <p id="billIdOut" class="muted" style="margin-top:10px;font-size:12px">No bill created yet.</p>
+              <button type="button" id="viewSlotBtn" style="margin-top:10px;width:100%;display:none">View appointment slip ›</button>
             </article>
             <article class="card" style="margin-top:12px;padding:14px">
               <h3 style="margin-top:0;font-size:14px">QR Identifier</h3>
@@ -452,6 +453,13 @@
             <article class="card" style="margin-top:12px;padding:14px">
               <h3 style="margin-top:0;font-size:14px">Bill logs</h3>
               <ul class="clean" id="billLogs" style="max-height:160px;overflow-y:auto;margin:0;padding-left:0"></ul>
+            </article>
+            <article class="card" style="margin-top:12px;padding:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <h3 style="margin:0;font-size:14px">Appointment history</h3>
+                <span class="badge">Demo</span>
+              </div>
+              <div id="slotHistoryList" style="max-height:300px;overflow-y:auto;display:grid;gap:8px"></div>
             </article>
           </aside>
         </div>
@@ -575,7 +583,145 @@
       </div>
     </div>
 
+    <!-- ── Demo Slot Modal ─────────────────────────────── -->
+    <div id="slotModal" hidden role="dialog" aria-modal="true" aria-labelledby="slotModalTitle">
+      <div class="slotModalBackdrop" id="slotModalBackdrop"></div>
+      <div class="slotModalPanel">
+        <div class="slotModalTopbar">
+          <div>
+            <div class="slotModalHospitalName">Goel Hospital</div>
+            <div class="slotModalHospitalSub">Emergency &amp; Specialty Care · Lucknow</div>
+          </div>
+          <button type="button" class="secondary slotModalCloseBtn" id="slotModalClose" aria-label="Close">✕</button>
+        </div>
+
+        <div class="slotSlip">
+          <div class="slotSlipBanner" id="slotModalTitle">APPOINTMENT &amp; BILLING SLIP</div>
+
+          <div class="slotSlipGrid4">
+            <div class="slotSlipField">
+              <span class="slotSlipLabel">Bill ref</span>
+              <span class="slotSlipValue slotSlipMono" id="slotBillRef">—</span>
+            </div>
+            <div class="slotSlipField">
+              <span class="slotSlipLabel">Generated</span>
+              <span class="slotSlipValue" id="slotDateTime">—</span>
+            </div>
+            <div class="slotSlipField">
+              <span class="slotSlipLabel">MRN</span>
+              <span class="slotSlipValue slotSlipMono" id="slotMrn">—</span>
+            </div>
+            <div class="slotSlipField">
+              <span class="slotSlipLabel">Status</span>
+              <span class="slotSlipValue" id="slotStatusBadge">—</span>
+            </div>
+          </div>
+
+          <div class="slotSlipDivider"></div>
+
+          <div class="slotSlipSection">
+            <div class="slotSlipSectionTitle">Patient</div>
+            <div class="slotSlipGrid4">
+              <div class="slotSlipField slotSlipFieldSpan2">
+                <span class="slotSlipLabel">Full name</span>
+                <span class="slotSlipValue slotSlipBold" id="slotPatientName">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Age</span>
+                <span class="slotSlipValue" id="slotPatientAge">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Triage</span>
+                <span class="slotSlipValue slotSlipEmg" id="slotTriage">—</span>
+              </div>
+              <div class="slotSlipField slotSlipFieldSpan4">
+                <span class="slotSlipLabel">Diagnosis / Procedure</span>
+                <span class="slotSlipValue" id="slotDiagnosis">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="slotSlipDivider"></div>
+
+          <div class="slotSlipSection">
+            <div class="slotSlipSectionTitle">Slot &amp; Assignment</div>
+            <div class="slotSlipGrid4">
+              <div class="slotSlipField slotSlipFieldSpan2">
+                <span class="slotSlipLabel">Assigned doctor</span>
+                <span class="slotSlipValue slotSlipBold slotSlipGreen" id="slotDoctor">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Department</span>
+                <span class="slotSlipValue" id="slotDept">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Token no.</span>
+                <span class="slotSlipValue slotSlipBold" id="slotToken">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Ward / Room</span>
+                <span class="slotSlipValue" id="slotWard">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Slot time</span>
+                <span class="slotSlipValue" id="slotTime">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Date</span>
+                <span class="slotSlipValue" id="slotDate">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Bed / Bay</span>
+                <span class="slotSlipValue" id="slotBed">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="slotSlipDivider"></div>
+
+          <div class="slotSlipSection">
+            <div class="slotSlipSectionTitle">Billing</div>
+            <div class="slotSlipGrid4">
+              <div class="slotSlipField slotSlipFieldSpan2">
+                <span class="slotSlipLabel">Amount (INR)</span>
+                <span class="slotSlipValue slotSlipBold slotSlipAmountBig" id="slotAmount">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Payment mode</span>
+                <span class="slotSlipValue" id="slotPayMode">—</span>
+              </div>
+              <div class="slotSlipField">
+                <span class="slotSlipLabel">Insurance / TPA</span>
+                <span class="slotSlipValue" id="slotInsurance">—</span>
+              </div>
+              <div class="slotSlipField slotSlipFieldSpan4">
+                <span class="slotSlipLabel">Authority chain</span>
+                <span class="slotSlipValue" id="slotAuthority">Nurse → Finance Manager → Admin Final</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="slotSlipQrRow">
+            <pre id="slotQrBlock" class="slotSlipQrBlock">QR: [ GENERATING… ]</pre>
+            <span class="slotSlipQrLabel">Scan for digital record</span>
+          </div>
+
+          <div class="slotSlipFooter">
+            This is a demo-generated appointment slip. Goel Hospital Emergency OS · emergencyos-innovationx.web.app
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap">
+          <button type="button" id="slotPrintBtn">Print slip</button>
+          <button type="button" class="secondary" id="slotModalClose2">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaflet: vendor (same-origin, works offline/CDN-blocked), then CDN as synchronous fallback -->
     <script src="./vendor/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+    <!-- Normalise whichever copy loaded: sets window.L, attaches basemap/resize helpers -->
     <script src="./leaflet-maps.js"></script>
     <!-- Firebase JS SDK (compat) for Internal Comms + Presence -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
