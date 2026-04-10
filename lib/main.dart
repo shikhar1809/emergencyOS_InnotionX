@@ -38,8 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _sendReport() {
     setState(() {
-      // Intentional beginner bug: this should increase by 1.
-      _reportsSent = _reportsSent - 1;
+      _reportsSent = _reportsSent + 1;
     });
   }
 
@@ -74,14 +73,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       value: _sirenOn,
                       onChanged: (value) {
                         setState(() {
-                          // Intentional beginner bug: this should use "value".
-                          _sirenOn = false;
+                          _sirenOn = value;
                         });
                       },
                     ),
                     Text(
-                      // Intentional beginner bug: labels are reversed.
-                      _sirenOn ? 'Siren is OFF' : 'Siren is ON',
+                      _sirenOn ? 'Siren is ON' : 'Siren is OFF',
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ],
@@ -95,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Very basic student-style UI.\nTwo small debug pratice bugs are intentionally added.',
+              'Very basic student-style UI.\nBugs fixed after debugging practice.',
               textAlign: TextAlign.center,
             ),
           ],
