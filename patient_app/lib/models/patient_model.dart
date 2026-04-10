@@ -28,5 +28,21 @@ class PatientModel {
         'email': email,
         'phone': phone,
       };
+
+  Map<String, dynamic> toSessionJson() => {
+        'uid': uid,
+        'name': name,
+        'email': email,
+        'phone': phone,
+      };
+
+  factory PatientModel.fromSessionJson(Map<String, dynamic> json) {
+    return PatientModel(
+      uid: json['uid'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+    );
+  }
 }
 

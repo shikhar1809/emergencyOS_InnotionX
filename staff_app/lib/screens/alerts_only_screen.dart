@@ -26,26 +26,42 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
   final _scrollCtrl = ScrollController();
   final Set<String> _demoAcknowledged = {};
 
+  /// Local-only samples: patient assigned to you + ward / bed or bay location.
   static const _demoAllotments = <Map<String, String>>[
     {
-      'id': 'local-demo-allot-1',
+      'id': 'demo-assign-er-1',
       'patient': 'Ravi Kumar',
-      'detail': 'ER trauma — you are allotted as lead physician. Triage bay 2.',
+      'ward': 'Emergency — Trauma',
+      'location': 'Triage Bay 2 · Zone A',
+      'detail': 'Assigned to you as lead physician. EMS handoff complete; FAST exam due.',
     },
     {
-      'id': 'local-demo-allot-2',
+      'id': 'demo-assign-ward-2',
+      'patient': 'Meera Joshi',
+      'ward': 'General Medicine — Ward 3B',
+      'location': 'Bed 14 · North wing',
+      'detail': 'New admission allotted to your service. Vitals reviewed; insulin protocol started.',
+    },
+    {
+      'id': 'demo-assign-obs-3',
       'patient': 'Farah Khan',
-      'detail': 'Obstetrics consult — patient en route; confirm bed readiness.',
+      'ward': 'Obstetrics — L&D',
+      'location': 'Room OR-2 (pre-op holding)',
+      'detail': 'Consult assigned: patient en route. Confirm epidural readiness with anesthesia.',
     },
     {
-      'id': 'local-demo-allot-3',
+      'id': 'demo-assign-cardio-4',
       'patient': 'Sanjay Verma',
-      'detail': 'Cardiology escalation — STEMI rule-out; review ECG in 15 min.',
+      'ward': 'Cardiology — CCU',
+      'location': 'Telemetry Bed 6',
+      'detail': 'STEMI rule-out track — you are covering. ECG at nursing station; review within 15 min.',
     },
     {
-      'id': 'local-demo-allot-4',
+      'id': 'demo-assign-transfer-5',
       'patient': 'Anjali Patel',
-      'detail': 'General medicine callback — ward A bed assignment pending.',
+      'ward': 'ICU — Step-down',
+      'location': 'Bed 08 · West corridor',
+      'detail': 'Transfer from ER accepted. Ward clerk updated location; family directed to waiting area W3.',
     },
   ];
 
@@ -192,12 +208,21 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
                         ...alerts.map((a) => _firestoreAlertCard(context, a)),
                       const SizedBox(height: 8),
                       Text(
-                        'Demo: patient allotments',
+                        'Demo: patient assignment & ward location',
                         style: GoogleFonts.inter(
                           color: const Color(0xFFf5a623),
                           fontWeight: FontWeight.w800,
                           fontSize: 11,
                           letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sample alerts (not from Firestore) showing who you are assigned to and where they are placed.',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6b7280),
+                          fontSize: 11,
+                          height: 1.35,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -207,6 +232,8 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
                             (d) => _demoAllotmentCard(
                               id: d['id']!,
                               patient: d['patient']!,
+                              ward: d['ward'] ?? '',
+                              location: d['location'] ?? '',
                               detail: d['detail']!,
                             ),
                           ),

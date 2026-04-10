@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Goel Hospital – Admin Panel</title>
     <link rel="stylesheet" href="./app.css" />
+    <!-- Leaflet: bundled with the site (no duplicate CDN CSS/JS — avoids double-init and blocked CDNs). -->
     <link rel="stylesheet" href="./vendor/leaflet.css" />
   </head>
   <body>
@@ -187,9 +188,9 @@
         <div class="mgmtLayout">
           <aside class="mgmtSidebar">
             <div class="mgmtSideBlock">
-              <div class="muted" style="margin-bottom:8px">Zones (Lucknow hex grid)</div>
+              <div class="muted" style="margin-bottom:8px">Lucknow zones</div>
               <p class="muted" style="font-size:11px;line-height:1.35;margin:0 0 8px">
-                Each cell is a lettered zone (A, B, C…). Select a row or click a hex on the map.
+                Hex cells <strong>A–S</strong> over central Lucknow. The <strong>selected</strong> cell turns <strong>green</strong> on the map; details update on the right.
               </p>
               <div id="ovZoneList" class="zoneRosterList" role="list" aria-label="Zones list"></div>
             </div>
@@ -197,12 +198,9 @@
 
           <section class="mgmtMain">
             <div class="mgmtMainHeader" style="flex-wrap:wrap;gap:10px">
-              <div class="mgmtMainTitle">Overview map · Lucknow</div>
-              <div class="overviewMapFilters" aria-label="Zone heat filters">
-                <label class="overviewMapFilterLabel"><input type="checkbox" id="hexFilterHigh" checked /> High inflow</label>
-                <label class="overviewMapFilterLabel"><input type="checkbox" id="hexFilterLow" checked /> Low inflow</label>
-              </div>
-              <span class="badge">Realtime (demo)</span>
+              <div class="mgmtMainTitle">Lucknow overview · hex zones</div>
+              <span class="badge green">Selected zone highlighted</span>
+              <span class="badge">Demo data</span>
             </div>
             <div class="mapWrap mapWrap--hex">
               <div id="mapMain" class="gmapCanvas" aria-label="Operations map"></div>
@@ -210,64 +208,86 @@
             </div>
           </section>
 
-          <aside class="mgmtDetails">
+          <aside class="mgmtDetails ovRightPanel">
             <div class="mgmtDetailsHeader">
-              <div>Overview</div>
+              <div>Zone intelligence</div>
               <div style="opacity:0.8">›</div>
             </div>
-            <div class="grid" style="margin-top:12px">
-              <article class="card" style="padding:14px">
-                <h3 style="margin-bottom:10px">Selected zone</h3>
-                <div class="row" style="justify-content:space-between;margin-top:8px">
-                  <span class="muted">Zone</span><b id="ovSelectedZoneName">—</b>
-                </div>
-                <div class="row" style="justify-content:space-between;margin-top:8px">
-                  <span class="muted">Tier</span><b id="ovSelectedZoneTier">—</b>
-                </div>
-                <div class="row" style="justify-content:space-between;margin-top:8px">
-                  <span class="muted">Inflow (24h)</span><b id="ovSelectedZoneInflow">—</b>
-                </div>
-              </article>
-            </div>
-            <article class="card" style="margin-top:12px">
-              <h3>Zone detail</h3>
-              <p class="muted" id="hexZonePlaceholder">Click a hex on the Lucknow map or pick a lettered zone on the left to load inflow and admissions.</p>
-              <div id="hexZoneDetails" class="hexZoneDetails" hidden>
-                <div class="hexZoneTitleRow">
-                  <span class="hexZoneName" id="hexZoneName"></span>
-                  <span class="badge" id="hexZoneTierBadge"></span>
-                </div>
-                <div class="hexZoneStat">
-                  <span class="hexZoneStatLabel">Patient inflow (24h)</span>
-                  <span class="hexZoneStatValue" id="hexZoneInflow"></span>
-                </div>
-                <div class="hexZoneStat">
-                  <span class="hexZoneStatLabel">Recent admissions (6h)</span>
-                  <span class="hexZoneStatValue" id="hexZoneAdmCount"></span>
-                </div>
-                <div class="hexZoneStat">
-                  <span class="hexZoneStatLabel">Latest admission from</span>
-                  <span class="hexZoneStatValue" id="hexZoneAdmFrom"></span>
-                </div>
-                <div class="hexZoneStat">
-                  <span class="hexZoneStatLabel">Population (est.)</span>
-                  <span class="hexZoneStatValue" id="hexZonePop"></span>
-                </div>
-                <div class="hexZoneBlock">
-                  <div class="hexZoneStatLabel">Top chief complaints</div>
-                  <p class="hexZoneBody" id="hexZoneComplaints"></p>
-                </div>
-                <div class="hexZoneBlock">
-                  <div class="hexZoneStatLabel">Operational note</div>
-                  <p class="muted hexZoneBody" id="hexZoneDemo"></p>
+
+            <p class="muted" id="hexZonePlaceholder" style="margin:12px 0 0;font-size:12px;line-height:1.45">
+              Select any hex on the map or a row in the zone list. The active cell is filled <strong style="color:#4ddb8e">green</strong>; numbers below are synthetic demo.
+            </p>
+
+            <article id="hexZoneDetails" class="card ovZoneIntelCard" style="margin-top:12px;padding:14px" hidden>
+              <div class="ovActiveZoneRow">
+                <div class="ovZoneLetter" id="ovZoneLetter" aria-hidden="true">—</div>
+                <div class="ovActiveZoneMeta">
+                  <div class="hexZoneName" id="hexZoneName" style="margin:0">—</div>
+                  <div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap">
+                    <span class="badge" id="hexZoneTierBadge">—</span>
+                    <span class="badge muted" style="font-size:10px">DEMO</span>
+                  </div>
                 </div>
               </div>
-            </article>
-            <article class="card" style="margin-top:12px">
-              <h3>Notes</h3>
-              <p class="muted" style="line-height:1.5;margin:0">
-                Fleet details stay inside <b>Manage</b>. This map is kept clean for patient/zone visibility (demo).
-              </p>
+
+              <h3 class="ovSectionTitle">Demographics</h3>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Median age (est.)</span>
+                <span class="hexZoneStatValue" id="hexDemoMedianAge">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Gender split</span>
+                <span class="hexZoneStatValue" id="hexDemoGender">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Seniors 65+</span>
+                <span class="hexZoneStatValue" id="hexDemoSeniors">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Pediatric &lt;18</span>
+                <span class="hexZoneStatValue" id="hexDemoYouth">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Catchment population</span>
+                <span class="hexZoneStatValue" id="hexZonePop">—</span>
+              </div>
+
+              <h3 class="ovSectionTitle">Patients &amp; forecast</h3>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Total patients (24h, this zone)</span>
+                <span class="hexZoneStatValue" id="hexTotalPatients">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Expected presentations (24h)</span>
+                <span class="hexZoneStatValue" id="hexExpectedPresentations">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Expected admissions (24h)</span>
+                <span class="hexZoneStatValue" id="hexExpectedAdmissions">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Recent admissions (6h)</span>
+                <span class="hexZoneStatValue" id="hexZoneAdmCount">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">vs forecast</span>
+                <span class="hexZoneStatValue" id="hexForecastVariance">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Presentations (24h) detail</span>
+                <span class="hexZoneStatValue" id="hexZoneInflow">—</span>
+              </div>
+              <div class="hexZoneStat">
+                <span class="hexZoneStatLabel">Latest intake pathway</span>
+                <span class="hexZoneStatValue" id="hexZoneAdmFrom">—</span>
+              </div>
+
+              <h3 class="ovSectionTitle">Clinical mix</h3>
+              <p class="hexZoneBody" id="hexZoneComplaints" style="margin:0">—</p>
+
+              <h3 class="ovSectionTitle">Operations</h3>
+              <p class="muted hexZoneBody" id="hexZoneFleet" style="margin:0 0 8px;line-height:1.45">—</p>
+              <p class="muted hexZoneBody" id="hexZoneDemo" style="margin:0;line-height:1.45">—</p>
             </article>
           </aside>
         </div>
@@ -297,6 +317,18 @@
             <div class="progressBar"><div class="fill green" style="width:83%"></div></div>
           </article>
         </div>
+
+        <p class="sectionTitle">Quick reports</p>
+        <article class="card">
+          <h3>Scheduled exports</h3>
+          <p class="muted" style="font-size:13px;margin:0 0 12px;line-height:1.45">
+            Build a plain-text summary from the current demo snapshot (wards, roster, billing counts). No server required.
+          </p>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <button type="button" id="reportLast7DaysBtn">Create last 7 days report</button>
+          </div>
+          <p class="muted" id="reportLast7Hint" style="font-size:12px;margin:10px 0 0;line-height:1.4"></p>
+        </article>
 
         <p class="sectionTitle">Demo roster &amp; shifts</p>
         <div class="grid grid-2">
@@ -330,19 +362,19 @@
       <section id="tab-billings" class="tabs">
         <div class="grid">
           <article class="card">
-            <h3>Total Bills Today</h3>
-            <p class="stat">23</p>
-            <p class="stat-sub">INR 4,82,600 collected</p>
+            <h3>Demo billing rows</h3>
+            <p class="stat">24</p>
+            <p class="stat-sub">Ledger preview · mixed clearance states</p>
           </article>
           <article class="card card-accent-amber">
             <h3>Pending Approvals</h3>
-            <p class="stat" id="pendingApprovalCount">7</p>
+            <p class="stat" id="pendingApprovalCount">16</p>
             <p class="stat-sub">Finance manager review</p>
           </article>
           <article class="card card-accent-green">
             <h3>Fully Cleared</h3>
-            <p class="stat">18</p>
-            <p class="stat-sub">Admin final signed</p>
+            <p class="stat">8</p>
+            <p class="stat-sub">Demo rows with cleared status</p>
           </article>
         </div>
 
@@ -543,13 +575,14 @@
       </div>
     </div>
 
+    <script src="./vendor/leaflet.js"></script>
+    <script src="./leaflet-maps.js"></script>
     <!-- Firebase JS SDK (compat) for Internal Comms + Presence -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-    <!-- Auto-initialize Firebase on Hosting (no hardcoded keys). -->
+    <!-- Auto-initialize Firebase on Hosting (no hardcoded keys). 404 on localhost is OK. -->
     <script src="/__/firebase/init.js"></script>
     <script src="./gemini-config.js"></script>
-    <script src="./vendor/leaflet.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

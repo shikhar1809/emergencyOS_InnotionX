@@ -147,6 +147,78 @@ const demoState = {
       lastCheckIn: Date.now() - 1000 * 60 * 2,
       contact: "shreya.gupta@goelhospital.com",
     },
+    {
+      id: "STF-011",
+      name: "Dr. Manish Agarwal",
+      role: "Pulmonologist",
+      ward: "General",
+      onDuty: true,
+      duty: "Bronchoscopy list",
+      assignment: "Pulmonology suite • procedures & consult backlog",
+      since: Date.now() - 1000 * 60 * 60 * 2 - 1000 * 60 * 9,
+      lastCheckIn: Date.now() - 1000 * 60 * 18,
+      contact: "manish.agarwal@goelhospital.com",
+    },
+    {
+      id: "STF-012",
+      name: "Nurse Divya Nair",
+      role: "Pediatric Nurse",
+      ward: "ER",
+      onDuty: true,
+      duty: "Peds corner",
+      assignment: "ER Peds bay • triage support & family comms",
+      since: Date.now() - 1000 * 60 * 60 * 4 - 1000 * 60 * 22,
+      lastCheckIn: Date.now() - 1000 * 60 * 4,
+      contact: "divya.nair@goelhospital.com",
+    },
+    {
+      id: "STF-013",
+      name: "Dr. Karan Bedi",
+      role: "Neurologist (On-call)",
+      ward: "ICU",
+      onDuty: false,
+      duty: "On-call",
+      assignment: "Stroke pathway consults",
+      since: Date.now() - 1000 * 60 * 60 * 14,
+      lastCheckIn: Date.now() - 1000 * 60 * 52,
+      contact: "karan.bedi@goelhospital.com",
+    },
+    {
+      id: "STF-014",
+      name: "Pharmacist Ritu Saxena",
+      role: "Clinical Pharmacist",
+      ward: "ICU",
+      onDuty: true,
+      duty: "Antimicrobial stewardship",
+      assignment: "ICU/ER • renal dosing & interaction checks",
+      since: Date.now() - 1000 * 60 * 60 * 5 - 1000 * 60 * 11,
+      lastCheckIn: Date.now() - 1000 * 60 * 9,
+      contact: "ritu.saxena@goelhospital.com",
+    },
+    {
+      id: "STF-015",
+      name: "Nurse Aditya Chauhan",
+      role: "OR Circulating Nurse",
+      ward: "General",
+      onDuty: false,
+      duty: "Off shift",
+      assignment: "Last case: appendectomy support",
+      since: Date.now() - 1000 * 60 * 60 * 20,
+      lastCheckIn: Date.now() - 1000 * 60 * 120,
+      contact: "aditya.chauhan@goelhospital.com",
+    },
+    {
+      id: "STF-016",
+      name: "Dr. Pooja Menon",
+      role: "Hospitalist",
+      ward: "General",
+      onDuty: true,
+      duty: "Discharge planning",
+      assignment: "Ward B/C • length-of-stay reviews",
+      since: Date.now() - 1000 * 60 * 60 * 1 - 1000 * 60 * 47,
+      lastCheckIn: Date.now() - 1000 * 60 * 6,
+      contact: "pooja.menon@goelhospital.com",
+    },
   ],
   fleet: [
     { id: "EMS-LKO-18", status: "standby", lat: 26.8467, lng: 80.9462 },
@@ -263,13 +335,116 @@ const demoState = {
       lat: 26.8513,
       lng: 80.9532,
     },
+    {
+      name: "Priya Sharma",
+      zone: "Cardiology suite",
+      severity: "urgent",
+      age: 41,
+      consignmentType: "Procedure",
+      department: "Cardiology",
+      schedule: "Today 16:10",
+      doctor: "Dr. Rohan Mehta",
+      lat: 26.8541,
+      lng: 80.9395,
+    },
+    {
+      name: "Sonia Reddy",
+      zone: "Imaging",
+      severity: "stable",
+      age: 36,
+      consignmentType: "Diagnostics",
+      department: "Radiology",
+      schedule: "Today 11:05",
+      doctor: "Tech Arjun Rao",
+      lat: 26.8444,
+      lng: 80.9518,
+    },
+    {
+      name: "Imran Qureshi",
+      zone: "ER Bay 4",
+      severity: "critical",
+      age: 58,
+      consignmentType: "Surgery",
+      department: "General Surgery",
+      schedule: "Today 10:40",
+      doctor: "Dr. Isha Tandon",
+      lat: 26.8498,
+      lng: 80.9444,
+    },
+    {
+      name: "Kavita Desai",
+      zone: "Ward D",
+      severity: "stable",
+      age: 62,
+      consignmentType: "Consultation",
+      department: "Endocrinology",
+      schedule: "Tomorrow 09:00",
+      doctor: "Dr. Neha Kapoor",
+      lat: 26.8365,
+      lng: 80.9582,
+    },
+    {
+      name: "Harsh Malik",
+      zone: "Triage",
+      severity: "urgent",
+      age: 19,
+      consignmentType: "Consultation",
+      department: "Orthopedics",
+      schedule: "Today 14:50",
+      doctor: "Dr. Sameer Ali",
+      lat: 26.8620,
+      lng: 80.9310,
+    },
+    {
+      name: "Deepa Iyer",
+      zone: "ICU step-down",
+      severity: "stable",
+      age: 55,
+      consignmentType: "Consultation",
+      department: "Nephrology",
+      schedule: "Today 17:30",
+      doctor: "Dr. Pooja Menon",
+      lat: 26.8412,
+      lng: 80.9625,
+    },
+    {
+      name: "Rahul Bhatt",
+      zone: "Observation",
+      severity: "stable",
+      age: 34,
+      consignmentType: "Consultation",
+      department: "ENT",
+      schedule: "Today 13:00",
+      doctor: "Dr. Manish Agarwal",
+      lat: 26.8577,
+      lng: 80.9499,
+    },
   ],
   billings: [
-    { id: "BL-2026-0090", patient: "Anjali Patel", amount: 12500, status: "cleared" },
-    { id: "BL-2026-0091", patient: "Ravi Kumar", amount: 35600, status: "pending_finance" },
-    { id: "BL-2026-0092", patient: "Meera Singh", amount: 8900, status: "pending_admin" },
-    { id: "BL-2026-0093", patient: "Mohit Yadav", amount: 12400, status: "pending_finance" },
-    { id: "BL-2026-0094", patient: "Farah Khan", amount: 5600, status: "pending_admin" },
+    { id: "BL-2026-0067", patient: "Sonia Reddy", amount: 12400, status: "cleared" },
+    { id: "BL-2026-0068", patient: "Imran Qureshi", amount: 285000, status: "pending_finance" },
+    { id: "BL-2026-0069", patient: "Kavita Desai", amount: 4200, status: "pending_admin" },
+    { id: "BL-2026-0070", patient: "Harsh Malik", amount: 9800, status: "cleared" },
+    { id: "BL-2026-0071", patient: "Deepa Iyer", amount: 15600, status: "pending_finance" },
+    { id: "BL-2026-0072", patient: "Rahul Bhatt", amount: 3200, status: "pending_admin" },
+    { id: "BL-2026-0073", patient: "Priya Sharma", amount: 8450, status: "pending_finance" },
+    { id: "BL-2026-0074", patient: "Anjali Patel", amount: 12500, status: "cleared" },
+    { id: "BL-2026-0075", patient: "Ravi Kumar", amount: 35600, status: "pending_finance" },
+    { id: "BL-2026-0076", patient: "Meera Singh", amount: 8900, status: "pending_admin" },
+    { id: "BL-2026-0077", patient: "Sanjay Verma", amount: 92000, status: "cleared" },
+    { id: "BL-2026-0078", patient: "Aarav Sharma", amount: 11200, status: "pending_finance" },
+    { id: "BL-2026-0079", patient: "Farah Khan", amount: 5600, status: "pending_admin" },
+    { id: "BL-2026-0080", patient: "Vikram Joshi", amount: 7400, status: "cleared" },
+    { id: "BL-2026-0081", patient: "Ritika Srivastava", amount: 198000, status: "pending_finance" },
+    { id: "BL-2026-0082", patient: "Mohit Yadav", amount: 12400, status: "pending_admin" },
+    { id: "BL-2026-0083", patient: "Imran Qureshi", amount: 45000, status: "cleared" },
+    { id: "BL-2026-0084", patient: "Kavita Desai", amount: 2100, status: "pending_finance" },
+    { id: "BL-2026-0085", patient: "Harsh Malik", amount: 6700, status: "pending_admin" },
+    { id: "BL-2026-0086", patient: "Deepa Iyer", amount: 18900, status: "cleared" },
+    { id: "BL-2026-0087", patient: "Rahul Bhatt", amount: 5100, status: "pending_finance" },
+    { id: "BL-2026-0088", patient: "Vikram Joshi", amount: 185000, status: "cleared" },
+    { id: "BL-2026-0089", patient: "Sonia Reddy", amount: 12400, status: "pending_admin" },
+    { id: "BL-2026-0090", patient: "Anjali Patel", amount: 3300, status: "pending_finance" },
   ],
   comms: {
     alerts: 6,
@@ -277,6 +452,16 @@ const demoState = {
     handshake: 2,
   },
 };
+
+// Used by computeSystemHealth (early) and Management quick view — declare before any tick/refresh uses it.
+let emergencyCount = 0;
+
+(function syncPendingApprovalsKpiFromDemo() {
+  const el = document.getElementById("pendingApprovalCount");
+  if (!el) return;
+  const n = demoState.billings.filter((b) => b.status === "pending_finance" || b.status === "pending_admin").length;
+  el.textContent = String(n);
+})();
 
 function switchTab(tab) {
   for (const [name, section] of Object.entries(tabSections)) {
@@ -292,16 +477,20 @@ function switchTab(tab) {
   });
   pageTitleEl.textContent = tabTitles[tab];
 
-  // If map is visible after tab switch, resize map
+  // Overview / Manage: ensure Leaflet inited (first paint can miss size) then resize
   if (tab === "overview" || tab === "management") {
+    initLeafletMapsIfNeeded();
     tryResizeMapsSoon();
   }
   try {
     if (tab === "overview" && !sessionStorage.getItem("eos_demo_emit_overview")) {
       sessionStorage.setItem("eos_demo_emit_overview", "1");
-      emitOpsFromModule("ops", "Demo: Overview map", "Hex zones, fleet/patient markers, and zone list (Lucknow demo).", {
-        demo: true,
-      });
+      emitOpsFromModule(
+        "ops",
+        "Demo: Overview map",
+        "Lucknow hex grid (zones A–S); selected cell turns green; right panel shows demo demographics and patient/forecast stats.",
+        { demo: true }
+      );
     }
     if (tab === "management" && !sessionStorage.getItem("eos_demo_emit_manage")) {
       sessionStorage.setItem("eos_demo_emit_manage", "1");
@@ -1030,6 +1219,10 @@ const mgmtViews = {
   staff: document.getElementById("mview-staff"),
 };
 
+// Must be declared before first switchMgmtView() — roster render reads these (TDZ-safe).
+let selectedStaffId = "";
+let selectedPatientName = "";
+
 function switchMgmtView(name) {
   mgmtBtns.forEach((b) => b.classList.toggle("active", b.dataset.mview === name));
   Object.entries(mgmtViews).forEach(([k, el]) => el && el.classList.toggle("active", k === name));
@@ -1058,7 +1251,6 @@ const staffOnDutyDemo = demoState.staff.filter((s) => s.onDuty).length;
 let staffCount = staffOnDutyDemo;
 let fleetCount = 0;
 let dispatched = 0;
-let emergencyCount = 0;
 
 const staffCountEl   = document.getElementById("staffCount");
 const fleetCountEl   = document.getElementById("fleetCount");
@@ -1190,9 +1382,6 @@ document.getElementById("patientSearch")?.addEventListener("input", renderMgmtPa
 // (Ward view removed from Manage; ward data still used in Overview/Operations.)
 
 // ── Management: staff roster + details ─────────────────────────
-let selectedStaffId = "";
-let selectedPatientName = "";
-
 function formatUptime(ms) {
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600);
@@ -1566,7 +1755,7 @@ function selectFleetOnMap(fleetId) {
   if (!fleet) return;
   highlightSidebarFleet(fleetId);
   renderMgmtDetails("fleet", fleet);
-  if (osmMgmt && window.L) {
+  if (osmMgmt && eosL()) {
     try {
       osmMgmt.setView([fleet.lat, fleet.lng], 14);
     } catch (_) {}
@@ -1731,7 +1920,14 @@ document.getElementById("fleetCredResetBtn")?.addEventListener("click", () => {
   pushFleetCredLog("RESET password " + acc.email);
 });
 
-// ── Open-source maps (Leaflet + OpenStreetMap) ────────────────
+// ── Open-source maps (Leaflet + raster tiles) ─────────────────
+function eosL() {
+  if (typeof EOSLeafletMaps !== "undefined" && EOSLeafletMaps.getL) {
+    return EOSLeafletMaps.getL();
+  }
+  return null;
+}
+
 let osmMain;
 let osmMgmt;
 let osmMarkersMain = [];
@@ -1774,24 +1970,16 @@ function hexVerticesPointy(centerLat, centerLng, Rm) {
   return corners;
 }
 
-// Lucknow overview hex grid (shared spacing for zone centers + polygon size).
-const LUCKNOW_HEX_SPACING_M = 460;
-const LUCKNOW_HEX_DISK_RING = 3;
-
-function lucknowZoneLetterName(index) {
-  if (index < 26) return "Zone " + String.fromCharCode(65 + index);
-  return "Zone Z" + (index - 25);
-}
+// Lucknow overview hex grid — ring-2 disk (~19 cells) over core Lucknow (matches shipped working build).
+const LUCKNOW_HEX_SPACING_M = 480;
+const LUCKNOW_HEX_DISK_RING = 2;
 
 function buildLucknowHexZones() {
   const centerLat = 26.8467;
   const centerLng = 80.9462;
   const hexSpacingM = LUCKNOW_HEX_SPACING_M;
   const cells = hexDiskRadius(LUCKNOW_HEX_DISK_RING);
-  const inflows = [
-    12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22,
-    31, 16, 45, 23, 38, 6, 52, 19, 27, 35, 13, 40, 21, 29, 17, 46, 10, 34, 24,
-  ];
+  const inflows = [12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22];
   const pops = ["~48k", "~22k", "~61k", "~31k", "~19k", "~55k"];
   const complaintSets = [
     ["Chest pain / cardiac workup", "Hypertensive urgency", "Syncope"],
@@ -1821,25 +2009,50 @@ function buildLucknowHexZones() {
     "Senior cohort 67%; fall-related presentations trending up week over week.",
     "Working-age dominant; occupational injury notes in 9% of charts.",
   ];
+  const admFromList = ["ER Bay 2", "Trauma Desk", "Ward A", "Ward C", "ICU", "Registration"];
   const zones = cells.map(([q, r], i) => {
     const [lat, lng] = axialToCenterLatLng(q, r, centerLat, centerLng, hexSpacingM);
-    const name = lucknowZoneLetterName(i);
+    const letter = String.fromCharCode(65 + i);
+    const name = "Zone " + letter;
     const inflow = inflows[i] != null ? inflows[i] : 16 + i;
     const recentAdm = Math.max(0, Math.round(inflow / 10) + ((i % 3) - 1));
-    const admFrom = ["ER Bay 2", "Trauma Desk", "Ward A", "Ward C", "ICU", "Registration"].at(i % 6);
+    const admFrom = admFromList[i % admFromList.length];
+    const totalPatients24h = inflow;
+    const expectedPresentations24h = Math.max(0, inflow + ((i % 5) - 2) * 3 + (i % 7));
+    const expectedAdmissions24h = Math.max(1, Math.round(expectedPresentations24h / 6) + (i % 4));
+    const delta = totalPatients24h - expectedPresentations24h;
+    const varianceLabel =
+      delta === 0
+        ? "On forecast"
+        : (delta > 0 ? "+" + delta + " vs forecast" : delta + " vs forecast") + " (7-day model)";
+    const medianAge = 34 + (i % 22);
+    const malePct = 46 + (i % 10);
+    const femalePct = 100 - malePct;
+    const seniorPct = 14 + (i % 18);
+    const youthPct = 9 + (i % 8);
     return {
       q,
       r,
       lat,
       lng,
+      letter,
       name,
       inflow24h: inflow,
+      totalPatients24h,
+      expectedPresentations24h,
+      expectedAdmissions24h,
+      forecastVariance: varianceLabel,
       admissions6h: recentAdm,
       latestAdmissionFrom: admFrom + " · " + (10 + (i % 40)) + " min ago",
       populationBand: pops[i % pops.length],
       complaints: complaintSets[i % complaintSets.length],
       fleetBlurb: fleetLines[i % fleetLines.length],
       demoBlurb: demoLines[i % demoLines.length],
+      demoMedianAge: medianAge,
+      demoMalePct: malePct,
+      demoFemalePct: femalePct,
+      demoSeniorPct: seniorPct,
+      demoYouthPct: youthPct,
     };
   });
   const sorted = [...zones].sort((a, b) => b.inflow24h - a.inflow24h);
@@ -1855,54 +2068,21 @@ function buildLucknowHexZones() {
   return zones;
 }
 
-function hexDefaultStyle() {
-  return {
-    color: "#5b8fd8",
-    weight: 1.5,
-    fillColor: "#3f7cff",
-    fillOpacity: 0.16,
-    className: "hexMapCell",
-  };
-}
-
-function hexTierFilterOn(id) {
-  const el = document.getElementById(id);
-  return el ? el.checked : true;
-}
-
 function hexStyleForZone(z) {
-  const hi = hexTierFilterOn("hexFilterHigh");
-  const lo = hexTierFilterOn("hexFilterLow");
   const base = { className: "hexMapCell" };
   if (selectedHexZoneName && z.name === selectedHexZoneName) {
     return Object.assign(base, {
-      color: "#35c97a",
-      weight: 2.5,
-      fillColor: "#35c97a",
-      fillOpacity: 0.5,
-    });
-  }
-  if (z.tier === "high" && hi) {
-    return Object.assign(base, {
-      color: "#35c97a",
-      weight: 2,
-      fillColor: "#35c97a",
-      fillOpacity: 0.34,
-    });
-  }
-  if (z.tier === "low" && lo) {
-    return Object.assign(base, {
-      color: "#ff5252",
-      weight: 2,
-      fillColor: "#ff5252",
-      fillOpacity: 0.3,
+      color: "#22c55e",
+      weight: 3,
+      fillColor: "#22c55e",
+      fillOpacity: 0.62,
     });
   }
   return Object.assign(base, {
-    color: "#5b8fd8",
-    weight: 1.5,
-    fillColor: "#3f7cff",
-    fillOpacity: 0.16,
+    color: "#4b6a9a",
+    weight: 1.25,
+    fillColor: "#1e3a5f",
+    fillOpacity: 0.42,
   });
 }
 
@@ -1925,14 +2105,8 @@ function setSelectedZone(z) {
   selectedHexZoneName = z.name;
   highlightZoneRow(selectedHexZoneName);
   refreshHexStyles();
+  refreshHexLabelStyles();
   showHexZonePanel(z);
-
-  const n = document.getElementById("ovSelectedZoneName");
-  if (n) n.textContent = z.name || "—";
-  const t = document.getElementById("ovSelectedZoneTier");
-  if (t) t.textContent = z.tier === "high" ? "High" : z.tier === "low" ? "Low" : "Mid";
-  const i = document.getElementById("ovSelectedZoneInflow");
-  if (i) i.textContent = String(z.inflow24h ?? "—");
 }
 
 function renderOverviewZoneList() {
@@ -1967,13 +2141,14 @@ function renderOverviewZoneList() {
       "</div>" +
       "<div class=\"zoneSub\"></div>";
     row.querySelector(".zoneName").textContent = z.name;
-    row.querySelector(".zoneTag").textContent =
-      z.tier === "high" ? "HIGH" : z.tier === "low" ? "LOW" : "MID";
-    row.querySelector(".zoneSub").textContent = "Inflow 24h: " + String(z.inflow24h ?? "—");
+    row.querySelector(".zoneTag").textContent = z.letter || z.name.replace(/^Zone\s+/, "");
+    row.querySelector(".zoneSub").textContent =
+      "Patients 24h: " + String(z.totalPatients24h ?? z.inflow24h ?? "—") + " · demand " +
+      (z.tier === "high" ? "high" : z.tier === "low" ? "low" : "typical");
 
     function open() {
       setSelectedZone(z);
-      if (osmMain && window.L) {
+      if (osmMain && eosL()) {
         try {
           osmMain.setView([z.lat, z.lng], Math.max(osmMain.getZoom(), 12));
         } catch (_) {}
@@ -1994,32 +2169,69 @@ function showHexZonePanel(z) {
   const det = document.getElementById("hexZoneDetails");
   if (ph) ph.hidden = true;
   if (det) det.hidden = false;
+
+  const letterEl = document.getElementById("ovZoneLetter");
+  if (letterEl) letterEl.textContent = z.letter || (z.name && z.name.replace(/^Zone\s+/, "")) || "—";
+
   const nameEl = document.getElementById("hexZoneName");
-  if (nameEl) nameEl.textContent = z.name;
+  if (nameEl) nameEl.textContent = z.name || "—";
+
   const badge = document.getElementById("hexZoneTierBadge");
   if (badge) {
     badge.textContent =
-      z.tier === "high" ? "High inflow" : z.tier === "low" ? "Low inflow" : "Typical inflow";
+      z.tier === "high" ? "High demand" : z.tier === "low" ? "Lower demand" : "Typical demand";
     badge.className =
       "badge " + (z.tier === "high" ? "green" : z.tier === "low" ? "red" : "muted");
   }
-  const inf = document.getElementById("hexZoneInflow");
-  if (inf) inf.textContent = String(z.inflow24h) + " presentations (24h est.)";
-  const ac = document.getElementById("hexZoneAdmCount");
-  if (ac) ac.textContent = String(z.admissions6h ?? "—") + " (demo)";
-  const af = document.getElementById("hexZoneAdmFrom");
-  if (af) af.textContent = String(z.latestAdmissionFrom || "—");
-  const pop = document.getElementById("hexZonePop");
-  if (pop) pop.textContent = z.populationBand + " residents (model)";
+
+  const setTxt = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+
+  setTxt("hexDemoMedianAge", String(z.demoMedianAge ?? "—") + " yrs");
+  setTxt(
+    "hexDemoGender",
+    String(z.demoMalePct ?? "—") + "% male · " + String(z.demoFemalePct ?? "—") + "% female (demo)"
+  );
+  setTxt("hexDemoSeniors", String(z.demoSeniorPct ?? "—") + "% of presentations");
+  setTxt("hexDemoYouth", String(z.demoYouthPct ?? "—") + "% of presentations");
+  setTxt("hexZonePop", (z.populationBand || "—") + " residents (catchment model)");
+
+  setTxt("hexTotalPatients", String(z.totalPatients24h ?? z.inflow24h ?? "—"));
+  setTxt("hexExpectedPresentations", String(z.expectedPresentations24h ?? "—"));
+  setTxt("hexExpectedAdmissions", String(z.expectedAdmissions24h ?? "—"));
+  setTxt("hexZoneAdmCount", String(z.admissions6h ?? "—"));
+  setTxt("hexForecastVariance", z.forecastVariance || "—");
+  setTxt("hexZoneInflow", String(z.inflow24h ?? "—") + " touches / presentations (24h est.)");
+  setTxt("hexZoneAdmFrom", String(z.latestAdmissionFrom || "—"));
+
   const comp = document.getElementById("hexZoneComplaints");
-  if (comp) comp.textContent = z.complaints.join(" · ");
+  if (comp) comp.textContent = (z.complaints && z.complaints.join(" · ")) || "—";
+
+  const fl = document.getElementById("hexZoneFleet");
+  if (fl) fl.textContent = z.fleetBlurb || "—";
+
   const dm = document.getElementById("hexZoneDemo");
-  if (dm) dm.textContent = z.demoBlurb;
+  if (dm) dm.textContent = z.demoBlurb || "—";
+}
+
+function refreshHexLabelStyles() {
+  if (!hexPolyLayer || !eosL()) return;
+  hexPolyLayer.eachLayer((layer) => {
+    if (!layer._hexZoneLabel) return;
+    const z = layer._hexZone;
+    const root =
+      typeof layer.getElement === "function" ? layer.getElement() : layer._icon;
+    if (!root) return;
+    const on = z && selectedHexZoneName && z.name === selectedHexZoneName;
+    root.classList.toggle("hexZoneMapLabel--active", !!on);
+  });
 }
 
 function addHexGridToMainMap(map) {
-  ensureLeafletGlobal();
-  if (!map || !window.L) return;
+  const L = eosL();
+  if (!map || !L) return;
   lucknowHexZones = buildLucknowHexZones();
   const hexSpacingM = LUCKNOW_HEX_SPACING_M;
   if (hexPolyLayer) {
@@ -2033,7 +2245,7 @@ function addHexGridToMainMap(map) {
     const verts = hexVerticesPointy(z.lat, z.lng, hexSpacingM * 0.97);
     const poly = L.polygon(verts, hexStyleForZone(z)).addTo(hexPolyLayer);
     poly._hexZone = z;
-    poly.bindTooltip(z.name, {
+    poly.bindTooltip(z.name + " · click to select", {
       sticky: true,
       direction: "center",
       className: "hexCellTooltip",
@@ -2046,21 +2258,33 @@ function addHexGridToMainMap(map) {
       bounds.extend(poly.getBounds());
     } catch (_) {}
   });
+  lucknowHexZones.forEach((z) => {
+    const icon = L.divIcon({
+      className: "hexZoneMapLabel",
+      html: "<span>" + (z.letter || "?") + "</span>",
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+    const marker = L.marker([z.lat, z.lng], {
+      icon: icon,
+      interactive: true,
+      keyboard: true,
+      zIndexOffset: 450,
+    });
+    marker._hexZone = z;
+    marker._hexZoneLabel = true;
+    marker.on("click", (e) => {
+      L.DomEvent.stopPropagation(e);
+      setSelectedZone(z);
+    });
+    marker.addTo(hexPolyLayer);
+  });
   try {
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16] });
   } catch (_) {}
 
   renderOverviewZoneList();
-  const hi = document.getElementById("hexFilterHigh");
-  const lo = document.getElementById("hexFilterLow");
-  if (hi && !hi._hexBound) {
-    hi._hexBound = true;
-    hi.addEventListener("change", refreshHexStyles);
-  }
-  if (lo && !lo._hexBound) {
-    lo._hexBound = true;
-    lo.addEventListener("change", refreshHexStyles);
-  }
+  refreshHexLabelStyles();
 }
 
 function showMapError(id, msg) {
@@ -2097,8 +2321,8 @@ function markerColor(type) {
 }
 
 function addLeafletMarkers(map, arr, opts) {
-  ensureLeafletGlobal();
-  if (!map || !window.L) return;
+  const L = eosL();
+  if (!map || !L) return;
   clearLeafletMarkers(arr);
   const o = opts || {};
   const includeFleet = o.includeFleet !== false;
@@ -2119,89 +2343,100 @@ function addLeafletMarkers(map, arr, opts) {
   });
 }
 
-function ensureLeafletGlobal() {
-  // Bundled Leaflet 1.9 UMD sets window.L; older copy might only set window.leaflet.
-  if (typeof window !== "undefined" && !window.L && window.leaflet) {
-    window.L = window.leaflet;
-  }
-}
-
-function bindMapResizeHelpers(map, el) {
-  if (!map || !el) return;
-  function inv() {
-    try {
-      map.invalidateSize({ animate: false });
-    } catch (_) {}
-  }
-  requestAnimationFrame(inv);
-  setTimeout(inv, 50);
-  setTimeout(inv, 200);
-  setTimeout(inv, 600);
-  if (typeof ResizeObserver !== "undefined") {
-    try {
-      const ro = new ResizeObserver(() => inv());
-      ro.observe(el);
-      el._eosMapResizeObserver = ro;
-    } catch (_) {}
-  }
-}
-
 function initLeafletMap(id, errorId, useDarkBasemap) {
-  ensureLeafletGlobal();
+  const L = eosL();
   const el = document.getElementById(id);
   if (!el) return null;
-  if (el._leaflet_id) {
-    return null;
-  }
-  if (!window.L || typeof window.L.map !== "function") {
-    showMapError(errorId, "Leaflet library failed to load.");
+  if (!L) {
+    showMapError(errorId, "Leaflet library failed to load (check ./vendor/leaflet.js on this host).");
     return null;
   }
   const map = L.map(el, { zoomControl: true }).setView([26.8467, 80.9462], 12);
-  if (useDarkBasemap) {
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 20,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
-        '&copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: "abcd",
-    }).addTo(map);
+  if (typeof EOSLeafletMaps !== "undefined" && EOSLeafletMaps.attachBasemap) {
+    EOSLeafletMaps.attachBasemap(map, !!useDarkBasemap);
   } else {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>',
+      subdomains: "abc",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
   }
-  bindMapResizeHelpers(map, el);
+  if (typeof EOSLeafletMaps !== "undefined" && EOSLeafletMaps.bindResize) {
+    EOSLeafletMaps.bindResize(map, el);
+  } else {
+    requestAnimationFrame(function () {
+      try {
+        map.invalidateSize({ animate: false });
+      } catch (_) {}
+    });
+  }
+  if (errorId) {
+    const errEl = document.getElementById(errorId);
+    if (errEl) errEl.style.display = "none";
+  }
   return map;
 }
 
-function initOpenSourceMaps() {
-  ensureLeafletGlobal();
-  const mainEl = document.getElementById("mapMain");
-  if (!osmMain && mainEl && !mainEl._leaflet_id) {
-    // Dark basemap reads better on the admin shell; hex colors stay visible.
+function initLeafletMapsIfNeeded() {
+  if (!eosL()) {
+    showMapError("mapError", "Leaflet failed to load. Ensure vendor/leaflet.js is deployed with the site.");
+    showMapError("mapErrorMgmt", "Leaflet failed to load.");
+    return;
+  }
+  if (!osmMain && document.getElementById("mapMain")) {
     osmMain = initLeafletMap("mapMain", "mapError", true);
     if (osmMain) {
       addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: true, includePatients: true });
-      addHexGridToMainMap(osmMain);
+      try {
+        addHexGridToMainMap(osmMain);
+      } catch (err) {
+        console.error("[EmergencyOS] Hex grid failed:", err);
+        showMapError("mapError", "Hex grid failed to render (see browser console).");
+      }
     }
   }
-  const mgmtEl = document.getElementById("mapMgmt");
-  if (!osmMgmt && mgmtEl && !mgmtEl._leaflet_id) {
+  if (!osmMgmt && document.getElementById("mapMgmt")) {
     osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false);
     if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt, { includeFleet: false, includePatients: true });
   }
-  renderMgmtFleetSidebar();
-  renderMgmtStaffList();
-  tryResizeMapsSoon();
-  [120, 450, 900, 1800].forEach((ms) => setTimeout(() => tryResizeMapsSoon(), ms));
 }
 
-// Leaflet loads via script tag; run after DOM is ready
-window.addEventListener("load", () => {
-  initOpenSourceMaps();
-});
+function runMapLifecycle() {
+  try {
+    lucknowHexZones = buildLucknowHexZones();
+    renderOverviewZoneList();
+  } catch (err) {
+    console.error("[EmergencyOS] Zone list failed:", err);
+    lucknowHexZones = [];
+  }
+  initLeafletMapsIfNeeded();
+  try {
+    renderMgmtFleetSidebar();
+    renderMgmtStaffList();
+  } catch (_) {}
+  tryResizeMapsSoon();
+}
+
+function scheduleMapBoot() {
+  function tick() {
+    runMapLifecycle();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", tick);
+  } else {
+    tick();
+  }
+  function late() {
+    tick();
+    requestAnimationFrame(tick);
+    [120, 400, 900, 1800].forEach((ms) => setTimeout(tick, ms));
+    [200, 600, 1400].forEach((ms) => setTimeout(tryResizeMapsSoon, ms));
+  }
+  if (document.readyState === "complete") late();
+  else window.addEventListener("load", late);
+}
+
+scheduleMapBoot();
 
 // ── Insights tab – Gemma 4 via Gemini API ────────────────────
 let geminiApiKey = "";
@@ -2276,8 +2511,12 @@ async function askGemma4(prompt) {
     comms: demoState.comms,
     hexZones: buildLucknowHexZones().map((z) => ({
       name: z.name,
+      letter: z.letter,
       tier: z.tier,
       inflow24h: z.inflow24h,
+      totalPatients24h: z.totalPatients24h,
+      expectedPresentations24h: z.expectedPresentations24h,
+      expectedAdmissions24h: z.expectedAdmissions24h,
     })),
   };
   const systemCtx =
@@ -2403,78 +2642,360 @@ chatInputEl && chatInputEl.addEventListener("keydown", (e) => {
 });
 
 // ── Billings tab ──────────────────────────────────────────────
-const BILLING_DEMO_INCIDENTS = [
-  {
-    id: "INC-DEMO-001",
-    title: "Demo incident · Cardiac consultation",
-    status: "pending",
-    patient: "Priya Sharma",
-    mrn: "MRN-10492",
-    openedAt: "2026-04-10 09:12",
-    department: "Cardiology / ER",
-    chiefComplaint: "Chest tightness, palpitations",
-    triage: "ESI-2",
-    billRef: "BL-2026-0091",
-    amountInr: 8450,
-    notes: "Initial consult and ECG completed. Labs and echo scheduled; final amount may change.",
-  },
-  {
-    id: "INC-2026-0148",
-    title: "Post-operative follow-up",
-    status: "completed",
-    patient: "Ravi Kumar",
-    mrn: "MRN-10102",
-    openedAt: "2026-04-09 14:40",
-    department: "General Surgery",
-    chiefComplaint: "Wound check",
-    triage: "ESI-4",
-    billRef: "BL-2026-0088",
-    amountInr: 2200,
-    notes: "Bill cleared by finance and admin. Patient discharged with instructions.",
-  },
-  {
-    id: "INC-2026-0140",
-    title: "Insurance partial · Ortho imaging",
-    status: "partially_completed",
-    patient: "Meera Singh",
-    mrn: "MRN-10355",
-    openedAt: "2026-04-08 11:05",
-    department: "Orthopedics",
-    chiefComplaint: "Knee injury — MRI review",
-    triage: "ESI-3",
-    billRef: "BL-2026-0092",
-    amountInr: 18900,
-    notes: "Patient share collected. TPA pending for MRI component; finance flagged partial clearance.",
-  },
-  {
-    id: "INC-2026-0155",
-    title: "Diagnostics bundle · Lab + imaging",
-    status: "pending",
-    patient: "Mohit Yadav",
-    mrn: "MRN-10821",
-    openedAt: "2026-04-10 10:22",
-    department: "Lab / ER",
-    chiefComplaint: "Shortness of breath — rule out PE",
-    triage: "ESI-3",
-    billRef: "BL-2026-0093",
-    amountInr: 12400,
-    notes: "D-dimer elevated; CTA pending insurance auth. Demo incident for multi-line billing.",
-  },
-  {
-    id: "INC-2026-0156",
-    title: "Obstetrics urgent consult",
-    status: "pending",
-    patient: "Farah Khan",
-    mrn: "MRN-10677",
-    openedAt: "2026-04-10 11:05",
-    department: "Obstetrics / ER",
-    chiefComplaint: "Antepartum bleed — stable vitals",
-    triage: "ESI-2",
-    billRef: "BL-2026-0094",
-    amountInr: 5600,
-    notes: "Ultrasound slot held; consent documented. Demo workflow for specialty routing.",
-  },
-];
+const BILLING_DEMO_INCIDENTS = (() => {
+  const row = (id, title, status, patient, mrn, openedAt, department, chiefComplaint, triage, billRef, amountInr, notes) => ({
+    id,
+    title,
+    status,
+    patient,
+    mrn,
+    openedAt,
+    department,
+    chiefComplaint,
+    triage,
+    billRef,
+    amountInr,
+    notes,
+  });
+  return [
+    row(
+      "INC-DEMO-001",
+      "Cardiac consultation · ECG pathway",
+      "pending",
+      "Priya Sharma",
+      "MRN-10492",
+      "2026-04-10 09:12",
+      "Cardiology / ER",
+      "Chest tightness, palpitations",
+      "ESI-2",
+      "BL-2026-0073",
+      8450,
+      "Echo add-on queued; finance review for bundled pricing."
+    ),
+    row(
+      "INC-2026-0148",
+      "Post-operative wound review",
+      "completed",
+      "Ravi Kumar",
+      "MRN-10102",
+      "2026-04-09 14:40",
+      "General Surgery",
+      "Wound check post laparotomy",
+      "ESI-4",
+      "BL-2026-0075",
+      35600,
+      "Cleared through finance and admin."
+    ),
+    row(
+      "INC-2026-0140",
+      "Insurance partial · ortho imaging",
+      "partially_completed",
+      "Meera Singh",
+      "MRN-10355",
+      "2026-04-08 11:05",
+      "Orthopedics",
+      "Knee injury — MRI review",
+      "ESI-3",
+      "BL-2026-0076",
+      8900,
+      "Patient share posted; TPA segment still open."
+    ),
+    row(
+      "INC-2026-0155",
+      "Diagnostics bundle · rule out PE",
+      "pending",
+      "Mohit Yadav",
+      "MRN-10821",
+      "2026-04-10 10:22",
+      "Lab / ER",
+      "Shortness of breath",
+      "ESI-3",
+      "BL-2026-0082",
+      12400,
+      "CTA auth pending; labs billed."
+    ),
+    row(
+      "INC-2026-0156",
+      "Obstetrics urgent consult",
+      "pending",
+      "Farah Khan",
+      "MRN-10677",
+      "2026-04-10 11:05",
+      "Obstetrics / ER",
+      "Antepartum bleed — stable vitals",
+      "ESI-2",
+      "BL-2026-0079",
+      5600,
+      "Ultrasound slot held; consent on file."
+    ),
+    row(
+      "INC-2026-0120",
+      "CT thorax · oncology workup",
+      "completed",
+      "Sonia Reddy",
+      "MRN-11001",
+      "2026-04-07 08:30",
+      "Radiology",
+      "Persistent cough, weight loss",
+      "ESI-3",
+      "BL-2026-0067",
+      12400,
+      "Report issued; billing closed same day."
+    ),
+    row(
+      "INC-2026-0121",
+      "Emergency laparotomy pathway",
+      "partially_completed",
+      "Imran Qureshi",
+      "MRN-11002",
+      "2026-04-10 07:15",
+      "General Surgery",
+      "Acute abdomen",
+      "ESI-2",
+      "BL-2026-0068",
+      285000,
+      "Theatre charges cleared; implant invoice awaiting vendor match."
+    ),
+    row(
+      "INC-2026-0122",
+      "OPD diabetes review",
+      "completed",
+      "Kavita Desai",
+      "MRN-11003",
+      "2026-04-06 10:00",
+      "Endocrinology",
+      "HbA1c follow-up",
+      "ESI-5",
+      "BL-2026-0069",
+      4200,
+      "Admin signature pending on package discount — now cleared in ledger."
+    ),
+    row(
+      "INC-2026-0123",
+      "Closed fracture reduction",
+      "pending",
+      "Harsh Malik",
+      "MRN-11004",
+      "2026-04-10 13:20",
+      "Orthopedics",
+      "Ankle injury — post reduction",
+      "ESI-3",
+      "BL-2026-0070",
+      9800,
+      "Splint supplies billed; physio block not yet coded."
+    ),
+    row(
+      "INC-2026-0124",
+      "Dialysis access evaluation",
+      "partially_completed",
+      "Deepa Iyer",
+      "MRN-11005",
+      "2026-04-05 15:45",
+      "Nephrology",
+      "Elevated creatinine",
+      "ESI-3",
+      "BL-2026-0071",
+      15600,
+      "Consult paid; vascular duplex awaiting insurance."
+    ),
+    row(
+      "INC-2026-0125",
+      "ENT foreign body removal",
+      "completed",
+      "Rahul Bhatt",
+      "MRN-11006",
+      "2026-04-09 11:10",
+      "ENT",
+      "Nasal FB",
+      "ESI-4",
+      "BL-2026-0072",
+      3200,
+      "Minor procedure; same-day clearance."
+    ),
+    row(
+      "INC-2026-0126",
+      "Ward admission · CAP",
+      "pending",
+      "Anjali Patel",
+      "MRN-11007",
+      "2026-04-04 16:00",
+      "General Medicine",
+      "Fever and consolidation",
+      "ESI-3",
+      "BL-2026-0074",
+      12500,
+      "Room charges accruing; pharmacy reconciliation open."
+    ),
+    row(
+      "INC-2026-0127",
+      "STEMI pathway · cath hold",
+      "completed",
+      "Sanjay Verma",
+      "MRN-11008",
+      "2026-04-08 06:50",
+      "Cardiology",
+      "Chest pain, ST changes",
+      "ESI-2",
+      "BL-2026-0077",
+      92000,
+      "Cath lab bundle finalized."
+    ),
+    row(
+      "INC-2026-0128",
+      "Sports injury clinic",
+      "partially_completed",
+      "Aarav Sharma",
+      "MRN-11009",
+      "2026-04-10 14:05",
+      "Orthopedics",
+      "Shoulder instability",
+      "ESI-4",
+      "BL-2026-0078",
+      11200,
+      "MRI pre-auth received; radiology fee split TBD."
+    ),
+    row(
+      "INC-2026-0129",
+      "ICU ventilator day bundle",
+      "pending",
+      "Ritika Srivastava",
+      "MRN-11010",
+      "2026-04-10 05:00",
+      "ICU",
+      "Respiratory failure",
+      "ESI-2",
+      "BL-2026-0081",
+      198000,
+      "Daily ICU charges stacking; finance coding review."
+    ),
+    row(
+      "INC-2026-0130",
+      "Pulmonology bronchoscopy",
+      "completed",
+      "Meera Singh",
+      "MRN-10355",
+      "2026-04-07 12:30",
+      "Pulmonology",
+      "Hemoptysis workup",
+      "ESI-3",
+      "BL-2026-0076",
+      8900,
+      "Separate procedure claim from prior ortho partial — ledger note applied."
+    ),
+    row(
+      "INC-2026-0131",
+      "Trauma activation level 2",
+      "pending",
+      "Ravi Kumar",
+      "MRN-10102",
+      "2026-04-10 08:40",
+      "Trauma / ER",
+      "MVC polytrauma screen",
+      "ESI-2",
+      "BL-2026-0075",
+      35600,
+      "Activation fee disputed with payer — hold on trauma line items."
+    ),
+    row(
+      "INC-2026-0132",
+      "Lab stat panel batch",
+      "completed",
+      "Mohit Yadav",
+      "MRN-10821",
+      "2026-04-09 19:00",
+      "Lab",
+      "Sepsis rule-out labs",
+      "ESI-3",
+      "BL-2026-0082",
+      12400,
+      "Batch reconciled against ER encounters."
+    ),
+    row(
+      "INC-2026-0133",
+      "Obstetric ultrasound package",
+      "partially_completed",
+      "Farah Khan",
+      "MRN-10677",
+      "2026-04-06 09:15",
+      "Obstetrics",
+      "Growth scan",
+      "ESI-4",
+      "BL-2026-0079",
+      5600,
+      "Package partially covered; top-up invoice generated."
+    ),
+    row(
+      "INC-2026-0134",
+      "Neurology EEG",
+      "pending",
+      "Vikram Joshi",
+      "MRN-11011",
+      "2026-04-10 15:30",
+      "Neurology",
+      "New-onset seizures",
+      "ESI-3",
+      "BL-2026-0080",
+      7400,
+      "Technician overtime line pending approval."
+    ),
+    row(
+      "INC-2026-0135",
+      "Discharge medication reconciliation",
+      "completed",
+      "Anjali Patel",
+      "MRN-11007",
+      "2026-04-09 17:00",
+      "Pharmacy",
+      "Take-home meds",
+      "ESI-5",
+      "BL-2026-0090",
+      3300,
+      "Retail pharmacy bridge cleared."
+    ),
+    row(
+      "INC-2026-0136",
+      "Ambulance copay",
+      "partially_completed",
+      "Priya Sharma",
+      "MRN-10492",
+      "2026-04-05 07:20",
+      "EMS billing",
+      "Inter-facility transfer",
+      "ESI-3",
+      "BL-2026-0073",
+      8450,
+      "Ground mile component waived; base rate still active."
+    ),
+    row(
+      "INC-2026-0137",
+      "Pediatric dehydration IV",
+      "completed",
+      "Aarav Sharma",
+      "MRN-11009",
+      "2026-04-04 13:00",
+      "Pediatrics / ER",
+      "Gastroenteritis",
+      "ESI-4",
+      "BL-2026-0078",
+      11200,
+      "IV therapy bundle closed."
+    ),
+    row(
+      "INC-2026-0138",
+      "Surgical implant markup review",
+      "pending",
+      "Imran Qureshi",
+      "MRN-11002",
+      "2026-04-09 10:00",
+      "Materials management",
+      "Implant invoice match",
+      "ESI-5",
+      "BL-2026-0083",
+      45000,
+      "Vendor batch BL-2026-0083 awaiting three-way match."
+    ),
+  ];
+})();
 
 const BILLING_STATUS_LABEL = {
   pending: "Pending",
@@ -2708,6 +3229,78 @@ function seedDemoBillLogs() {
   }
 }
 seedDemoBillLogs();
+
+function isoDateOnly(d) {
+  const x = new Date(d.getTime());
+  x.setHours(0, 0, 0, 0);
+  return x.toISOString().slice(0, 10);
+}
+
+function buildLast7DaysReportText() {
+  const endDay = new Date();
+  endDay.setHours(0, 0, 0, 0);
+  const startDay = new Date(endDay.getTime());
+  startDay.setDate(startDay.getDate() - 7);
+  const inWin = BILLING_DEMO_INCIDENTS.filter((inc) => {
+    const d = new Date(String(inc.openedAt).slice(0, 10) + "T12:00:00");
+    return d >= startDay && d <= endDay;
+  });
+  const staffOn = demoState.staff.filter((s) => s.onDuty).length;
+  const bill = demoState.billings;
+  const lines = [
+    "EmergencyOS — Last 7 days operations report (demo)",
+    "Generated (local): " + new Date().toISOString(),
+    "Window: " + isoDateOnly(startDay) + " → " + isoDateOnly(endDay),
+    "",
+    "Incidents opened in window: " + inWin.length,
+    "  · Pending: " + inWin.filter((i) => i.status === "pending").length,
+    "  · Completed: " + inWin.filter((i) => i.status === "completed").length,
+    "  · Partially completed: " + inWin.filter((i) => i.status === "partially_completed").length,
+    "",
+    "Roster: patients " + demoState.patients.length + " | staff on duty " + staffOn + " / " + demoState.staff.length,
+    "Wards: ICU " +
+      demoState.wards.ICU.used +
+      "/" +
+      demoState.wards.ICU.total +
+      " | ER " +
+      demoState.wards.ER.used +
+      "/" +
+      demoState.wards.ER.total,
+    "",
+    "Billing file (demo): " + bill.length + " rows",
+    "  · Cleared: " + bill.filter((b) => b.status === "cleared").length,
+    "  · Pending finance: " + bill.filter((b) => b.status === "pending_finance").length,
+    "  · Pending admin: " + bill.filter((b) => b.status === "pending_admin").length,
+    "",
+    "Incident IDs in window:",
+  ];
+  inWin.forEach((i) => lines.push("  · " + i.id + " · " + i.patient + " · " + i.status));
+  return lines.join("\n");
+}
+
+const reportLast7DaysBtn = document.getElementById("reportLast7DaysBtn");
+reportLast7DaysBtn &&
+  reportLast7DaysBtn.addEventListener("click", () => {
+    const text = buildLast7DaysReportText();
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "emergencyos-report-last-7-days-" + isoDateOnly(new Date()) + ".txt";
+    a.click();
+    URL.revokeObjectURL(url);
+    const hint = document.getElementById("reportLast7Hint");
+    if (hint) hint.textContent = "Download started (demo text export).";
+    const endDay = new Date();
+    endDay.setHours(0, 0, 0, 0);
+    const startDay = new Date(endDay.getTime());
+    startDay.setDate(startDay.getDate() - 7);
+    const n = BILLING_DEMO_INCIDENTS.filter((inc) => {
+      const d = new Date(String(inc.openedAt).slice(0, 10) + "T12:00:00");
+      return d >= startDay && d <= endDay;
+    }).length;
+    if (chatListEl) addChat("System", "Last 7 days report created — " + n + " billing incidents in window.");
+  });
 
 document.getElementById("createBillBtn").addEventListener("click", () => {
   const patient   = document.getElementById("billPatient").value.trim();

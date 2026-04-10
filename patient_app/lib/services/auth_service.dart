@@ -1,48 +1,58 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/patient_model.dart';
 
+/// Local demo auth only (no Firebase Auth). Firestore may still be used for appointments.
 class PatientAuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static const demoEmail = 'patient.demo@goelhospital.com';
+  static const demoPassword = 'PatientDemo123';
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-  User? get currentUser => _auth.currentUser;
+  static const PatientModel demoProfile = PatientModel(
+    uid: 'demo-patient-lko',
+    name: 'Anjali Patel (Demo)',
+    email: demoEmail,
+    phone: '+91 98765 43210',
+  );
 
-  Future<PatientModel?> signIn(String email, String password) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    final user = credential.user;
-    if (user == null) return null;
+  static const _prefsKey = 'eos_patient_demo_session';
 
-    // Patient profile lives under patients/{uid}
-    final doc = await _db.collection('patients').doc(user.uid).get();
-    if (doc.exists) {
-      return PatientModel.fromDoc(doc);
+  Future<PatientModel?> restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      return PatientModel.fromSessionJson(map);
+    } catch (_) {
+      return null;
     }
+  }
 
-    // First-time patient sign-in: create minimal profile (can be updated in intake screen)
-    final profile = PatientModel(
-      uid: user.uid,
-      name: user.displayName ?? email.split('@').first,
-      email: email,
-      phone: '',
-    );
-    await _db.collection('patients').doc(user.uid).set(profile.toMap());
-    return profile;
+  /// Returns [demoProfile] when email/password match demo credentials; otherwise null.
+  Future<PatientModel?> signIn(String email, String password) async {
+    final e = email.trim().toLowerCase();
+    if (e != demoEmail.toLowerCase() || password != demoPassword) {
+      return null;
+    }
+    await _persist(demoProfile);
+    return demoProfile;
+  }
+
+  Future<void> _persist(PatientModel patient) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(patient.toSessionJson()));
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsKey);
   }
 
-  Future<PatientModel?> fetchProfile(String uid) async {
-    final doc = await _db.collection('patients').doc(uid).get();
-    if (!doc.exists) return null;
-    return PatientModel.fromDoc(doc);
+  /// Opens the portal directly as the demo patient (no login UI).
+  Future<PatientModel> openDemoSession() async {
+    await _persist(demoProfile);
+    return demoProfile;
   }
 }
-

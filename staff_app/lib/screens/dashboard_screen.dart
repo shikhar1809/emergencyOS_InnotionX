@@ -139,7 +139,12 @@ class _DashboardScreenState extends State<DashboardScreen>
     _doctor = widget.doctor;
     _doctorSub = _firestoreService.doctorStream(widget.doctor.uid).listen(
       (d) {
-        if (mounted) setState(() => _doctor = d);
+        if (!mounted) return;
+        // Missing `users/{uid}` yields empty fields from fromDoc — keep demo labels.
+        final merged = (d.name.isEmpty && d.email.isEmpty)
+            ? widget.doctor.copyWith(onDuty: d.onDuty)
+            : d;
+        setState(() => _doctor = merged);
       },
       onError: (_) {
         // No auth / rules: keep the fixed demo profile and local duty state.

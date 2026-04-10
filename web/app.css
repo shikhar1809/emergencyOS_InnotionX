@@ -234,25 +234,28 @@ ul.clean li {
 }
 
 .mapWrap--hex {
-  /* Explicit height so Leaflet gets non-zero size (percent heights need this). */
-  height: clamp(320px, 52vh, 480px);
+  position: relative;
+  height: min(52vh, 440px);
   min-height: 320px;
   width: 100%;
 }
 
-/* Overview map: Leaflet mounts on #mapMain and adds .leaflet-container */
-#mapMain {
-  min-height: 300px;
-  height: 100%;
+.mapWrap--hex .leaflet-container {
   width: 100%;
-  position: relative;
-  z-index: 0;
+  height: 100%;
+  min-height: 300px;
 }
 
-#mapMain.leaflet-container {
-  min-height: 300px;
-  background: #0a0f18;
-  border-radius: 10px;
+.mapWrap--hex .leaflet-tile-pane {
+  filter: saturate(1.08) hue-rotate(-12deg) brightness(0.92);
+}
+
+#mapMain {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  position: relative;
+  z-index: 0;
 }
 
 .mapHexLayout {
@@ -450,18 +453,86 @@ ul.clean li {
   color: #c5d0ec;
 }
 
-/* Default Leaflet surface (Manage tab uses OSM light tiles) */
+/* Dark shell default; Manage map overrides below */
 .leaflet-container {
-  background: #ffffff;
+  background: #090f1c;
   font: inherit;
 }
 
 #mapMgmt.leaflet-container {
-  background: #ffffff;
+  background: #ffffff !important;
 }
 
 path.hexMapCell {
   cursor: pointer;
+}
+
+/* Letter badge on each hex (Overview) */
+.leaflet-marker-icon.hexZoneMapLabel {
+  background: transparent !important;
+  border: none !important;
+}
+.hexZoneMapLabel span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(15, 24, 40, 0.9);
+  border: 1px solid #5b7ab8;
+  color: #f1f5f9;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+.hexZoneMapLabel--active span {
+  background: rgba(34, 197, 94, 0.95) !important;
+  border-color: #15803d !important;
+  color: #052e16 !important;
+}
+
+.ovActiveZoneRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #1d2e47;
+}
+.ovZoneLetter {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 900;
+  color: #ecfdf5;
+  background: linear-gradient(145deg, #15803d 0%, #22c55e 100%);
+  border: 1px solid #4ade80;
+  flex-shrink: 0;
+}
+.ovActiveZoneMeta .hexZoneName {
+  font-size: 17px;
+  font-weight: 800;
+  color: #eef2ff;
+}
+.ovSectionTitle {
+  margin: 18px 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a96b0;
+}
+.ovSectionTitle:first-of-type {
+  margin-top: 0;
+}
+.ovZoneIntelCard .hexZoneStat {
+  margin-bottom: 8px;
 }
 
 .leaflet-tooltip.hexCellTooltip {
@@ -481,6 +552,7 @@ path.hexMapCell {
 .mapError {
   position: absolute;
   inset: 0;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;

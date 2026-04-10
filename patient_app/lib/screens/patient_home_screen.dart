@@ -8,20 +8,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment_model.dart';
 import '../models/patient_model.dart';
 import '../services/appointment_service.dart';
-import '../services/auth_service.dart';
 import '../services/billing_push_service.dart';
-import 'login_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   final PatientModel patient;
-  const PatientHomeScreen({super.key, required this.patient});
+  /// Clears local demo session (see [AuthGate]).
+  final Future<void> Function() onSignedOut;
+
+  const PatientHomeScreen({
+    super.key,
+    required this.patient,
+    required this.onSignedOut,
+  });
 
   @override
   State<PatientHomeScreen> createState() => _PatientHomeScreenState();
 }
 
 class _PatientHomeScreenState extends State<PatientHomeScreen> {
-  final _auth = PatientAuthService();
   final _appointments = AppointmentService();
   final _billingPush = BillingPushService();
 
@@ -95,11 +99,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
     if (confirmed != true) return;
 
-    await _auth.signOut();
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const PatientLoginScreen()),
-    );
+    await widget.onSignedOut();
   }
 
   Future<void> _requestSlot() async {

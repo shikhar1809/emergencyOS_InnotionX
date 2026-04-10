@@ -1,11 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
 import 'models/patient_model.dart';
-import 'screens/login_screen.dart';
 import 'screens/patient_home_screen.dart';
 import 'services/auth_service.dart';
 
@@ -43,50 +41,106 @@ class PatientApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  final _auth = PatientAuthService();
+  PatientModel? _patient;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  /// Restore saved session or fall back to demo patient — never shows a login screen.
+  Future<void> _bootstrap() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      var p = await _auth.restoreSession();
+      p ??= await _auth.openDemoSession();
+      if (!mounted) return;
+      setState(() {
+        _patient = p;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final authService = PatientAuthService();
-    return StreamBuilder<User?>(
-      stream: authService.authStateChanges,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Color(0xFF0d0d1a),
-            body: Center(
-              child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
-            ),
-          );
-        }
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0d0d1a),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF7c3aed)),
+              SizedBox(height: 16),
+              Text(
+                'Opening patient portal…',
+                style: TextStyle(color: Color(0xFF9ca3af), fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-        final user = snapshot.data;
-        if (user == null) {
-          return const PatientLoginScreen();
-        }
-
-        return FutureBuilder<PatientModel?>(
-          future: authService.fetchProfile(user.uid),
-          builder: (context, profileSnap) {
-            if (profileSnap.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                backgroundColor: Color(0xFF0d0d1a),
-                body: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+    if (_error != null || _patient == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0d0d1a),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Could not start portal',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
                 ),
-              );
-            }
-            final patient = profileSnap.data;
-            if (patient == null) {
-              FirebaseAuth.instance.signOut();
-              return const PatientLoginScreen();
-            }
-            return PatientHomeScreen(patient: patient);
-          },
-        );
+                const SizedBox(height: 12),
+                Text(
+                  _error ?? 'Unknown error',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF9ca3af), fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: _bootstrap,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return PatientHomeScreen(
+      patient: _patient!,
+      onSignedOut: () async {
+        await _auth.signOut();
+        await _bootstrap();
       },
     );
   }
 }
-
