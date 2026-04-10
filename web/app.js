@@ -19,18 +19,261 @@ const tabTitles = {
 const pageTitleEl = document.getElementById("pageTitle");
 
 // ── Data sources ───────────────────────────────────────────────
-// Demo data removed. Populate these from backend services.
+// Demo data (admin panel is currently static).
 const demoState = {
   wards: {
-    ICU: { used: 0, total: 0 },
-    ER: { used: 0, total: 0 },
-    General: { used: 0, total: 0 },
+    ICU: { used: 9, total: 12 },
+    ER: { used: 14, total: 20 },
+    General: { used: 38, total: 60 },
   },
-  staff: [],
-  fleet: [],
-  patients: [],
-  billings: [],
-  comms: { alerts: 0, shifts: 0, handshake: 0 },
+  staff: [
+    {
+      id: "STF-001",
+      name: "Dr. Aanya Verma",
+      role: "Emergency Physician",
+      ward: "ER",
+      onDuty: true,
+      duty: "Triage Lead",
+      assignment: "ER Bay 2 • trauma intake & stabilization",
+      since: Date.now() - 1000 * 60 * 60 * 3 - 1000 * 60 * 17,
+      lastCheckIn: Date.now() - 1000 * 60 * 7,
+      contact: "aanya.verma@goelhospital.com",
+    },
+    {
+      id: "STF-002",
+      name: "Nurse Kavya Singh",
+      role: "ICU Nurse",
+      ward: "ICU",
+      onDuty: true,
+      duty: "Ventilator Rounds",
+      assignment: "ICU Bed 4–6 • vitals monitoring & meds",
+      since: Date.now() - 1000 * 60 * 60 * 5 - 1000 * 60 * 2,
+      lastCheckIn: Date.now() - 1000 * 60 * 2,
+      contact: "kavya.singh@goelhospital.com",
+    },
+    {
+      id: "STF-003",
+      name: "Dr. Rohan Mehta",
+      role: "Cardiologist (On-call)",
+      ward: "ICU",
+      onDuty: false,
+      duty: "On-call",
+      assignment: "On call for cardiac consults",
+      since: Date.now() - 1000 * 60 * 60 * 12,
+      lastCheckIn: Date.now() - 1000 * 60 * 45,
+      contact: "rohan.mehta@goelhospital.com",
+    },
+    {
+      id: "STF-004",
+      name: "Tech Arjun Rao",
+      role: "Radiology Tech",
+      ward: "ER",
+      onDuty: true,
+      duty: "Portable X-Ray",
+      assignment: "ER Bay 1–3 • imaging requests queue",
+      since: Date.now() - 1000 * 60 * 60 * 1 - 1000 * 60 * 28,
+      lastCheckIn: Date.now() - 1000 * 60 * 11,
+      contact: "arjun.rao@goelhospital.com",
+    },
+    {
+      id: "STF-005",
+      name: "Dr. Neha Kapoor",
+      role: "General Physician",
+      ward: "General",
+      onDuty: true,
+      duty: "Ward Coverage",
+      assignment: "Ward A • rounds, discharge review, consults",
+      since: Date.now() - 1000 * 60 * 60 * 2 - 1000 * 60 * 41,
+      lastCheckIn: Date.now() - 1000 * 60 * 5,
+      contact: "neha.kapoor@goelhospital.com",
+    },
+    {
+      id: "STF-006",
+      name: "Nurse Priya Mishra",
+      role: "ER Nurse",
+      ward: "ER",
+      onDuty: true,
+      duty: "Triage Support",
+      assignment: "ER Triage • vitals, IV access, documentation",
+      since: Date.now() - 1000 * 60 * 60 * 4 - 1000 * 60 * 8,
+      lastCheckIn: Date.now() - 1000 * 60 * 3,
+      contact: "priya.mishra@goelhospital.com",
+    },
+    {
+      id: "STF-007",
+      name: "Tech Saurabh Jain",
+      role: "Lab Technician",
+      ward: "ER",
+      onDuty: true,
+      duty: "Stat Labs",
+      assignment: "ER Lab Desk • CBC/CMP/troponin queue handling",
+      since: Date.now() - 1000 * 60 * 60 * 1 - 1000 * 60 * 52,
+      lastCheckIn: Date.now() - 1000 * 60 * 6,
+      contact: "saurabh.jain@goelhospital.com",
+    },
+    {
+      id: "STF-008",
+      name: "Dr. Sameer Ali",
+      role: "Orthopedic (On-call)",
+      ward: "ER",
+      onDuty: false,
+      duty: "On-call",
+      assignment: "On-call for fracture reductions / ortho consults",
+      since: Date.now() - 1000 * 60 * 60 * 8,
+      lastCheckIn: Date.now() - 1000 * 60 * 39,
+      contact: "sameer.ali@goelhospital.com",
+    },
+    {
+      id: "STF-009",
+      name: "Dr. Isha Tandon",
+      role: "Anesthetist",
+      ward: "ICU",
+      onDuty: true,
+      duty: "Airway Lead",
+      assignment: "ICU/ER airway • RSI backup, vent protocols",
+      since: Date.now() - 1000 * 60 * 60 * 6 - 1000 * 60 * 14,
+      lastCheckIn: Date.now() - 1000 * 60 * 4,
+      contact: "isha.tandon@goelhospital.com",
+    },
+    {
+      id: "STF-010",
+      name: "Nurse Shreya Gupta",
+      role: "ICU Nurse",
+      ward: "ICU",
+      onDuty: true,
+      duty: "Meds & Monitoring",
+      assignment: "ICU Bed 7–9 • infusions, monitoring, charting",
+      since: Date.now() - 1000 * 60 * 60 * 3 - 1000 * 60 * 33,
+      lastCheckIn: Date.now() - 1000 * 60 * 2,
+      contact: "shreya.gupta@goelhospital.com",
+    },
+  ],
+  fleet: [
+    { id: "EMS-LKO-18", status: "standby", lat: 26.8467, lng: 80.9462 },
+    { id: "EMS-LKO-09", status: "dispatched", lat: 26.8585, lng: 80.9605 },
+    { id: "EMS-LKO-03", status: "available", lat: 26.8382, lng: 80.9341 },
+    { id: "EMS-LKO-12", status: "service", lat: 26.8721, lng: 80.9414 },
+  ],
+  patients: [
+    {
+      name: "Anjali Patel",
+      zone: "Ward A",
+      severity: "stable",
+      age: 44,
+      consignmentType: "Consultation",
+      department: "General Medicine",
+      schedule: "Today 11:40",
+      doctor: "Dr. Neha Kapoor",
+      lat: 26.8460,
+      lng: 80.9490,
+    },
+    {
+      name: "Ravi Kumar",
+      zone: "Trauma Desk",
+      severity: "critical",
+      age: 52,
+      consignmentType: "Surgery",
+      department: "Trauma / Ortho",
+      schedule: "Today 12:10",
+      doctor: "Dr. Aanya Verma",
+      lat: 26.8526,
+      lng: 80.9412,
+    },
+    {
+      name: "Meera Singh",
+      zone: "Ward C",
+      severity: "stable",
+      age: 38,
+      consignmentType: "Consultation",
+      department: "Pulmonology",
+      schedule: "Today 13:15",
+      doctor: "Dr. Neha Kapoor",
+      lat: 26.8397,
+      lng: 80.9542,
+    },
+    {
+      name: "Sanjay Verma",
+      zone: "ER Bay 2",
+      severity: "critical",
+      age: 61,
+      consignmentType: "Procedure",
+      department: "Cardiology",
+      schedule: "Today 12:35",
+      doctor: "Dr. Rohan Mehta",
+      lat: 26.8602,
+      lng: 80.9521,
+    },
+    {
+      name: "Aarav Sharma",
+      zone: "Registration",
+      severity: "stable",
+      age: 29,
+      consignmentType: "Consultation",
+      department: "Orthopedics",
+      schedule: "Today 14:05",
+      doctor: "Dr. Sameer Ali",
+      lat: 26.8489,
+      lng: 80.9388,
+    },
+    {
+      name: "Farah Khan",
+      zone: "ER Bay 1",
+      severity: "urgent",
+      age: 33,
+      consignmentType: "Procedure",
+      department: "Obstetrics",
+      schedule: "Today 12:55",
+      doctor: "Dr. Aanya Verma",
+      lat: 26.8436,
+      lng: 80.9601,
+    },
+    {
+      name: "Vikram Joshi",
+      zone: "Ward B",
+      severity: "stable",
+      age: 47,
+      consignmentType: "Consultation",
+      department: "Neurology",
+      schedule: "Today 15:20",
+      doctor: "Dr. Rohan Mehta",
+      lat: 26.8328,
+      lng: 80.9469,
+    },
+    {
+      name: "Ritika Srivastava",
+      zone: "ICU",
+      severity: "critical",
+      age: 70,
+      consignmentType: "Surgery",
+      department: "General Surgery",
+      schedule: "Today 13:40",
+      doctor: "Dr. Isha Tandon",
+      lat: 26.8555,
+      lng: 80.9486,
+    },
+    {
+      name: "Mohit Yadav",
+      zone: "Lab",
+      severity: "urgent",
+      age: 56,
+      consignmentType: "Diagnostics",
+      department: "Lab / Pathology",
+      schedule: "Today 12:25",
+      doctor: "Tech Saurabh Jain",
+      lat: 26.8513,
+      lng: 80.9532,
+    },
+  ],
+  billings: [
+    { id: "BL-2026-0090", patient: "Anjali Patel", amount: 12500, status: "cleared" },
+    { id: "BL-2026-0091", patient: "Ravi Kumar", amount: 35600, status: "pending_finance" },
+    { id: "BL-2026-0092", patient: "Meera Singh", amount: 8900, status: "pending_admin" },
+  ],
+  comms: {
+    alerts: 6,
+    shifts: 4,
+    handshake: 2,
+  },
 };
 
 function switchTab(tab) {
@@ -50,6 +293,49 @@ function switchTab(tab) {
   // If map is visible after tab switch, resize map
   if (tab === "overview" || tab === "management") {
     tryResizeMapsSoon();
+  }
+  try {
+    if (tab === "overview" && !sessionStorage.getItem("eos_demo_emit_overview")) {
+      sessionStorage.setItem("eos_demo_emit_overview", "1");
+      emitOpsFromModule("ops", "Demo: Overview map", "Hex zones, fleet/patient markers, and zone list (Lucknow demo).", {
+        demo: true,
+      });
+    }
+    if (tab === "management" && !sessionStorage.getItem("eos_demo_emit_manage")) {
+      sessionStorage.setItem("eos_demo_emit_manage", "1");
+      emitOpsFromModule("ops", "Demo: Management", "Patient roster and staff duty views use embedded demo data.", {
+        demo: true,
+      });
+    }
+    if (tab === "operations" && !sessionStorage.getItem("eos_demo_emit_operations")) {
+      sessionStorage.setItem("eos_demo_emit_operations", "1");
+      emitOpsFromModule("ops", "Demo: Operations", "Feed items are demo-seeded; approve flows tie to Firestore when configured.", {
+        demo: true,
+      });
+    }
+    if (tab === "comms" && !sessionStorage.getItem("eos_demo_emit_comms")) {
+      sessionStorage.setItem("eos_demo_emit_comms", "1");
+      emitOpsFromModule("staff", "Demo: Comms", "Live messages appear when Firebase comms collections are enabled.", {
+        demo: true,
+      });
+    }
+    if (tab === "insights" && !sessionStorage.getItem("eos_demo_emit_insights")) {
+      sessionStorage.setItem("eos_demo_emit_insights", "1");
+      emitOpsFromModule("ops", "Demo: Report", "KPI cards and Gemma analytics use demo baselines.", { demo: true });
+    }
+    if (tab === "billings" && !sessionStorage.getItem("eos_demo_emit_billings")) {
+      sessionStorage.setItem("eos_demo_emit_billings", "1");
+      emitOpsFromModule(
+        "ops",
+        "Demo: Billings",
+        "Incidents, status filters, quick bill tools; patient push uses Firestore demo_billing/patient_push when configured.",
+        { demo: true }
+      );
+    }
+  } catch (_) {}
+  if (tab === "management") {
+    const activeM = document.querySelector("#tab-management .mgmtNavBtn.active");
+    switchMgmtView(activeM && activeM.dataset.mview ? activeM.dataset.mview : "patients");
   }
 }
 tabButtons.forEach((btn) => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
@@ -312,10 +598,99 @@ function renderOpsDetail(it) {
   const askBtn = document.getElementById("opsAskGeminiBtn");
   const holdBtn = document.getElementById("opsHoldBtn");
 
-  if (approveBtn) approveBtn.disabled = it.status === "approved";
+  if (approveBtn) {
+    approveBtn.disabled = it.status === "approved";
+    approveBtn.hidden = false;
+  }
   if (rejectBtn) rejectBtn.disabled = it.status === "rejected";
   if (holdBtn) holdBtn.textContent = it.status === "hold" ? "Unhold" : "Hold";
   if (askBtn) askBtn.disabled = !opsState.aiEnabled || it.status === "hold";
+
+  opsHydrateAppointmentAssignUI(it);
+}
+
+function opsRandomToken() {
+  try {
+    const a = new Uint8Array(18);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
+    else for (let i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256);
+    let s = "";
+    for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  } catch (_) {
+    return "tok-" + Date.now() + "-" + Math.floor(Math.random() * 1e9);
+  }
+}
+
+async function opsLoadDoctorsIntoSelect() {
+  const sel = document.getElementById("opsApptDoctorSelect");
+  if (!sel || !commsDb) return;
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "Select staff…";
+  sel.appendChild(opt0);
+  try {
+    const q = await commsDb.collection("users").where("role", "==", "Doctor").limit(40).get();
+    q.docs.forEach((doc) => {
+      const m = doc.data() || {};
+      const onDuty = m.onDuty === true;
+      const o = document.createElement("option");
+      o.value = doc.id;
+      o.textContent = (m.name || doc.id) + (onDuty ? " · on duty" : "");
+      o.dataset.doctorName = m.name ? String(m.name) : "Doctor";
+      sel.appendChild(o);
+    });
+  } catch (_) {
+    const o = document.createElement("option");
+    o.value = "";
+    o.textContent = "(Could not load users — check Firestore rules/index)";
+    sel.appendChild(o);
+  }
+}
+
+function opsHydrateAppointmentAssignUI(it) {
+  const bar = document.getElementById("opsApptAssignBar");
+  const hint = document.getElementById("opsApptAssignHint");
+  const sel = document.getElementById("opsApptDoctorSelect");
+  const assignBtn = document.getElementById("opsApptApproveAssignBtn");
+  const approveBtn = document.getElementById("opsApproveBtn");
+  if (!bar) return;
+  bar.style.display = "none";
+  bar.hidden = true;
+  if (hint) hint.textContent = "";
+  if (sel) sel.innerHTML = "";
+  if (assignBtn) assignBtn.disabled = false;
+
+  const aid = it && it.payload && it.payload.appointmentId;
+  if (!aid || !commsDb) return;
+
+  (async () => {
+    try {
+      const ds = await commsDb.collection("appointments").doc(aid).get();
+      if (!ds.exists) {
+        if (hint) {
+          bar.style.display = "block";
+          bar.hidden = false;
+          hint.textContent = "Appointment not found (it may have been deleted).";
+        }
+        return;
+      }
+      const d = ds.data() || {};
+      const st = opsSafeStr(d.status);
+      if (st === "pending_approval") {
+        bar.style.display = "block";
+        bar.hidden = false;
+        if (approveBtn) approveBtn.hidden = true;
+        if (hint) hint.textContent = "Patient app shows loading until you approve and assign staff.";
+        await opsLoadDoctorsIntoSelect();
+      }
+    } catch (e) {
+      if (hint) hint.textContent = "Could not load appointment: " + (e && e.message ? e.message : String(e));
+      bar.style.display = "block";
+      bar.hidden = false;
+    }
+  })();
 }
 
 function bindOpsActionsOnce() {
@@ -355,6 +730,14 @@ function bindOpsActionsOnce() {
   rejectBtn && rejectBtn.addEventListener("click", () => {
     const it = opsState.items.find((x) => x.id === opsState.selectedId);
     if (!it) return;
+    const apptId = it.payload && it.payload.appointmentId;
+    if (apptId && commsDb) {
+      commsDb
+        .collection("appointments")
+        .doc(apptId)
+        .update({ status: "cancelled" })
+        .catch(() => {});
+    }
     it.status = "rejected";
     renderOpsFeed();
     renderOpsDetail(it);
@@ -395,11 +778,183 @@ function bindOpsActionsOnce() {
       askBtn.textContent = "Ask Gemini";
     })();
   });
+
+  const apptAssignBtn = document.getElementById("opsApptApproveAssignBtn");
+  if (apptAssignBtn && !apptAssignBtn._opsApptBound) {
+    apptAssignBtn._opsApptBound = true;
+    apptAssignBtn.addEventListener("click", async () => {
+      const it = opsState.items.find((x) => x.id === opsState.selectedId);
+      const apptId = it && it.payload && it.payload.appointmentId;
+      if (!apptId || !commsDb) return;
+      const sel = document.getElementById("opsApptDoctorSelect");
+      const uid = sel && sel.value;
+      if (!uid) {
+        alert("Select a staff member to assign.");
+        return;
+      }
+      const opt = sel.selectedOptions && sel.selectedOptions[0];
+      const doctorName = (opt && opt.dataset && opt.dataset.doctorName) || "Doctor";
+      const now = new Date();
+      const start = new Date(now.getTime() + 30 * 60000);
+      const end = new Date(start.getTime() + 15 * 60000);
+      apptAssignBtn.disabled = true;
+      try {
+        await commsDb
+          .collection("appointments")
+          .doc(apptId)
+          .update({
+            doctorUid: uid,
+            doctorNameSnapshot: doctorName,
+            status: "scheduled",
+            receptionQrToken: opsRandomToken(),
+            scheduledStart: firebase.firestore.Timestamp.fromDate(start),
+            scheduledEnd: firebase.firestore.Timestamp.fromDate(end),
+          });
+        if (it) {
+          it.status = "approved";
+          if (it.payload) it.payload.status = "scheduled";
+        }
+        renderOpsFeed();
+        renderOpsDetail(it);
+        refreshOpsKpis();
+      } catch (e) {
+        alert("Could not approve: " + (e && e.message ? e.message : String(e)));
+      } finally {
+        apptAssignBtn.disabled = false;
+      }
+    });
+  }
 }
 
 function seedOpsFeed() {
-  // Demo seed removed.
-  return;
+  if (opsState.items.length) return;
+  const t0 = opsNowTs();
+  const seeds = [
+    {
+      id: "DEMO-OPS-P1",
+      type: "patients",
+      title: "ER slot request — chest pain",
+      summary: "Ravi Kumar · Emergency · consult_general · ETA triage 12m",
+      status: "pending",
+      payload: {
+        appointmentId: "demo-appt-seed-1",
+        patientName: "Ravi Kumar",
+        department: "Emergency",
+        symptoms: "Chest pain, diaphoresis",
+      },
+    },
+    {
+      id: "DEMO-OPS-P2",
+      type: "patients",
+      title: "Follow-up — ortho",
+      summary: "Aarav Sharma · General · follow-up · pending assignment",
+      status: "pending",
+      payload: {
+        appointmentId: "demo-appt-seed-2",
+        patientName: "Aarav Sharma",
+        department: "General",
+        symptoms: "Post-fracture follow-up",
+      },
+    },
+    {
+      id: "DEMO-OPS-S1",
+      type: "staff",
+      title: "Shift handoff reminder",
+      summary: "ICU · Dr. Isha Tandon ↔ Dr. Rohan Mehta · 18:30",
+      status: "pending",
+      payload: { ward: "ICU", handoffTime: "18:30" },
+    },
+    {
+      id: "DEMO-OPS-S2",
+      type: "staff",
+      title: "On-call acknowledgment",
+      summary: "Cardiology on-call (Dr. Rohan Mehta) — confirm pager test",
+      status: "hold",
+      payload: { role: "Cardiology on-call" },
+    },
+    {
+      id: "DEMO-OPS-O1",
+      type: "ops",
+      title: "Fleet — EMS-LKO-09 reroute",
+      summary: "Hazratganj congestion · +4m to Zone 07 · auto-notify dispatch",
+      status: "pending",
+      payload: { unit: "EMS-LKO-09", zone: "Zone 07" },
+    },
+    {
+      id: "DEMO-OPS-O2",
+      type: "ops",
+      title: "Bed pressure — ER",
+      summary: "ER bays 85% full · suggest surge protocol (demo)",
+      status: "approved",
+      payload: { ward: "ER", occupancyPct: 85 },
+    },
+  ];
+  seeds.forEach((s, idx) => {
+    opsState.items.push({
+      id: s.id,
+      type: s.type,
+      title: s.title,
+      summary: s.summary,
+      createdAt: t0 - idx * 75000,
+      status: s.status,
+      payload: s.payload || {},
+      aiSuggestion: null,
+    });
+  });
+  opsState.selectedId = opsState.items[0] ? opsState.items[0].id : "";
+  renderOpsFeed();
+  renderOpsDetailById(opsState.selectedId);
+  refreshOpsKpis();
+}
+
+const DEMO_ADMIN_ALERTS = [
+  { id: "da-1", text: "Demo: 2 patient requests awaiting Operations approval." },
+  { id: "da-2", text: "Demo: EMS-LKO-03 available — assign to Zone 12 surge." },
+  { id: "da-3", text: "Demo: Staff handoff ICU at 18:30 — confirm in Manage › Staff." },
+];
+
+function renderDemoAdminAlertStrip() {
+  const host = document.getElementById("demoAlertStrip");
+  if (!host) return;
+  let dismissed = {};
+  try {
+    dismissed = JSON.parse(sessionStorage.getItem("eos_demo_alerts_dismissed") || "{}") || {};
+  } catch (_) {
+    dismissed = {};
+  }
+  const visible = DEMO_ADMIN_ALERTS.filter((a) => !dismissed[a.id]);
+  if (!visible.length) {
+    host.innerHTML = "";
+    host.hidden = true;
+    return;
+  }
+  host.hidden = false;
+  host.innerHTML = "";
+  const title = document.createElement("div");
+  title.className = "demoAlertStripTitle";
+  title.textContent = "Live demo alerts";
+  host.appendChild(title);
+  visible.forEach((a) => {
+    const row = document.createElement("div");
+    row.className = "demoAlertStripRow";
+    const msg = document.createElement("span");
+    msg.className = "demoAlertStripText";
+    msg.textContent = a.text;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "secondary demoAlertStripDismiss";
+    btn.textContent = "Dismiss";
+    btn.addEventListener("click", () => {
+      dismissed[a.id] = true;
+      try {
+        sessionStorage.setItem("eos_demo_alerts_dismissed", JSON.stringify(dismissed));
+      } catch (_) {}
+      renderDemoAdminAlertStrip();
+    });
+    row.appendChild(msg);
+    row.appendChild(btn);
+    host.appendChild(row);
+  });
 }
 
 bindOpsActionsOnce();
@@ -407,6 +962,7 @@ seedOpsFeed();
 renderOpsFeed();
 renderOpsDetailById(opsState.selectedId);
 refreshOpsKpis();
+renderDemoAdminAlertStrip();
 
 // ── Management side navigation (Patients / Staff) ──
 const mgmtBtns = Array.from(document.querySelectorAll(".mgmtNavBtn"));
@@ -436,9 +992,11 @@ function switchMgmtView(name) {
 }
 
 mgmtBtns.forEach((b) => b.addEventListener("click", () => switchMgmtView(b.dataset.mview)));
+switchMgmtView("patients");
 
 // ── Management tab ────────────────────────────────────────────
-let staffCount = 0;
+const staffOnDutyDemo = demoState.staff.filter((s) => s.onDuty).length;
+let staffCount = staffOnDutyDemo;
 let fleetCount = 0;
 let dispatched = 0;
 let emergencyCount = 0;
@@ -446,6 +1004,8 @@ let emergencyCount = 0;
 const staffCountEl   = document.getElementById("staffCount");
 const fleetCountEl   = document.getElementById("fleetCount");
 const fleetSubEl     = document.getElementById("fleetSub");
+if (staffCountEl) staffCountEl.textContent = String(staffCount);
+setBar("staffBar", Math.min(100, Math.round(staffCount / 58 * 100)));
 
 function setBar(id, pct) {
   const el = document.getElementById(id);
@@ -477,14 +1037,16 @@ function refreshMgmtPatientsQuickView() {
     list.innerHTML = "";
     demoState.patients.slice(0, 6).forEach((p) => {
       const li = document.createElement("li");
-      li.textContent = p.name + " · " + p.zone + " · " + p.severity;
+      const slot = p.schedule ? " · " + p.schedule : "";
+      const cons = p.consignmentType ? " · " + p.consignmentType : "";
+      li.textContent = p.name + " · " + p.zone + " · " + p.severity + cons + slot;
       li.style.cursor = "pointer";
       li.setAttribute("role", "button");
       li.setAttribute("tabindex", "0");
       li.setAttribute("aria-label", "View patient " + p.name);
-      li.addEventListener("click", () => renderMgmtDetails("patient", p));
+      li.addEventListener("click", () => selectPatient(p));
       li.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") renderMgmtDetails("patient", p);
+        if (e.key === "Enter") selectPatient(p);
       });
       list.appendChild(li);
     });
@@ -499,7 +1061,23 @@ function renderMgmtPatientRoster() {
 
   const filtered = demoState.patients.filter((p) => {
     if (!q) return true;
-    const hay = (p.name + " " + p.zone + " " + p.severity + " " + p.age).toLowerCase();
+    const hay = (
+      p.name +
+      " " +
+      p.zone +
+      " " +
+      p.severity +
+      " " +
+      p.age +
+      " " +
+      (p.consignmentType || "") +
+      " " +
+      (p.department || "") +
+      " " +
+      (p.schedule || "") +
+      " " +
+      (p.doctor || "")
+    ).toLowerCase();
     return hay.includes(q);
   });
 
@@ -515,6 +1093,7 @@ function renderMgmtPatientRoster() {
   filtered.forEach((p) => {
     const row = document.createElement("div");
     row.className = "staffRow staffRowClick";
+    row.dataset.patientName = p.name;
     row.innerHTML =
       "<div class=\"staffRowTop\">" +
       "<div class=\"staffName\"></div>" +
@@ -522,11 +1101,29 @@ function renderMgmtPatientRoster() {
       "</div>" +
       "<div class=\"staffSub\"></div>";
     row.querySelector(".staffName").textContent = p.name;
-    row.querySelector(".staffTag").textContent = String(p.severity || "").toUpperCase();
-    row.querySelector(".staffSub").textContent = (p.zone || "—") + " · age " + p.age;
-    row.addEventListener("click", () => renderMgmtDetails("patient", p));
+    row.querySelector(".staffTag").textContent = String(p.consignmentType || p.severity || "—").toUpperCase();
+    row.querySelector(".staffSub").textContent =
+      (p.zone || "—") +
+      " · " +
+      (p.department || "—") +
+      " · " +
+      (p.schedule || "—") +
+      " · " +
+      (p.severity || "—") +
+      " · age " +
+      p.age;
+    row.addEventListener("click", () => selectPatient(p));
     listEl.appendChild(row);
   });
+
+  if (selectedPatientName && !filtered.some((p) => p.name === selectedPatientName)) {
+    selectedPatientName = "";
+  }
+  if (!selectedPatientName && filtered.length) {
+    selectPatient(filtered[0]);
+  } else {
+    highlightPatientRow(selectedPatientName);
+  }
 }
 
 document.getElementById("patientSearch")?.addEventListener("input", renderMgmtPatientRoster);
@@ -535,6 +1132,7 @@ document.getElementById("patientSearch")?.addEventListener("input", renderMgmtPa
 
 // ── Management: staff roster + details ─────────────────────────
 let selectedStaffId = "";
+let selectedPatientName = "";
 
 function formatUptime(ms) {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -549,118 +1147,36 @@ function staffDutyLabel(s) {
 }
 
 function highlightStaffRow(staffId) {
-  document.querySelectorAll(".staffRowClick").forEach((n) => {
+  document.querySelectorAll("#mgmtStaffList .staffRowClick").forEach((n) => {
     n.classList.toggle("staffRowActive", !!staffId && n.dataset.staffId === staffId);
   });
 }
 
-function mgmtAnalyticsHtml() {
-  const w = demoState.wards;
-  const bedsFree =
-    (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
-  return (
-    "<div class=\"detailsTitle\">Analytics</div>" +
-    "<div class=\"detailsBlocks\">" +
-    "<div class=\"detailsGrid\">" +
-    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Fleet</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
-    demoState.fleet.length +
-    "</span></div></div>" +
-    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Patients</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
-    demoState.patients.length +
-    "</span></div></div>" +
-    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Beds free</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
-    bedsFree +
-    "</span></div></div>" +
-    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">On duty</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
-    demoState.staff.filter((x) => x.onDuty).length +
-    "</span></div></div>" +
-    "</div>" +
-    "</div>"
-  );
+function highlightPatientRow(patientName) {
+  document.querySelectorAll("#mgmtPatientRoster .staffRowClick").forEach((n) => {
+    n.classList.toggle("staffRowActive", !!patientName && n.dataset.patientName === patientName);
+  });
+}
+
+function selectPatient(p) {
+  if (!p) return;
+  selectedPatientName = p.name;
+  highlightPatientRow(selectedPatientName);
+  renderMgmtDetails("patient", p);
 }
 
 function renderMgmtDetails(kind, payload) {
-  const det = document.getElementById("detailsText");
-  if (!det) return;
-
-  const base = mgmtAnalyticsHtml();
-
   if (kind === "fleet") {
-    const f = payload;
-    const activeFleetCreds = activeFleetCredAccounts().filter((a) => a.kind === "fleet");
-    const guessCred =
-      activeFleetCreds.find((a) => String(a.displayName || "").toUpperCase() === String(f.id || "").toUpperCase()) ||
-      activeFleetCreds[activeFleetCreds.length - 1] ||
-      null;
-    det.innerHTML =
-      base +
-      "<div class=\"detailsTitle\" style=\"margin-top:12px\">Fleet unit</div>" +
-      "<div class=\"detailsBlocks\">" +
-      "<div class=\"detailsGrid\">" +
-      "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Unit</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
-      f.id +
-      "</span></div></div>" +
-      "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Status</div><div class=\"detailsValue\">" +
-      fleetStatusLabel(f) +
-      "</div></div>" +
-      "</div>" +
-      "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Credentials</div><div class=\"detailsValue\">" +
-      (guessCred ?
-        ("<span class=\"detailsValueStrong\">" + guessCred.email + "</span><br/>Pass: " + guessCred.password)
-      : "No fleet credentials issued yet. Use Manage credentials to create one.") +
-      "</div></div>" +
-      "<div class=\"row\" style=\"margin-top:10px;gap:8px\">" +
-      "<button type=\"button\" id=\"fleetAssignBtn\" aria-label=\"Assign unit to incident\">Assign</button>" +
-      "<button type=\"button\" class=\"secondary\" id=\"fleetCallBackBtn\" aria-label=\"Call back unit\">Call back</button>" +
-      "<button type=\"button\" class=\"danger\" id=\"fleetRevokeBtn\" aria-label=\"Revoke unit\">Revoke</button>" +
-      "<button type=\"button\" class=\"secondary\" id=\"fleetOpenCredBtn\" aria-label=\"Open credentials console\">Credentials</button>" +
-      "</div>" +
-      "</div>";
-
-    document.getElementById("fleetAssignBtn")?.addEventListener("click", () => {
-      alert("Assigned " + f.id + " to incident (demo).");
-      f.status = "dispatched";
-      renderMgmtFleetSidebar();
-      refreshOverviewKpis();
-      tickSystemHealth();
-      renderMgmtDetails("fleet", f);
-      emitOpsFromModule(
-        "fleet",
-        "Fleet assigned: " + f.id,
-        "Unit assigned to an incident. Status → dispatched.",
-        { unit: f.id, action: "assign", status: f.status }
-      );
-    });
-    document.getElementById("fleetCallBackBtn")?.addEventListener("click", () => {
-      f.status = "standby";
-      renderMgmtFleetSidebar();
-      renderMgmtDetails("fleet", f);
-      emitOpsFromModule(
-        "fleet",
-        "Fleet call-back: " + f.id,
-        "Unit called back. Status → standby.",
-        { unit: f.id, action: "callback", status: f.status }
-      );
-    });
-    document.getElementById("fleetRevokeBtn")?.addEventListener("click", () => {
-      f.status = "service";
-      renderMgmtFleetSidebar();
-      tickSystemHealth();
-      renderMgmtDetails("fleet", f);
-      emitOpsFromModule(
-        "fleet",
-        "Fleet revoked: " + f.id,
-        "Unit access revoked for now. Status → service.",
-        { unit: f.id, action: "revoke", status: f.status }
-      );
-    });
-    document.getElementById("fleetOpenCredBtn")?.addEventListener("click", () => {
-      openFleetCredModal();
-    });
     return;
   }
 
   if (kind === "staff") {
+    const det = document.getElementById("mgmtStaffDetail");
+    const ph = document.getElementById("mgmtStaffDetailPlaceholder");
+    if (!det) return;
+    if (ph) ph.hidden = true;
+    det.hidden = false;
+
     const s = payload;
     const now = Date.now();
     const uptime = s.onDuty ? formatUptime(now - (s.since || now)) : "—";
@@ -668,15 +1184,13 @@ function renderMgmtDetails(kind, payload) {
       ? new Date(s.lastCheckIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "—";
     det.innerHTML =
-      base +
-      "<div class=\"detailsTitle\" style=\"margin-top:12px\">Staff</div>" +
       "<div class=\"detailsBlocks\">" +
       "<div class=\"detailsGrid\">" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Name</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
       s.name +
       "</span></div></div>" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Status</div><div class=\"detailsValue\">" +
-      (s.onDuty ? "On duty" : "Off duty") +
+      (s.onDuty ? "Online (on duty)" : "Off duty") +
       "</div></div>" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Ward</div><div class=\"detailsValue\">" +
       (s.ward || "—") +
@@ -685,6 +1199,9 @@ function renderMgmtDetails(kind, payload) {
       uptime +
       "</div></div>" +
       "</div>" +
+      "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Duty</div><div class=\"detailsValue\">" +
+      (s.duty || s.role || "—") +
+      "</div></div>" +
       "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Assignment</div><div class=\"detailsValue\">" +
       (s.assignment || "—") +
       "</div></div>" +
@@ -696,6 +1213,9 @@ function renderMgmtDetails(kind, payload) {
       last +
       "</div></div>" +
       "</div>" +
+      "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Contact</div><div class=\"detailsValue\">" +
+      (s.contact || "—") +
+      "</div></div>" +
       "<div class=\"row\" style=\"margin-top:10px;gap:8px\">" +
       "<button type=\"button\" id=\"staffDutyBtn\" aria-label=\"Change staff duty\">" +
       (s.onDuty ? "Mark off-duty" : "Mark on-duty") +
@@ -731,20 +1251,36 @@ function renderMgmtDetails(kind, payload) {
   }
 
   if (kind === "patient") {
+    const det = document.getElementById("mgmtPatientDetail");
+    const ph = document.getElementById("mgmtPatientDetailPlaceholder");
+    if (!det) return;
+    if (ph) ph.hidden = true;
+    det.hidden = false;
+
     const p = payload;
     det.innerHTML =
-      base +
-      "<div class=\"detailsTitle\" style=\"margin-top:12px\">Patient</div>" +
       "<div class=\"detailsBlocks\">" +
       "<div class=\"detailsGrid\">" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Name</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
       p.name +
       "</span></div></div>" +
+      "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Consignment</div><div class=\"detailsValue\">" +
+      (p.consignmentType || "—") +
+      "</div></div>" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Severity</div><div class=\"detailsValue\">" +
       p.severity +
       "</div></div>" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Zone</div><div class=\"detailsValue\">" +
       p.zone +
+      "</div></div>" +
+      "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Department</div><div class=\"detailsValue\">" +
+      (p.department || "—") +
+      "</div></div>" +
+      "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Scheduled</div><div class=\"detailsValue\">" +
+      (p.schedule || "—") +
+      "</div></div>" +
+      "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Assigned</div><div class=\"detailsValue\">" +
+      (p.doctor || "—") +
       "</div></div>" +
       "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Age</div><div class=\"detailsValue\">" +
       p.age +
@@ -773,10 +1309,7 @@ function renderMgmtDetails(kind, payload) {
         { name: p.name, action: "call_nurse", severity: p.severity, zone: p.zone, age: p.age }
       );
     });
-    return;
   }
-
-  det.innerHTML = base + "<p class=\"muted\" style=\"margin-top:12px\">Select an item to see details.</p>";
 }
 
 function renderStaffDetails(s) {
@@ -798,6 +1331,8 @@ function renderMgmtStaffList() {
   const qEl = document.getElementById("staffSearch");
   const q = qEl ? qEl.value.trim().toLowerCase() : "";
   const filtered = demoState.staff.filter((s) => {
+    // Manage → Staff should show only online staff (demo == onDuty).
+    if (!s.onDuty) return false;
     if (!q) return true;
     const hay = (s.name + " " + s.role + " " + s.ward + " " + s.duty).toLowerCase();
     return hay.includes(q);
@@ -812,6 +1347,10 @@ function renderMgmtStaffList() {
     return;
   }
 
+  if (selectedStaffId && !filtered.some((s) => s.id === selectedStaffId)) {
+    selectedStaffId = "";
+  }
+
   filtered.forEach((s) => {
     const row = document.createElement("div");
     row.className = "staffRow staffRowClick";
@@ -823,11 +1362,19 @@ function renderMgmtStaffList() {
       "</div>" +
       "<div class=\"staffSub\"></div>";
     row.querySelector(".staffName").textContent = s.name;
-    row.querySelector(".staffTag").textContent = s.onDuty ? "ON DUTY" : "OFF DUTY";
-    row.querySelector(".staffSub").textContent = (s.ward ? s.ward + " · " : "") + staffDutyLabel(s);
+    row.querySelector(".staffTag").textContent = "ONLINE";
+    const uptime = s.since ? formatUptime(Date.now() - s.since) : "—";
+    const duty = s.duty || s.role || "—";
+    row.querySelector(".staffSub").textContent =
+      (s.ward ? s.ward + " · " : "") + duty + " · " + uptime + " · " + (s.assignment || "—");
     row.addEventListener("click", () => selectStaff(s.id));
     listEl.appendChild(row);
   });
+
+  if (!selectedStaffId) {
+    const first = filtered[0];
+    if (first) selectStaff(first.id);
+  }
 
   highlightStaffRow(selectedStaffId);
 }
@@ -1168,13 +1715,15 @@ function hexVerticesPointy(centerLat, centerLng, Rm) {
   return corners;
 }
 
+// Lucknow overview hex grid (shared spacing for zone centers + polygon size).
+const LUCKNOW_HEX_SPACING_M = 520;
+const LUCKNOW_HEX_DISK_RING = 2;
+
 function buildLucknowHexZones() {
   const centerLat = 26.8467;
   const centerLng = 80.9462;
-  // Scale up to cover Lucknow core region (not just a small cluster).
-  // (hexSpacingM is effectively the hex "size" used in axial transform + vertices below.)
-  const hexSpacingM = 1700;
-  const cells = hexDiskRadius(6);
+  const hexSpacingM = LUCKNOW_HEX_SPACING_M;
+  const cells = hexDiskRadius(LUCKNOW_HEX_DISK_RING);
   const inflows = [12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22];
   const pops = ["~48k", "~22k", "~61k", "~31k", "~19k", "~55k"];
   const complaintSets = [
@@ -1207,7 +1756,7 @@ function buildLucknowHexZones() {
   ];
   const zones = cells.map(([q, r], i) => {
     const [lat, lng] = axialToCenterLatLng(q, r, centerLat, centerLng, hexSpacingM);
-    const name = "Zone " + String.fromCharCode(65 + i);
+    const name = "Zone " + String(i + 1).padStart(2, "0");
     const inflow = inflows[i] != null ? inflows[i] : 16 + i;
     const recentAdm = Math.max(0, Math.round(inflow / 10) + ((i % 3) - 1));
     const admFrom = ["ER Bay 2", "Trauma Desk", "Ward A", "Ward C", "ICU", "Registration"].at(i % 6);
@@ -1244,14 +1793,19 @@ function hexDefaultStyle() {
     color: "#5b8fd8",
     weight: 1.5,
     fillColor: "#3f7cff",
-    fillOpacity: 0.07,
+    fillOpacity: 0.16,
     className: "hexMapCell",
   };
 }
 
+function hexTierFilterOn(id) {
+  const el = document.getElementById(id);
+  return el ? el.checked : true;
+}
+
 function hexStyleForZone(z) {
-  const hi = document.getElementById("hexFilterHigh")?.checked;
-  const lo = document.getElementById("hexFilterLow")?.checked;
+  const hi = hexTierFilterOn("hexFilterHigh");
+  const lo = hexTierFilterOn("hexFilterLow");
   const base = { className: "hexMapCell" };
   if (selectedHexZoneName && z.name === selectedHexZoneName) {
     return Object.assign(base, {
@@ -1281,7 +1835,7 @@ function hexStyleForZone(z) {
     color: "#5b8fd8",
     weight: 1.5,
     fillColor: "#3f7cff",
-    fillOpacity: 0.07,
+    fillOpacity: 0.16,
   });
 }
 
@@ -1397,9 +1951,10 @@ function showHexZonePanel(z) {
 }
 
 function addHexGridToMainMap(map) {
+  ensureLeafletGlobal();
   if (!map || !window.L) return;
   lucknowHexZones = buildLucknowHexZones();
-  const hexSpacingM = 1700;
+  const hexSpacingM = LUCKNOW_HEX_SPACING_M;
   if (hexPolyLayer) {
     try {
       map.removeLayer(hexPolyLayer);
@@ -1470,6 +2025,8 @@ function markerColor(type) {
 }
 
 function addLeafletMarkers(map, arr, opts) {
+  ensureLeafletGlobal();
+  if (!map || !window.L) return;
   clearLeafletMarkers(arr);
   const o = opts || {};
   const includeFleet = o.includeFleet !== false;
@@ -1490,7 +2047,15 @@ function addLeafletMarkers(map, arr, opts) {
   });
 }
 
+function ensureLeafletGlobal() {
+  // Leaflet 1.9 dist bundled here attaches to `window.leaflet`, not `window.L`.
+  if (typeof window !== "undefined" && !window.L && window.leaflet) {
+    window.L = window.leaflet;
+  }
+}
+
 function initLeafletMap(id, errorId, useDarkBasemap) {
+  ensureLeafletGlobal();
   const el = document.getElementById(id);
   if (!el) return null;
   if (!window.L) {
@@ -1516,11 +2081,11 @@ function initLeafletMap(id, errorId, useDarkBasemap) {
 }
 
 function initOpenSourceMaps() {
+  ensureLeafletGlobal();
   osmMain = initLeafletMap("mapMain", "mapError", false);
   osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false);
   if (osmMain) {
-    // Overview map: keep it clean (no fleet references).
-    addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: false, includePatients: true });
+    addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: true, includePatients: true });
     addHexGridToMainMap(osmMain);
   }
   // Manage map: keep fleet + patients.
@@ -1528,6 +2093,7 @@ function initOpenSourceMaps() {
   renderMgmtFleetSidebar();
   renderMgmtStaffList();
   tryResizeMapsSoon();
+  [120, 450, 900].forEach((ms) => setTimeout(() => tryResizeMapsSoon(), ms));
 }
 
 // Leaflet loads via script tag; run after DOM is ready
@@ -1538,19 +2104,48 @@ window.addEventListener("load", () => {
 // ── Insights tab – Gemma 4 via Gemini API ────────────────────
 let geminiApiKey = "";
 
+const GEMINI_KEY_STORAGE = "emergencyos_gemini_key";
+
+function resolveInitialGeminiKey() {
+  const fromWindow =
+    typeof window.__GEMINI_API_KEY__ === "string" ? window.__GEMINI_API_KEY__.trim() : "";
+  let fromStorage = "";
+  try {
+    fromStorage = (localStorage.getItem(GEMINI_KEY_STORAGE) || "").trim();
+  } catch (_) {}
+  return fromWindow || fromStorage;
+}
+
+const chatListEl = document.getElementById("chatList");
+
+function applyGeminiKeyToUi(k, announce) {
+  geminiApiKey = k;
+  const keyEl = document.getElementById("gemmaApiKey");
+  if (keyEl) keyEl.value = k;
+  if (announce && chatListEl) {
+    addChat("System", "Gemini API key loaded. Gemma 4 is active.");
+  }
+}
+
 const saveKeyBtn = document.getElementById("saveKeyBtn");
 saveKeyBtn && saveKeyBtn.addEventListener("click", () => {
   const keyEl = document.getElementById("gemmaApiKey");
   const k = (keyEl ? keyEl.value : "").trim();
   if (k) {
-    geminiApiKey = k;
+    try {
+      localStorage.setItem(GEMINI_KEY_STORAGE, k);
+    } catch (_) {}
+    applyGeminiKeyToUi(k, false);
     addChat("System", "Gemini API key saved. Gemma 4 is now active.");
   } else {
     addChat("System", "Please paste your Gemini API key first.");
   }
 });
 
-const chatListEl  = document.getElementById("chatList");
+const _initialGemini = resolveInitialGeminiKey();
+if (_initialGemini) {
+  geminiApiKey = _initialGemini;
+}
 
 function addChat(role, text) {
   const li = document.createElement("li");
@@ -1561,7 +2156,12 @@ function addChat(role, text) {
 }
 
 if (chatListEl) {
+  const keyElBoot = document.getElementById("gemmaApiKey");
+  if (keyElBoot && geminiApiKey) keyElBoot.value = geminiApiKey;
   addChat("Gemma 4", "Ready. Ask me about ICU trends, billing anomalies, fleet efficiency, or patient demographics.");
+  if (geminiApiKey) {
+    addChat("System", "Gemini API key loaded from config or saved session. Gemma 4 is active.");
+  }
 }
 
 async function askGemma4(prompt) {
@@ -1701,15 +2301,283 @@ chatInputEl && chatInputEl.addEventListener("keydown", (e) => {
 });
 
 // ── Billings tab ──────────────────────────────────────────────
+const BILLING_DEMO_INCIDENTS = [
+  {
+    id: "INC-DEMO-001",
+    title: "Demo incident · Cardiac consultation",
+    status: "pending",
+    patient: "Priya Sharma",
+    mrn: "MRN-10492",
+    openedAt: "2026-04-10 09:12",
+    department: "Cardiology / ER",
+    chiefComplaint: "Chest tightness, palpitations",
+    triage: "ESI-2",
+    billRef: "BL-2026-0091",
+    amountInr: 8450,
+    notes: "Initial consult and ECG completed. Labs and echo scheduled; final amount may change.",
+  },
+  {
+    id: "INC-2026-0148",
+    title: "Post-operative follow-up",
+    status: "completed",
+    patient: "Ravi Kumar",
+    mrn: "MRN-10102",
+    openedAt: "2026-04-09 14:40",
+    department: "General Surgery",
+    chiefComplaint: "Wound check",
+    triage: "ESI-4",
+    billRef: "BL-2026-0088",
+    amountInr: 2200,
+    notes: "Bill cleared by finance and admin. Patient discharged with instructions.",
+  },
+  {
+    id: "INC-2026-0140",
+    title: "Insurance partial · Ortho imaging",
+    status: "partially_completed",
+    patient: "Meera Singh",
+    mrn: "MRN-10355",
+    openedAt: "2026-04-08 11:05",
+    department: "Orthopedics",
+    chiefComplaint: "Knee injury — MRI review",
+    triage: "ESI-3",
+    billRef: "BL-2026-0092",
+    amountInr: 18900,
+    notes: "Patient share collected. TPA pending for MRI component; finance flagged partial clearance.",
+  },
+];
+
+const BILLING_STATUS_LABEL = {
+  pending: "Pending",
+  completed: "Completed",
+  partially_completed: "Partially completed",
+};
+
+let billingIncidentFilter = "all";
+let billingSelectedIncidentId = null;
+
+function billingEscapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function billingStatusBadgeClass(status) {
+  if (status === "completed") return "badge green";
+  if (status === "partially_completed") return "badge amber";
+  return "badge red";
+}
+
+function getFilteredBillingIncidents() {
+  if (billingIncidentFilter === "all") return BILLING_DEMO_INCIDENTS;
+  return BILLING_DEMO_INCIDENTS.filter((i) => i.status === billingIncidentFilter);
+}
+
+function renderBillingIncidentList() {
+  const listEl = document.getElementById("billingIncidentList");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+  const items = getFilteredBillingIncidents();
+  items.forEach((inc) => {
+    const div = document.createElement("div");
+    div.className = "sideUnit sideUnitClick billingIncidentRow";
+    div.setAttribute("role", "listitem");
+    div.dataset.incidentId = inc.id;
+    if (billingSelectedIncidentId === inc.id) div.classList.add("sideUnitActive");
+    div.innerHTML =
+      '<div class="sideUnitTitle">' +
+      billingEscapeHtml(inc.title) +
+      '</div><div class="sideUnitSub">' +
+      billingEscapeHtml(inc.patient) +
+      ' · <span class="' +
+      billingStatusBadgeClass(inc.status) +
+      '" style="font-size:10px;padding:2px 8px">' +
+      billingEscapeHtml(BILLING_STATUS_LABEL[inc.status] || inc.status) +
+      "</span></div>";
+    div.addEventListener("click", () => selectBillingIncident(inc.id));
+    listEl.appendChild(div);
+  });
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.style.fontSize = "12px";
+    empty.textContent = "No incidents for this filter.";
+    listEl.appendChild(empty);
+  }
+}
+
+function selectBillingIncident(id) {
+  billingSelectedIncidentId = id;
+  const inc = BILLING_DEMO_INCIDENTS.find((x) => x.id === id);
+  const badgeEl = document.getElementById("billingSelectedBadge");
+  const headingEl = document.getElementById("billingDetailHeading");
+  const placeholderEl = document.getElementById("billingDetailPlaceholder");
+  const bodyEl = document.getElementById("billingDetailBody");
+  const actionsEl = document.getElementById("billingDetailActions");
+  renderBillingIncidentList();
+
+  if (!inc || !bodyEl || !placeholderEl || !headingEl || !actionsEl) return;
+
+  headingEl.textContent = inc.title;
+  placeholderEl.hidden = true;
+  bodyEl.hidden = false;
+  actionsEl.hidden = false;
+  if (badgeEl) {
+    badgeEl.textContent = BILLING_STATUS_LABEL[inc.status] || inc.status;
+    badgeEl.className =
+      "badge " + (inc.status === "completed" ? "green" : inc.status === "partially_completed" ? "amber" : "red");
+  }
+
+  bodyEl.innerHTML =
+    '<div class="fleetDetailGrid">' +
+    '<div><div class="fleetDetailLabel">Incident ID</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.id) +
+    "</div></div>" +
+    '<div><div class="fleetDetailLabel">MRN</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.mrn) +
+    "</div></div>" +
+    '<div><div class="fleetDetailLabel">Patient</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.patient) +
+    "</div></div>" +
+    '<div><div class="fleetDetailLabel">Opened</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.openedAt) +
+    "</div></div>" +
+    "</div>" +
+    '<div class="fleetDetailBlock"><div class="fleetDetailLabel">Department</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.department) +
+    "</div></div>" +
+    '<div class="fleetDetailBlock"><div class="fleetDetailLabel">Chief complaint</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.chiefComplaint) +
+    "</div></div>" +
+    '<div class="fleetDetailGrid">' +
+    '<div><div class="fleetDetailLabel">Triage</div><div class="fleetDetailValue fleetDetailValue--emg">' +
+    billingEscapeHtml(inc.triage) +
+    "</div></div>" +
+    '<div><div class="fleetDetailLabel">Bill ref / preview</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.billRef) +
+    " · INR " +
+    billingEscapeHtml(String(inc.amountInr)) +
+    "</div></div>" +
+    "</div>" +
+    '<div class="fleetDetailBlock"><div class="fleetDetailLabel">Notes</div><div class="fleetDetailValue">' +
+    billingEscapeHtml(inc.notes) +
+    "</div></div>";
+
+  const hintEl = document.getElementById("billingSendPatientHint");
+  if (hintEl) hintEl.textContent = "";
+}
+
+async function sendBillingRequestToPatientApp() {
+  const inc = BILLING_DEMO_INCIDENTS.find((x) => x.id === billingSelectedIncidentId);
+  const hintEl = document.getElementById("billingSendPatientHint");
+  if (!inc) {
+    if (hintEl) hintEl.textContent = "Select an incident first.";
+    return;
+  }
+  const payload = {
+    incidentId: inc.id,
+    title: inc.title,
+    patientLabel: inc.patient,
+    billRef: inc.billRef,
+    amountInr: inc.amountInr,
+    status: inc.status,
+    message: "Hospital billing: please review " + inc.billRef + " (" + inc.title + ").",
+    token: String(Date.now()),
+    sentAtIso: new Date().toISOString(),
+  };
+
+  if (!commsDb || !window.firebase || !firebase.firestore) {
+    if (hintEl) hintEl.textContent = "Firebase not available — logged locally only.";
+    addBillLog("Patient app push (offline demo): " + inc.id + " — " + payload.message);
+    try {
+      localStorage.setItem("eos_demo_billing_push", JSON.stringify(payload));
+    } catch (_) {}
+    return;
+  }
+
+  try {
+    await commsDb.collection("demo_billing").doc("patient_push").set({
+      ...payload,
+      sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    if (hintEl) hintEl.textContent = "Sent to patient channel (demo_billing / patient_push).";
+    addBillLog("Patient app push: " + inc.id + " via Firestore.");
+  } catch (e) {
+    const msg = e && e.message ? e.message : String(e);
+    if (hintEl) hintEl.textContent = "Firestore error — check rules. Logged locally.";
+    addBillLog("Patient app push failed: " + msg);
+    try {
+      localStorage.setItem("eos_demo_billing_push", JSON.stringify(payload));
+    } catch (_) {}
+  }
+}
+
+document.querySelectorAll(".billingFilterBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    billingIncidentFilter = btn.dataset.bfilter || "all";
+    document.querySelectorAll(".billingFilterBtn").forEach((b) => b.classList.toggle("active", b === btn));
+    const stillVisible = getFilteredBillingIncidents().some((i) => i.id === billingSelectedIncidentId);
+    if (!stillVisible) {
+      billingSelectedIncidentId = null;
+      const placeholderEl = document.getElementById("billingDetailPlaceholder");
+      const bodyEl = document.getElementById("billingDetailBody");
+      const actionsEl = document.getElementById("billingDetailActions");
+      const headingEl = document.getElementById("billingDetailHeading");
+      const badgeEl = document.getElementById("billingSelectedBadge");
+      if (headingEl) headingEl.textContent = "No incident selected";
+      if (placeholderEl) placeholderEl.hidden = false;
+      if (bodyEl) bodyEl.hidden = true;
+      if (actionsEl) actionsEl.hidden = true;
+      if (badgeEl) {
+        badgeEl.textContent = "None";
+        badgeEl.className = "badge muted";
+      }
+    }
+    renderBillingIncidentList();
+  });
+});
+
+const billingSendPatientBtn = document.getElementById("billingSendPatientBtn");
+billingSendPatientBtn && billingSendPatientBtn.addEventListener("click", () => {
+  sendBillingRequestToPatientApp();
+});
+
+renderBillingIncidentList();
+
 let billId = 90;
 let currentBill = "";
 let financeOk = false;
 const billLogsEl = document.getElementById("billLogs");
 function addBillLog(text) {
+  if (!billLogsEl) return;
   const li = document.createElement("li");
   li.textContent = "[" + new Date().toLocaleTimeString() + "] " + text;
   billLogsEl.prepend(li);
 }
+
+/** Static demo lines shown when Billings tab loads (newest first after seed). */
+function seedDemoBillLogs() {
+  if (!billLogsEl) return;
+  const lines = [
+    "[06:12:08] Night batch: queued 12 OPD settlements for finance review",
+    "[07:45:22] Insurance pre-auth received for BL-2026-0074 (cardiology)",
+    "[08:20:01] Created BL-2026-0088 for Vikram Joshi (Appendectomy) INR 185000",
+    "[08:55:33] Finance approved BL-2026-0088",
+    "[09:10:14] Admin finalised BL-2026-0088 — cleared",
+    "[09:42:50] Created BL-2026-0089 for Sonia Reddy (CT thorax) INR 12400",
+    "[10:05:19] Finance approved BL-2026-0089",
+    "[10:48:02] Flagged BL-2026-0077 — missing ICD-10 on discharge summary",
+    "[11:22:41] Refund initiated BL-2026-0062 duplicate charge (INR 3200)",
+    "[11:58:17] UPI settlement reconciled: 28 bills · INR 4.2L",
+  ];
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const li = document.createElement("li");
+    li.textContent = lines[i];
+    billLogsEl.prepend(li);
+  }
+}
+seedDemoBillLogs();
 
 document.getElementById("createBillBtn").addEventListener("click", () => {
   const patient   = document.getElementById("billPatient").value.trim();
@@ -1788,6 +2656,7 @@ commsDb = initCommsFirebaseIfPossible();
 
 // ── Operations: realtime from Firestore ─────────────────────────
 let opsUnsubAppointments = null;
+let opsApptInitialLoad = true;
 const opsSeen = {
   appointmentAdd: new Set(),
   checkIn: new Set(),
@@ -1795,6 +2664,19 @@ const opsSeen = {
 
 function opsSafeStr(x) {
   return x == null ? "" : String(x);
+}
+
+function emitPendingAppointmentOps(id, data) {
+  const pName = opsSafeStr(data.patientNameSnapshot) || opsSafeStr(data.patientName) || "Patient";
+  const dept = opsSafeStr(data.department) || "—";
+  const symptoms = opsSafeStr(data.symptoms);
+  const summary = symptoms ? pName + " — " + symptoms.slice(0, 80) : pName + " — awaiting admin assign";
+  emitOpsFromModule(
+    "patients",
+    "Slot request: " + dept,
+    summary,
+    Object.assign({ appointmentId: id }, data)
+  );
 }
 
 function opsSubscribeAppointmentsIfPossible() {
@@ -1808,27 +2690,33 @@ function opsSubscribeAppointmentsIfPossible() {
       .limit(60)
       .onSnapshot(
         (snap) => {
+          if (opsApptInitialLoad) {
+            opsApptInitialLoad = false;
+            snap.docs.forEach((doc) => {
+              const id = doc.id;
+              const data = doc.data() || {};
+              const status = opsSafeStr(data.status);
+              if (status === "pending_approval" && !opsSeen.appointmentAdd.has(id)) {
+                opsSeen.appointmentAdd.add(id);
+                emitPendingAppointmentOps(id, data);
+              }
+            });
+            return;
+          }
+
           snap.docChanges().forEach((chg) => {
             const id = chg.doc.id;
             const data = chg.doc.data() || {};
+            const status = opsSafeStr(data.status);
 
-            // New appointment → Patients queue item
             if (chg.type === "added" && !opsSeen.appointmentAdd.has(id)) {
-              opsSeen.appointmentAdd.add(id);
-              const pName = opsSafeStr(data.patientNameSnapshot) || opsSafeStr(data.patientName) || "Patient";
-              const dept = opsSafeStr(data.department) || "—";
-              const docName = opsSafeStr(data.doctorNameSnapshot) || "Doctor";
-              emitOpsFromModule(
-                "patients",
-                "New slot: " + dept,
-                pName + " scheduled with " + docName,
-                Object.assign({ appointmentId: id }, data)
-              );
+              if (status === "pending_approval") {
+                opsSeen.appointmentAdd.add(id);
+                emitPendingAppointmentOps(id, data);
+              }
             }
 
-            // Check-in event → Patients queue item
             if (chg.type !== "removed") {
-              const status = opsSafeStr(data.status);
               if (status === "checked_in" && !opsSeen.checkIn.has(id)) {
                 opsSeen.checkIn.add(id);
                 const pName = opsSafeStr(data.patientNameSnapshot) || "Patient";

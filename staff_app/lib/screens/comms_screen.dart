@@ -21,15 +21,16 @@ class CommsScreen extends StatefulWidget {
 }
 
 class _CommsScreenState extends State<CommsScreen> {
+  // Same Firestore channel IDs + labels as admin (`web/index.html` — Internal Comms sidebar).
   static const _channelsAnnouncements = [
-    ('announcements', '#announcements', Icons.campaign_outlined),
-    ('alerts', '#alerts', Icons.warning_amber_outlined),
+    ('announcements', '# announcements', Icons.campaign_outlined),
+    ('alerts', '# alerts', Icons.warning_amber_outlined),
   ];
 
   static const _channelsStaff = [
-    ('shift-updates', '#shift-updates', Icons.schedule_outlined),
-    ('ems-handshake', '#ems-handshake', Icons.sync_alt_outlined),
-    ('admin', '#admin', Icons.admin_panel_settings_outlined),
+    ('shift-updates', '# shift-updates', Icons.schedule_outlined),
+    ('ems-handshake', '# ems-handshake', Icons.sync_alt_outlined),
+    ('admin', '# admin', Icons.admin_panel_settings_outlined),
   ];
 
   static const _channelDescs = {
@@ -50,6 +51,11 @@ class _CommsScreenState extends State<CommsScreen> {
   String get _activeChannelLabel => _allChannels[_channelIndex].$2;
   String get _activeChannelDesc => _channelDescs[_activeChannelId] ?? '';
 
+  /// Admin-managed; staff app stays read-only here (same Firestore feed as admin).
+  bool get _composerReadOnly => _activeChannelId == 'alerts';
+
+  static const double _wideBreakpoint = 720;
+
   @override
   void dispose() {
     _msgCtrl.dispose();
@@ -65,92 +71,435 @@ class _CommsScreenState extends State<CommsScreen> {
     return '${diff.inDays}d ago';
   }
 
-  Future<void> _openChannelsSheet() async {
-    final selected = await showModalBottomSheet<int>(
-      context: context,
-      backgroundColor: const Color(0xFF0d0d1a),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+  Widget _sidebarSectionLabel(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 2),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          color: const Color(0xFF6b7280),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+        ),
       ),
-      builder: (ctx) {
-        Widget section(String title, List<(String, String, IconData)> chans) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6b7280),
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    );
+  }
+
+  Widget _sidebarChannelButton((String id, String label, IconData icon) chan) {
+    final idx = _allChannels.indexWhere((c) => c.$1 == chan.$1);
+    final active = idx == _channelIndex;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _channelIndex = idx),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: active ? const Color(0xFF1a1a35) : const Color(0xFF13132a),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: active ? const Color(0xFF7c3aed) : const Color(0xFF1e1e3a),
               ),
-              ...List.generate(chans.length, (i) {
-                final (id, label, icon) = chans[i];
-                final idx = _allChannels.indexWhere((c) => c.$1 == id);
-                final active = idx == _channelIndex;
-                return ListTile(
-                  leading: Icon(icon,
-                      color: active ? const Color(0xFFc4b5fd) : const Color(0xFF4b5563),
-                      size: 18),
-                  title: Text(
-                    label,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  chan.$3,
+                  size: 16,
+                  color: active ? const Color(0xFFc4b5fd) : const Color(0xFF4b5563),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    chan.$2,
                     style: GoogleFonts.inter(
                       color: active ? Colors.white : const Color(0xFFd1d5db),
+                      fontSize: 12,
                       fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                  subtitle: _channelDescs[id] == null
-                      ? null
-                      : Text(
-                          _channelDescs[id]!,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF6b7280),
-                            fontSize: 11,
-                          ),
-                        ),
-                  onTap: () => Navigator.pop(ctx, idx),
-                );
-              }),
-            ],
-          );
-        }
-
-        return SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Text(
-                    'Internal Comms',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
                     ),
                   ),
                 ),
-                section('ANNOUNCEMENTS', _channelsAnnouncements),
-                section('STAFF COMMS', _channelsStaff),
-                const SizedBox(height: 12),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Left column — matches admin `channelSidebar`.
+  Widget _buildChannelSidebar(double width) {
+    return Container(
+      width: width,
+      decoration: const BoxDecoration(
+        color: Color(0xFF13132a),
+        border: Border(right: BorderSide(color: Color(0xFF1e1e3a))),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(10, 12, 10, 16),
+        children: [
+          Text(
+            'Internal Comms',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _sidebarSectionLabel('Announcements'),
+          ..._channelsAnnouncements.map(_sidebarChannelButton),
+          const SizedBox(height: 10),
+          _sidebarSectionLabel('Staff Comms'),
+          ..._channelsStaff.map(_sidebarChannelButton),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommsHeader({required bool showRosterShortcut}) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      color: const Color(0xFF0d0d1a),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _activeChannelLabel,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                if (_activeChannelDesc.isNotEmpty)
+                  Text(
+                    _activeChannelDesc,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: const Color(0xFF6b7280),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          StreamBuilder<List<PresenceModel>>(
+            stream: widget.firestoreService.onlinePresenceStream(),
+            builder: (context, snap) {
+              final n = (snap.data ?? const []).length;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF13132a),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF1e1e3a)),
+                ),
+                child: Text(
+                  '$n online',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFc4b5fd),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (showRosterShortcut) ...[
+            const SizedBox(width: 6),
+            IconButton(
+              onPressed: _openRosterSheet,
+              icon: const Icon(Icons.groups_2_outlined, color: Color(0xFFcbd5e1)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageList() {
+    return StreamBuilder<List<MessageModel>>(
+      stream: widget.firestoreService.messagesStream(_activeChannelId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+          );
+        }
+        final msgs = snapshot.data ?? [];
+        if (msgs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.chat_bubble_outline,
+                    color: Color(0xFF1e1e3a), size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  'No messages in $_activeChannelLabel',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF4b5563), fontSize: 13),
+                ),
+                Text(
+                  _composerReadOnly
+                      ? 'No messages yet. Admin posts appear here.'
+                      : 'Be the first to send a message.',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF374151), fontSize: 11),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          controller: _scrollCtrl,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          itemCount: msgs.length,
+          itemBuilder: (ctx, i) {
+            final msg = msgs[i];
+            final isMe = msg.senderUid == widget.doctor.uid;
+            final showSender =
+                i == 0 || msgs[i - 1].senderUid != msg.senderUid;
+            return _messageBubble(msg, isMe: isMe, showSender: showSender);
+          },
         );
       },
     );
+  }
 
-    if (!mounted) return;
-    if (selected != null && selected >= 0) {
-      setState(() => _channelIndex = selected);
+  Widget _buildComposer() {
+    if (_composerReadOnly) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Color(0xFF13132a),
+          border: Border(top: BorderSide(color: Color(0xFF1e1e3a))),
+        ),
+        child: Text(
+          '#alerts is view-only in the staff app (same feed as admin).',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF6b7280),
+            fontSize: 12,
+          ),
+        ),
+      );
     }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF13132a),
+        border: Border(top: BorderSide(color: Color(0xFF1e1e3a))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _msgCtrl,
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+              maxLines: null,
+              decoration: InputDecoration(
+                hintText: 'Message $_activeChannelLabel…',
+                hintStyle: GoogleFonts.inter(
+                    color: const Color(0xFF374151), fontSize: 13),
+                filled: true,
+                fillColor: const Color(0xFF0d0d1a),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(22),
+                  borderSide: const BorderSide(color: Color(0xFF1e1e3a)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(22),
+                  borderSide: const BorderSide(color: Color(0xFF1e1e3a)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(22),
+                  borderSide: const BorderSide(color: Color(0xFF7c3aed)),
+                ),
+              ),
+              onSubmitted: (_) => _send(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: const Color(0xFF7c3aed),
+            borderRadius: BorderRadius.circular(22),
+            child: InkWell(
+              onTap: _sending ? null : _send,
+              borderRadius: BorderRadius.circular(22),
+              child: Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                child: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send, color: Colors.white, size: 18),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRosterColumn() {
+    return Container(
+      width: 200,
+      decoration: const BoxDecoration(
+        color: Color(0xFF13132a),
+        border: Border(left: BorderSide(color: Color(0xFF1e1e3a))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+            child: Text(
+              'Online staff',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            child: Text(
+              'Live presence',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6b7280),
+                fontSize: 11,
+              ),
+            ),
+          ),
+          Container(height: 1, color: const Color(0xFF1e1e3a)),
+          Expanded(child: _buildRosterListBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRosterListBody() {
+    return StreamBuilder<List<PresenceModel>>(
+      stream: widget.firestoreService.onlinePresenceStream(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+          );
+        }
+        final list = snap.data ?? const [];
+        if (list.isEmpty) {
+          return Center(
+            child: Text(
+              'No staff online.',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6b7280),
+                fontSize: 12,
+              ),
+            ),
+          );
+        }
+        final byRole = <String, List<PresenceModel>>{};
+        for (final p in list) {
+          (byRole[p.role] ??= []).add(p);
+        }
+        final roles = byRole.keys.toList()..sort();
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
+          itemCount: roles.length,
+          itemBuilder: (ctx, i) {
+            final role = roles[i];
+            final people = byRole[role]!;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6, left: 2),
+                    child: Text(
+                      role.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6b7280),
+                        fontSize: 10,
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  ...people.map((p) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0d0d1a),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF1e1e3a)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: p.state == 'idle'
+                                  ? const Color(0xFFfbbf24)
+                                  : const Color(0xFF4ade80),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  p.name,
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  '${p.state}${p.department.isNotEmpty ? ' · ${p.department}' : ''} · ${_formatLastSeen(p.lastSeen)}',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF6b7280),
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _openRosterSheet() async {
@@ -188,121 +537,7 @@ class _CommsScreenState extends State<CommsScreen> {
                   ),
                 ),
                 Container(height: 1, color: const Color(0xFF1e1e3a)),
-                Expanded(
-                  child: StreamBuilder<List<PresenceModel>>(
-                    stream: widget.firestoreService.onlinePresenceStream(),
-                    builder: (context, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
-                        );
-                      }
-                      final list = snap.data ?? const [];
-                      if (list.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No staff online.',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF6b7280),
-                              fontSize: 13,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final byRole = <String, List<PresenceModel>>{};
-                      for (final p in list) {
-                        (byRole[p.role] ??= []).add(p);
-                      }
-                      final roles = byRole.keys.toList()..sort();
-
-                      return ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                        itemCount: roles.length,
-                        itemBuilder: (ctx, i) {
-                          final role = roles[i];
-                          final people = byRole[role]!;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-                                  child: Text(
-                                    role.toUpperCase(),
-                                    style: GoogleFonts.inter(
-                                      color: const Color(0xFF6b7280),
-                                      fontSize: 11,
-                                      letterSpacing: 1.2,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                                ...people.map((p) {
-                                  final idle = p.state == 'idle';
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF13132a),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFF1e1e3a)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: idle ? const Color(0xFFfbbf24) : const Color(0xFF4ade80),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: (idle ? const Color(0xFFfbbf24) : const Color(0xFF4ade80))
-                                                    .withOpacity(0.22),
-                                                blurRadius: 12,
-                                                spreadRadius: 2,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                p.name.isNotEmpty ? p.name : 'Unknown',
-                                                style: GoogleFonts.inter(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                '${p.state}${p.department.isNotEmpty ? ' · ${p.department}' : ''} · ${_formatLastSeen(p.lastSeen)}',
-                                                style: GoogleFonts.inter(
-                                                  color: const Color(0xFF6b7280),
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
+                Expanded(child: _buildRosterListBody()),
               ],
             ),
           ),
@@ -350,185 +585,42 @@ class _CommsScreenState extends State<CommsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Channel header (Discord-like)
-        Container(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-          color: const Color(0xFF0d0d1a),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: _openChannelsSheet,
-                icon: const Icon(Icons.menu, color: Color(0xFFcbd5e1)),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _activeChannelLabel,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (_activeChannelDesc.isNotEmpty)
-                      Text(
-                        _activeChannelDesc,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: const Color(0xFF6b7280),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              StreamBuilder<List<PresenceModel>>(
-                stream: widget.firestoreService.onlinePresenceStream(),
-                builder: (context, snap) {
-                  final n = (snap.data ?? const []).length;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF13132a),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF1e1e3a)),
-                    ),
-                    child: Text(
-                      '$n online',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFc4b5fd),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: 6),
-              IconButton(
-                onPressed: _openRosterSheet,
-                icon: const Icon(Icons.groups_2_outlined, color: Color(0xFFcbd5e1)),
-              ),
-            ],
-          ),
-        ),
-        Container(height: 1, color: const Color(0xFF1e1e3a)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= _wideBreakpoint;
+        final sideW = wide
+            ? 220.0
+            : (constraints.maxWidth * 0.36).clamp(128.0, 188.0);
 
-        // Message list
-        Expanded(
-          child: StreamBuilder<List<MessageModel>>(
-            stream: widget.firestoreService.messagesStream(_activeChannelId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF7c3aed)));
-              }
-              final msgs = snapshot.data ?? [];
-              if (msgs.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.chat_bubble_outline,
-                          color: Color(0xFF1e1e3a), size: 48),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No messages in $_activeChannelLabel',
-                        style: GoogleFonts.inter(
-                            color: const Color(0xFF4b5563), fontSize: 13),
-                      ),
-                      Text(
-                        'Be the first to send a message.',
-                        style: GoogleFonts.inter(
-                            color: const Color(0xFF374151), fontSize: 11),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return ListView.builder(
-                controller: _scrollCtrl,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                itemCount: msgs.length,
-                itemBuilder: (ctx, i) {
-                  final msg = msgs[i];
-                  final isMe = msg.senderUid == widget.doctor.uid;
-                  final showSender = i == 0 ||
-                      msgs[i - 1].senderUid != msg.senderUid;
-                  return _messageBubble(msg, isMe: isMe, showSender: showSender);
-                },
-              );
-            },
-          ),
-        ),
+        final feed = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildCommsHeader(showRosterShortcut: !wide),
+            Container(height: 1, color: const Color(0xFF1e1e3a)),
+            Expanded(child: _buildMessageList()),
+            _buildComposer(),
+          ],
+        );
 
-        // Input bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: const BoxDecoration(
-            color: Color(0xFF13132a),
-            border: Border(top: BorderSide(color: Color(0xFF1e1e3a))),
-          ),
-          child: Row(
+        if (wide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _msgCtrl,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                  maxLines: null,
-                  decoration: InputDecoration(
-                    hintText: 'Message $_activeChannelLabel...',
-                    hintStyle: GoogleFonts.inter(
-                        color: const Color(0xFF374151), fontSize: 13),
-                    filled: true,
-                    fillColor: const Color(0xFF0d0d1a),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(22),
-                      borderSide: const BorderSide(color: Color(0xFF1e1e3a)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(22),
-                      borderSide: const BorderSide(color: Color(0xFF1e1e3a)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(22),
-                      borderSide: const BorderSide(color: Color(0xFF7c3aed)),
-                    ),
-                  ),
-                  onSubmitted: (_) => _send(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Material(
-                color: const Color(0xFF7c3aed),
-                borderRadius: BorderRadius.circular(22),
-                child: InkWell(
-                  onTap: _sending ? null : _send,
-                  borderRadius: BorderRadius.circular(22),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    alignment: Alignment.center,
-                    child: _sending
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send, color: Colors.white, size: 18),
-                  ),
-                ),
-              ),
+              _buildChannelSidebar(sideW),
+              Expanded(child: feed),
+              _buildRosterColumn(),
             ],
-          ),
-        ),
-      ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildChannelSidebar(sideW),
+            Expanded(child: feed),
+          ],
+        );
+      },
     );
   }
 

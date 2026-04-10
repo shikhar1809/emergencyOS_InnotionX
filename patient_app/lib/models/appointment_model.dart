@@ -31,6 +31,9 @@ class AppointmentModel {
 
   factory AppointmentModel.fromDoc(DocumentSnapshot doc) {
     final data = (doc.data() as Map<String, dynamic>?) ?? {};
+    final startTs = data['scheduledStart'] as Timestamp?;
+    final endTs = data['scheduledEnd'] as Timestamp?;
+    final now = DateTime.now();
     return AppointmentModel(
       id: doc.id,
       patientUid: (data['patientUid'] ?? '') as String,
@@ -40,13 +43,18 @@ class AppointmentModel {
       doctorUid: (data['doctorUid'] ?? '') as String,
       doctorNameSnapshot: (data['doctorNameSnapshot'] ?? '') as String,
       status: (data['status'] ?? 'requested') as String,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      scheduledStart: (data['scheduledStart'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      scheduledEnd: (data['scheduledEnd'] as Timestamp?)?.toDate() ??
-          DateTime.now().add(const Duration(minutes: 15)),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? now,
+      scheduledStart: startTs?.toDate() ?? now,
+      scheduledEnd: endTs?.toDate() ?? now.add(const Duration(minutes: 15)),
       receptionQrToken: (data['receptionQrToken'] ?? '') as String,
     );
   }
+
+  bool get isPendingApproval => status == 'pending_approval';
+
+  bool get canShowQr =>
+      receptionQrToken.isNotEmpty &&
+      (status == 'scheduled' || status == 'checked_in');
 
   Map<String, dynamic> toMap() => {
         'patientUid': patientUid,

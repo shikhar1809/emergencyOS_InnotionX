@@ -4,6 +4,9 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!-- Avoid stale Flutter bundles (main.dart.js) after deploy; pair with firebase.json Cache-Control. -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
   <meta name="description" content="EmergencyOS — Hospital Staff Portal">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -18,6 +21,28 @@
     html, body { height: 100%; }
     body { margin: 0; background: #0d0d1a; }
   </style>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    (function () {
+      // Replaced after each `flutter build web` by tool/stamp_web_index.ps1 (unique per deploy).
+      var DEPLOY_ID = 'staff-__BUILD_ID__';
+      try {
+        var k = 'eos_staff_deploy_id';
+        if (localStorage.getItem(k) === DEPLOY_ID) return;
+        localStorage.setItem(k, DEPLOY_ID);
+        if ('caches' in window) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (key) { caches.delete(key); });
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (r) { r.unregister(); });
+          });
+        }
+      } catch (e) { /* ignore private mode / quota */ }
+    })();
+  </script>
+  <!-- __BUILD_ID__ → unique query string after stamp script (forces fresh bootstrap + main.dart.js chain) -->
+  <script src="flutter_bootstrap.js?v=__BUILD_ID__" async></script>
 </body>
 </html>

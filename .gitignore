@@ -10,6 +10,9 @@ build/
 # Firebase Hosting local cache
 .firebase/
 
+# Local Gemini key for admin web (do not commit)
+web/gemini-config.js
+
 # IDE
 .idea/
 .vscode/
@@ -17,3 +20,6 @@ build/
 # OS
 Thumbs.db
 .DS_Store
+
+# Android SDK path (local machine)
+**/local.properties

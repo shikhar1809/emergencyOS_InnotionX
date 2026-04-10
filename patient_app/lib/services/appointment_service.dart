@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/appointment_model.dart';
@@ -9,60 +6,26 @@ import '../models/patient_model.dart';
 class AppointmentService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  String _randomToken({int bytes = 18}) {
-    final r = Random.secure();
-    final data = List<int>.generate(bytes, (_) => r.nextInt(256));
-    return base64Url.encode(data).replaceAll('=', '');
-  }
-
-  /// Minimal “availability” implementation:
-  /// - Find first on-duty doctor in `users` matching department (optional).
-  /// - Create an appointment + QR token.
-  ///
-  /// This is intentionally simple; can be upgraded to Functions+Gemini later.
+  /// Creates a **pending** request (no doctor, no QR). Admin approves in Operations
+  /// and assigns staff; patient listens until `status` becomes `scheduled`.
   Future<AppointmentModel> createAppointment({
     required PatientModel patient,
     required String serviceId,
     required String department,
     required String symptoms,
   }) async {
-    Query base = _db.collection('users').where('role', isEqualTo: 'Doctor').where('onDuty', isEqualTo: true);
-    Query query = base;
-    final dept = department.trim();
-    if (dept.isNotEmpty) query = query.where('department', isEqualTo: dept);
-
-    QuerySnapshot snap = await query.limit(1).get();
-    if (snap.docs.isEmpty) {
-      // Fallback: if department filtering is too strict (common when doctor profile department is blank),
-      // still allow a slot by routing to any on-duty doctor.
-      snap = await base.limit(1).get();
-    }
-    if (snap.docs.isEmpty) {
-      throw StateError(dept.isEmpty ? 'No on-duty doctor available' : 'No on-duty doctor available for $dept');
-    }
-
-    final doctorDoc = snap.docs.first;
-    final doctorUid = doctorDoc.id;
-    final doctorName = (doctorDoc.data() as Map<String, dynamic>)['name']?.toString() ?? 'Doctor';
-
-    final now = DateTime.now();
-    final start = now.add(const Duration(minutes: 30));
-    final end = start.add(const Duration(minutes: 15));
-    final token = _randomToken();
-
     final ref = await _db.collection('appointments').add({
       'patientUid': patient.uid,
       'patientNameSnapshot': patient.name,
+      'patientPhone': patient.phone,
       'serviceId': serviceId,
       'department': department,
       'symptoms': symptoms,
-      'doctorUid': doctorUid,
-      'doctorNameSnapshot': doctorName,
-      'status': 'scheduled',
+      'doctorUid': '',
+      'doctorNameSnapshot': '',
+      'status': 'pending_approval',
       'createdAt': FieldValue.serverTimestamp(),
-      'scheduledStart': Timestamp.fromDate(start),
-      'scheduledEnd': Timestamp.fromDate(end),
-      'receptionQrToken': token,
+      'receptionQrToken': '',
     });
 
     final created = await ref.get();

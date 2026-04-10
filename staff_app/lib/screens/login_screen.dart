@@ -15,6 +15,10 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _cardBorder = Color(0xFF1e1e3a);
   static const _muted = Color(0xFF6b7280);
 
+  /// Must match a Firebase Auth user you create for demos (same domain pattern as fleet app).
+  static const _demoEmail = 'staff.demo@goelhospital.com';
+  static const _demoPassword = 'StaffDemo123';
+
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -32,9 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final email = _emailCtrl.text.trim();
-    final pass = _passCtrl.text.trim();
 
     setState(() => _loading = true);
     try {
@@ -73,18 +74,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _applyDemoCredentials() {
+    setState(() {
+      _emailCtrl.text = _demoEmail;
+      _passCtrl.text = _demoPassword;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Filled demo email/password. Tap Sign in (create this user in Firebase Auth if needed).',
+          style: GoogleFonts.inter(fontSize: 13),
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF1e1e3a),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final compact = MediaQuery.sizeOf(context).height < 640;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d1a),
-      body: Center(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + bottomInset),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 // Logo / header
                 Container(
                   width: 72,
@@ -102,11 +127,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: const Icon(Icons.local_hospital, color: Colors.white, size: 36),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: compact ? 12 : 24),
                 Text(
                   'EmergencyOS',
                   style: GoogleFonts.inter(
-                    fontSize: 28,
+                    fontSize: compact ? 24 : 28,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: -0.5,
@@ -122,7 +147,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _loading ? null : _applyDemoCredentials,
+                  icon: const Icon(Icons.key_outlined, size: 18, color: Color(0xFFc4b5fd)),
+                  label: Text(
+                    'Use demo credentials',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: const Color(0xFFe9d5ff),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFe9d5ff),
+                    side: const BorderSide(color: Color(0xFF6d28d9)),
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    backgroundColor: const Color(0xFF1a1033),
+                  ),
+                ),
+                const SizedBox(height: 20),
 
                 // Card
                 Container(
@@ -131,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: _cardBorder),
                   ),
-                  padding: const EdgeInsets.all(28),
+                  padding: EdgeInsets.all(compact ? 20 : 28),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -230,13 +274,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // Demo mode removed.
+                        TextButton(
+                          onPressed: _loading ? null : _applyDemoCredentials,
+                          child: Text(
+                            'Fill demo login again',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFa78bfa),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Text(
                   'Access restricted to authorised hospital staff only.',
                   textAlign: TextAlign.center,
@@ -249,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

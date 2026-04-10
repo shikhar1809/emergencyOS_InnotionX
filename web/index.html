@@ -16,22 +16,24 @@
         </div>
       </div>
 
+      <div id="demoAlertStrip" class="demoAlertStrip" hidden></div>
+
       <!-- ── Management ─────────────────────────────────── -->
       <section id="tab-management" class="tabs">
-        <div class="mgmtLayout">
+        <div class="mgmtLayout mgmtLayout--manage">
           <aside class="mgmtSidebar">
             <div class="mgmtSideTop mgmtSideTop--two">
               <button class="mgmtNavBtn active" data-mview="patients">Patients</button>
               <button class="mgmtNavBtn" data-mview="staff">Staff</button>
             </div>
 
-            <div class="mgmtSideBlock" id="mgmtPatientsBlock" hidden>
+            <div class="mgmtSideBlock" id="mgmtPatientsBlock">
               <div class="row" style="justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
                 <div class="muted">Patient roster</div>
                 <span class="muted" style="font-size:12px">Demo list</span>
               </div>
               <div class="staffRosterSearch">
-                <input id="patientSearch" placeholder="Search patient by name / zone / severity…" />
+                <input id="patientSearch" placeholder="Search by name, zone, consignment, schedule…" />
               </div>
               <div id="mgmtPatientRoster" class="staffRosterList" role="list" aria-label="Patient roster"></div>
             </div>
@@ -49,7 +51,7 @@
           </aside>
 
           <section class="mgmtMain">
-            <div id="mview-patients" class="mview">
+            <div id="mview-patients" class="mview active">
               <div class="mgmtMainHeader">
                 <div class="mgmtMainTitle">Patients (quick view)</div>
                 <span class="badge">Incoming: <b id="mgmtIncomingCount">7</b></span>
@@ -69,6 +71,13 @@
                   <ul class="clean" id="mgmtPatientsMiniList" style="max-height:200px;overflow-y:auto"></ul>
                 </article>
               </div>
+              <article class="card mgmtInlineDetail" style="margin-top:14px">
+                <h3>Patient details</h3>
+                <p class="muted" id="mgmtPatientDetailPlaceholder" style="margin:8px 0 0;line-height:1.45">
+                  Select a patient from the list on the left.
+                </p>
+                <div id="mgmtPatientDetail" class="mgmtInlineDetailBody" hidden></div>
+              </article>
               <p class="muted" style="margin-top:10px;font-size:12px">Full patient workflow is in the dedicated <strong>Patients</strong> dock tab.</p>
             </div>
 
@@ -88,25 +97,15 @@
                   <p class="muted" style="margin-top:12px;font-size:12px">Demo staff roster and duty controls are available here.</p>
                 </article>
               </div>
+              <article class="card mgmtInlineDetail" style="margin-top:14px">
+                <h3>Staff details</h3>
+                <p class="muted" id="mgmtStaffDetailPlaceholder" style="margin:8px 0 0;line-height:1.45">
+                  Select a staff member from the list on the left.
+                </p>
+                <div id="mgmtStaffDetail" class="mgmtInlineDetailBody" hidden></div>
+              </article>
             </div>
           </section>
-
-          <aside class="mgmtDetails">
-            <div class="mgmtDetailsHeader">
-              <div>Details</div>
-              <div style="opacity:0.8">›</div>
-            </div>
-            <div class="sysHealth sysHealth--details good" style="margin-top:12px" title="System Health">
-              <span class="sysHealthLabel">System load</span>
-              <div class="sysHealthBar" aria-label="System health">
-                <div class="sysHealthFill" id="sysHealthFill"></div>
-              </div>
-              <span class="sysHealthText" id="sysHealthText">good</span>
-            </div>
-            <div class="muted" style="margin-top:14px" id="detailsText">
-              Select a patient or staff member to view details.
-            </div>
-          </aside>
         </div>
       </section>
 
@@ -172,6 +171,13 @@
               <button type="button" class="secondary" id="opsAskGeminiBtn">Ask Gemini</button>
               <button type="button" class="secondary" id="opsHoldBtn">Hold</button>
             </div>
+            <div id="opsApptAssignBar" class="muted" style="margin-top:14px;display:none" hidden>
+              <div class="detailsLabel" style="margin-bottom:6px">Assign staff &amp; issue QR</div>
+              <label class="muted" style="display:block;font-size:12px;margin-bottom:4px">Doctor / staff (from users)</label>
+              <select id="opsApptDoctorSelect" style="width:100%;margin-bottom:10px" aria-label="Assign staff"></select>
+              <button type="button" id="opsApptApproveAssignBtn">Approve &amp; issue QR</button>
+              <p class="muted" style="margin-top:8px;font-size:11px;line-height:1.4" id="opsApptAssignHint"></p>
+            </div>
           </aside>
         </div>
       </section>
@@ -187,8 +193,12 @@
           </aside>
 
           <section class="mgmtMain">
-            <div class="mgmtMainHeader">
+            <div class="mgmtMainHeader" style="flex-wrap:wrap;gap:10px">
               <div class="mgmtMainTitle">Overview map · Lucknow</div>
+              <div class="overviewMapFilters" aria-label="Zone heat filters">
+                <label class="overviewMapFilterLabel"><input type="checkbox" id="hexFilterHigh" checked /> High inflow</label>
+                <label class="overviewMapFilterLabel"><input type="checkbox" id="hexFilterLow" checked /> Low inflow</label>
+              </div>
               <span class="badge">Realtime (demo)</span>
             </div>
             <div class="mapWrap mapWrap--hex">
@@ -321,42 +331,83 @@
           </article>
         </div>
 
-        <p class="sectionTitle">Create New Bill</p>
-        <div class="grid grid-2">
-          <article class="card">
-            <div class="row" style="flex-direction:column;align-items:stretch;gap:10px">
-              <input id="billPatient" placeholder="Patient full name" />
-              <input id="billDiagnosis" placeholder="Diagnosis / procedure" />
-              <div class="row">
-                <input id="billAmount" type="number" placeholder="Amount (INR)" style="flex:1" />
-                <button id="createBillBtn">Generate Bill</button>
-              </div>
-            </div>
-            <p id="billIdOut" class="muted" style="margin-top:10px">No bill created yet.</p>
-          </article>
-          <article class="card">
-            <h3>QR Identifier</h3>
-            <pre id="billQr" style="color:#4ddb8e;font-size:13px;background:#060e1a;padding:10px;border-radius:8px;overflow-x:auto">QR: [ BILL-NOT-GENERATED ]</pre>
-            <h3 style="margin-top:14px">Authority Flow</h3>
-            <div class="row" style="gap:6px;flex-wrap:nowrap;font-size:13px">
-              <span class="badge">Nurse</span>
-              <span style="color:#6a7899">→</span>
-              <span class="badge" id="finBadge">Finance Mgr</span>
-              <span style="color:#6a7899">→</span>
-              <span class="badge" id="adminBadge">Admin Final</span>
-            </div>
-            <p style="margin:10px 0 10px;font-size:13px">Status: <strong id="approvalStatus">Pending Finance</strong></p>
-            <div class="row">
-              <button id="financeApproveBtn">Finance Upvote</button>
-              <button class="secondary" id="adminApproveBtn">Admin Finalise</button>
-            </div>
-          </article>
-        </div>
+        <div class="mgmtLayout" style="margin-top:14px">
+          <aside class="mgmtSidebar">
+            <div class="muted" style="margin-bottom:8px">Billing incidents</div>
+            <p class="muted" style="font-size:12px;line-height:1.4;margin:0 0 10px">
+              Select an incident to review. Demo data for workflow previews.
+            </p>
+            <div id="billingIncidentList" class="staffRosterList" style="max-height:420px" role="list" aria-label="Billing incidents"></div>
+          </aside>
 
-        <p class="sectionTitle">Bill Logs</p>
-        <article class="card">
-          <ul class="clean" id="billLogs" style="max-height:200px;overflow-y:auto"></ul>
-        </article>
+          <section class="mgmtMain">
+            <div class="mgmtMainHeader" style="flex-wrap:wrap;gap:10px;align-items:center">
+              <div class="mgmtMainTitle">Incident detail</div>
+              <span class="badge" id="billingSelectedBadge">None</span>
+            </div>
+
+            <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:14px">
+              <button type="button" class="secondary billingFilterBtn active" data-bfilter="all">All</button>
+              <button type="button" class="secondary billingFilterBtn" data-bfilter="pending">Pending</button>
+              <button type="button" class="secondary billingFilterBtn" data-bfilter="completed">Completed</button>
+              <button type="button" class="secondary billingFilterBtn" data-bfilter="partially_completed">Partially completed</button>
+            </div>
+
+            <article class="card mgmtInlineDetail">
+              <h3 id="billingDetailHeading">No incident selected</h3>
+              <p class="muted" id="billingDetailPlaceholder" style="margin:8px 0 0;line-height:1.45">
+                Choose a demo incident on the left to load triage, patient context, and billing notes here.
+              </p>
+              <div id="billingDetailBody" class="mgmtInlineDetailBody" hidden></div>
+              <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap" id="billingDetailActions" hidden>
+                <button type="button" id="billingSendPatientBtn">Send request to patient app</button>
+                <span class="muted" id="billingSendPatientHint" style="font-size:12px;align-self:center"></span>
+              </div>
+            </article>
+          </section>
+
+          <aside class="mgmtDetails">
+            <div class="mgmtDetailsHeader">
+              <div>Quick bill</div>
+              <div style="opacity:0.8">›</div>
+            </div>
+            <p class="muted" style="margin-top:10px;font-size:12px;line-height:1.4">
+              Generate a bill QR and run finance → admin approval (demo).
+            </p>
+            <article class="card" style="margin-top:12px;padding:14px">
+              <div class="row" style="flex-direction:column;align-items:stretch;gap:10px">
+                <input id="billPatient" placeholder="Patient full name" />
+                <input id="billDiagnosis" placeholder="Diagnosis / procedure" />
+                <div class="row">
+                  <input id="billAmount" type="number" placeholder="Amount (INR)" style="flex:1" />
+                  <button id="createBillBtn" type="button">Generate</button>
+                </div>
+              </div>
+              <p id="billIdOut" class="muted" style="margin-top:10px;font-size:12px">No bill created yet.</p>
+            </article>
+            <article class="card" style="margin-top:12px;padding:14px">
+              <h3 style="margin-top:0;font-size:14px">QR Identifier</h3>
+              <pre id="billQr" style="color:#4ddb8e;font-size:11px;background:#060e1a;padding:8px;border-radius:8px;overflow-x:auto;margin:0">QR: [ BILL-NOT-GENERATED ]</pre>
+              <h3 style="margin-top:12px;font-size:13px">Authority flow</h3>
+              <div class="row" style="gap:6px;flex-wrap:wrap;font-size:12px;margin-top:8px">
+                <span class="badge">Nurse</span>
+                <span style="color:#6a7899">→</span>
+                <span class="badge" id="finBadge">Finance Mgr</span>
+                <span style="color:#6a7899">→</span>
+                <span class="badge" id="adminBadge">Admin Final</span>
+              </div>
+              <p style="margin:10px 0;font-size:12px">Status: <strong id="approvalStatus">Pending Finance</strong></p>
+              <div class="row" style="flex-wrap:wrap;gap:8px">
+                <button type="button" id="financeApproveBtn">Finance Upvote</button>
+                <button type="button" class="secondary" id="adminApproveBtn">Admin Finalise</button>
+              </div>
+            </article>
+            <article class="card" style="margin-top:12px;padding:14px">
+              <h3 style="margin-top:0;font-size:14px">Bill logs</h3>
+              <ul class="clean" id="billLogs" style="max-height:160px;overflow-y:auto;margin:0;padding-left:0"></ul>
+            </article>
+          </aside>
+        </div>
       </section>
 
       <!-- ── Internal Comms ─────────────────────────────── -->
@@ -482,8 +533,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <!-- Auto-initialize Firebase on Hosting (no hardcoded keys). -->
     <script src="/__/firebase/init.js"></script>
-
-    <script src="./app.js"></script>
+    <script src="./gemini-config.js"></script>
     <script src="./vendor/leaflet.js"></script>
+    <script src="./app.js"></script>
   </body>
 </html>

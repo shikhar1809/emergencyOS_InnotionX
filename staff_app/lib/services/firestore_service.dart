@@ -19,6 +19,19 @@ class FirestoreService {
     return _db.collection('users').doc(uid).update({'onDuty': onDuty});
   }
 
+  /// Doctor-facing alerts (e.g. patient allotted to this clinician).
+  Future<void> acknowledgeDoctorAlert({
+    required String doctorUid,
+    required String alertId,
+  }) {
+    return _db
+        .collection('doctor_alerts')
+        .doc(doctorUid)
+        .collection('alerts')
+        .doc(alertId)
+        .update({'read': true});
+  }
+
   // ── Shifts ─────────────────────────────────────────────────────────────────
 
   Stream<List<ShiftModel>> shiftsForUser(String uid) {

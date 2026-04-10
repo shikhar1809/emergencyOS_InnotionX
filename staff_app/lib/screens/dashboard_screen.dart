@@ -4,7 +4,6 @@ import '../models/doctor_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'alerts_only_screen.dart';
-import 'shift_screen.dart';
 import 'comms_screen.dart';
 import 'login_screen.dart';
 import 'dart:async';
@@ -27,22 +26,19 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _dutyPromptShown = false;
   bool _togglingDuty = false;
 
-  static const _tabLabels = ['Alerts', 'Comms', 'Schedule'];
+  static const _tabLabels = ['Alerts', 'Comms'];
   static const _tabIcons = [
     Icons.warning_amber_outlined,
     Icons.chat_bubble_outline,
-    Icons.schedule_outlined,
   ];
   static const _tabActiveIcons = [
     Icons.warning_amber,
     Icons.chat_bubble,
-    Icons.schedule,
   ];
 
   List<Widget> _buildScreens(DoctorModel doc) => [
         AlertsOnlyScreen(doctor: doc, firestoreService: _firestoreService),
         CommsScreen(doctor: doc, firestoreService: _firestoreService),
-        ShiftScreen(doctor: doc, firestoreService: _firestoreService),
       ];
 
   Future<void> _maybePromptDuty(DoctorModel doctor) async {
@@ -226,16 +222,27 @@ class _DashboardScreenState extends State<DashboardScreen>
         _startPresenceLoop(doctor);
         _maybePromptDuty(doctor);
         final screens = _buildScreens(doctor);
+        final safeIndex = _selectedIndex.clamp(0, screens.length - 1);
+        if (safeIndex != _selectedIndex) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _selectedIndex = safeIndex);
+          });
+        }
 
         return _buildScaffold(
           doctor: doctor,
           screens: screens,
+          selectedIndex: safeIndex,
         );
       },
     );
   }
 
-  Widget _buildScaffold({required DoctorModel doctor, required List<Widget> screens}) {
+  Widget _buildScaffold({
+    required DoctorModel doctor,
+    required List<Widget> screens,
+    required int selectedIndex,
+  }) {
     return Scaffold(
           backgroundColor: const Color(0xFF0d0d1a),
           appBar: AppBar(
@@ -278,73 +285,54 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
             actions: [
-              // Duty toggle (moved to top)
+              // Duty: single toggle immediately left of profile (matches admin “duty” concept, no extra tab).
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: ElevatedButton.icon(
-                  onPressed: _togglingDuty ? null : () => _toggleDuty(doctor),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: doctor.onDuty ? const Color(0xFF16a34a) : const Color(0xFF374151),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                  ),
-                  icon: _togglingDuty
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Icon(doctor.onDuty ? Icons.toggle_on : Icons.toggle_off, size: 18),
-                  label: Text(
-                    doctor.onDuty ? 'On duty' : 'Off duty',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Duty status badge
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: doctor.onDuty
-                      ? const Color(0xFF14532d).withOpacity(0.6)
-                      : const Color(0xFF1f2937),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: doctor.onDuty ? const Color(0xFF16a34a) : const Color(0xFF374151),
-                  ),
-                ),
+                padding: const EdgeInsets.only(right: 4),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: doctor.onDuty
-                            ? const Color(0xFF4ade80)
-                            : const Color(0xFF6b7280),
-                      ),
-                    ),
-                    const SizedBox(width: 5),
                     Text(
-                      doctor.onDuty ? 'On Duty' : 'Off Duty',
+                      'Duty',
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: doctor.onDuty
-                            ? const Color(0xFF4ade80)
-                            : const Color(0xFF6b7280),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF6b7280),
+                        letterSpacing: 0.3,
                       ),
+                    ),
+                    const SizedBox(width: 2),
+                    Tooltip(
+                      message: doctor.onDuty
+                          ? 'On duty — visible to admin. Tap to go off duty.'
+                          : 'Off duty — tap to go on duty.',
+                      child: _togglingDuty
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7c3aed)),
+                              ),
+                            )
+                          : Transform.scale(
+                              scale: 0.9,
+                              child: Switch.adaptive(
+                                value: doctor.onDuty,
+                                onChanged: (wantOn) {
+                                  if (wantOn != doctor.onDuty) {
+                                    _toggleDuty(doctor);
+                                  }
+                                },
+                                activeTrackColor: const Color(0xFF14532d),
+                                activeThumbColor: const Color(0xFF4ade80),
+                                inactiveTrackColor: const Color(0xFF374151),
+                                inactiveThumbColor: const Color(0xFF9ca3af),
+                              ),
+                            ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               // Doctor avatar / name
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -411,7 +399,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           body: IndexedStack(
-            index: _selectedIndex,
+            index: selectedIndex,
             children: screens,
           ),
           bottomNavigationBar: Container(
@@ -420,7 +408,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               border: Border(top: BorderSide(color: Color(0xFF1e1e3a))),
             ),
             child: BottomNavigationBar(
-              currentIndex: _selectedIndex,
+              currentIndex: selectedIndex,
               onTap: (i) => setState(() => _selectedIndex = i),
               backgroundColor: Colors.transparent,
               elevation: 0,
@@ -434,9 +422,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _tabLabels.length,
                 (i) => BottomNavigationBarItem(
                   icon: Icon(_tabIcons[i]),
-                  activeIcon: i == 4
-                      ? Icon(_tabActiveIcons[i], color: const Color(0xFFef4444))
-                      : Icon(_tabActiveIcons[i]),
+                  activeIcon: Icon(_tabActiveIcons[i]),
                   label: _tabLabels[i],
                 ),
               ),

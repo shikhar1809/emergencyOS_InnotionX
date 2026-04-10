@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/appointment_model.dart';
 import '../models/patient_model.dart';
 import '../services/appointment_service.dart';
 import '../services/auth_service.dart';
+import '../services/billing_push_service.dart';
 import 'login_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
@@ -27,6 +29,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   String _department = 'Emergency';
   String _serviceId = 'consult_general';
   bool _submitting = false;
+  /// Local-only preview so reviewers can see slot + QR without Firestore approval.
+  AppointmentModel? _demoAppointment;
 
   @override
   void initState() {
@@ -94,7 +98,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
     setState(() => _submitting = true);
     try {
-      final appt = await _appointments.createAppointment(
+      await _appointments.createAppointment(
         patient: PatientModel(uid: widget.patient.uid, name: name, email: widget.patient.email, phone: phone),
         serviceId: _serviceId,
         department: _department,
@@ -102,16 +106,20 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Slot created with ${appt.doctorNameSnapshot}.'),
+        const SnackBar(
+          content: Text('Request sent. Waiting for admin approval…'),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      final msg = e.toString();
+      final friendly = msg.contains('permission-denied') || msg.contains('PERMISSION_DENIED')
+          ? 'Could not submit request (Firestore permission). Check Firebase rules for appointments.'
+          : 'Could not submit request: $e';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not create slot: $e'),
+          content: Text(friendly),
           behavior: SnackBarBehavior.floating,
           backgroundColor: const Color(0xFFb91c1c),
         ),
@@ -119,6 +127,46 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _showDemoSlotAndQr() {
+    final now = DateTime.now();
+    final name = _nameCtrl.text.trim().isEmpty ? widget.patient.name : _nameCtrl.text.trim();
+    setState(() {
+      _demoAppointment = AppointmentModel(
+        id: 'demo-local-preview',
+        patientUid: widget.patient.uid,
+        patientNameSnapshot: name,
+        serviceId: _serviceId,
+        department: _department,
+        doctorUid: 'demo-staff',
+        doctorNameSnapshot: 'Dr. Aanya Verma (demo)',
+        status: 'scheduled',
+        createdAt: now,
+        scheduledStart: now.add(const Duration(minutes: 5)),
+        scheduledEnd: now.add(const Duration(minutes: 25)),
+        receptionQrToken:
+            'DEMO-QR-LKO-${widget.patient.uid.hashCode.abs()}-${now.millisecondsSinceEpoch % 100000}',
+      );
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Demo: showing a sample slot and reception QR (not saved to the server).'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _clearDemoPreview() {
+    setState(() => _demoAppointment = null);
+  }
+
+  String _fmtSlot(DateTime dt) {
+    final t = TimeOfDay.fromDateTime(dt);
+    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final m = t.minute.toString().padLeft(2, '0');
+    final suffix = t.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$h:$m $suffix';
   }
 
   @override
@@ -177,7 +225,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       body: StreamBuilder<AppointmentModel?>(
         stream: _appointments.latestAppointmentForPatient(widget.patient.uid),
         builder: (context, snap) {
-          final appt = snap.data;
+          final appt = _demoAppointment ?? snap.data;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -260,8 +308,21 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                                   valueColor: AlwaysStoppedAnimation(Colors.white),
                                 ),
                               )
-                            : Text('Generate slot & QR',
+                            : Text('Request slot',
                                 style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton(
+                      onPressed: _submitting ? null : _showDemoSlotAndQr,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFfbbf24),
+                        side: const BorderSide(color: Color(0xFFf5a623)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(
+                        'Demo: show slot & QR',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                     ),
                   ],
@@ -273,44 +334,165 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               _card(
                 child: appt == null
                     ? Text(
-                        'No appointment yet. Submit details to generate a slot.',
+                        'No request yet. Submit details to request a slot.',
                         style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
                       )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Doctor: ${appt.doctorNameSnapshot}',
-                            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Status: ${appt.status}',
-                            style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
-                          ),
-                          const SizedBox(height: 14),
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
+                    : appt.id == 'demo-local-preview'
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF422006),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFf5a623).withOpacity(0.4)),
+                                    ),
+                                    child: Text(
+                                      'DEMO PREVIEW',
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFfbbf24),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: _clearDemoPreview,
+                                    child: Text(
+                                      'Clear',
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFF9ca3af),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: QrImageView(
-                                data: appt.receptionQrToken,
-                                version: QrVersions.auto,
-                                size: 220,
+                              const SizedBox(height: 8),
+                              Text(
+                                appt.doctorNameSnapshot,
+                                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Show this QR at reception to check-in. Scanning triggers an alert to your assigned doctor.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 12),
-                          ),
-                        ],
-                      ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${appt.department} · ${appt.serviceId} · ${_fmtSlot(appt.scheduledStart)}',
+                                style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
+                              ),
+                              const SizedBox(height: 14),
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: QrImageView(
+                                    data: appt.receptionQrToken,
+                                    version: QrVersions.auto,
+                                    size: 220,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'This QR is for UI demo only. Use “Request slot” for a real hospital request.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 12, height: 1.35),
+                              ),
+                            ],
+                          )
+                    : appt.status == 'cancelled'
+                        ? Text(
+                            'This request was cancelled or declined. Contact reception if you still need care.',
+                            style: GoogleFonts.inter(color: const Color(0xFFf87171), fontSize: 13, height: 1.4),
+                          )
+                        : appt.isPendingApproval
+                            ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 24),
+                                  child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+                                ),
+                              ),
+                              Text(
+                                'Waiting for hospital approval',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Your request is in the admin Operations queue. You will see your reception QR here once a staff member is assigned.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 12, height: 1.4),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${appt.department} · ${appt.serviceId}',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 11),
+                              ),
+                            ],
+                            )
+                        : appt.canShowQr
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    appt.doctorNameSnapshot.isEmpty
+                                        ? 'Assigned staff'
+                                        : 'Doctor: ${appt.doctorNameSnapshot}',
+                                    style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Status: ${appt.status}',
+                                    style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: QrImageView(
+                                        data: appt.receptionQrToken,
+                                        version: QrVersions.auto,
+                                        size: 220,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Show this QR at reception to check-in. Scanning triggers an alert to your assigned doctor.',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 12),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    'Status: ${appt.status}',
+                                    style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Center(child: CircularProgressIndicator(color: Color(0xFF7c3aed))),
+                                ],
+                              ),
               ),
             ],
           );
