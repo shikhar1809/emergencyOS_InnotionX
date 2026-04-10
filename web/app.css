@@ -24,6 +24,21 @@ body {
   padding-bottom: 14px;
 }
 
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandLogo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #0d1828;
+  border: 1px solid #1d2e47;
+  padding: 5px;
+}
+
 .titleRow h1 {
   margin: 0 0 4px;
   font-size: 26px;
@@ -47,6 +62,8 @@ body {
 
 .badge.green { border-color: #1e5c3a; background: #0f3320; color: #4ddb8e; }
 .badge.red   { border-color: #5c1e1e; background: #330f0f; color: #ff6b6b; }
+.badge.amber { border-color: #6b4a1e; background: #2a2210; color: #f5a623; }
+.badge.muted { border-color: #2a3548; background: #121a28; color: #8a96b0; }
 
 /* ── Tabs ──────────────────────────────────────────── */
 .tabs { display: none; }
@@ -172,6 +189,125 @@ ul.clean li {
   height: 100%;
 }
 
+.mapWrap--hex {
+  height: min(52vh, 440px);
+  min-height: 320px;
+}
+
+.mapHexLayout {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 300px);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .mapHexLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mapHexSub {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.hexToolbarLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6a7899;
+}
+
+.hexFilterLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #c5d0ec;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hexFilterLabel input {
+  width: 16px;
+  height: 16px;
+  accent-color: #3f7cff;
+}
+
+.hexMapLegend .hexLegHigh { color: #4ddb8e; font-weight: 600; }
+.hexMapLegend .hexLegLow { color: #ff8a8a; font-weight: 600; }
+
+.hexZonePanel h3 { margin-bottom: 10px; }
+
+.hexZoneDetails {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #1d2e47;
+}
+
+.hexZoneTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.hexZoneName {
+  font-weight: 800;
+  font-size: 17px;
+  color: #eef2ff;
+  letter-spacing: 0.02em;
+}
+
+.hexZoneStat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.hexZoneStatLabel {
+  color: #6a7899;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hexZoneStatValue {
+  font-weight: 700;
+  color: #7eb6ff;
+}
+
+.hexZoneBlock {
+  margin-top: 12px;
+}
+
+.hexZoneBody {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #c5d0ec;
+}
+
+.mapMainDark.leaflet-container,
+.mapMainDark .leaflet-container {
+  background: #050a14;
+}
+
+.mapWrap--hex .leaflet-tile-pane {
+  filter: saturate(1.08) hue-rotate(-12deg) brightness(0.92);
+}
+
+path.hexMapCell {
+  cursor: pointer;
+}
+
 .mapError {
   position: absolute;
   inset: 0;
@@ -195,6 +331,10 @@ ul.clean li {
   color: #a7b1c8 !important;
   border-radius: 8px !important;
   padding: 2px 8px !important;
+}
+
+.fleetMarkerIcon {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
 /* Management (reference image style) */
@@ -248,6 +388,50 @@ ul.clean li {
 }
 .sideUnitTitle { font-weight: 700; font-size: 13px; color: #eef2ff; }
 .sideUnitSub { font-size: 12px; color: #8a96b0; margin-top: 4px; }
+
+.sideUnitClick { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.sideUnitClick:hover { border-color: #3f7cff; }
+.sideUnitActive { border-color: #ff5252; box-shadow: 0 0 0 1px rgba(255, 82, 82, 0.35); }
+
+.fleetDetailsHint { margin-top: 14px; line-height: 1.45; }
+.fleetDetailsContent { margin-top: 12px; }
+.fleetDetailsTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.fleetDetailsUnit { font-weight: 800; font-size: 15px; color: #eef2ff; letter-spacing: 0.02em; }
+.fleetDetailBlock { margin-bottom: 12px; }
+.fleetDetailLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6a7899;
+  margin-bottom: 4px;
+}
+.fleetDetailValue { font-size: 13px; color: #c5d0ec; line-height: 1.45; }
+.fleetDetailValue--emg { color: #ff8a80; font-weight: 600; }
+.fleetDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.fleetDetailTraffic { font-size: 12px; }
+.fleetDetailNote { font-size: 12px; margin-top: 12px; line-height: 1.4; }
+
+.emgLegend { color: #ff6b6b; font-weight: 600; }
+
+path.leaflet-emergency-marker {
+  animation: emgPulse 2.2s ease-in-out infinite;
+}
+@keyframes emgPulse {
+  0%, 100% { stroke-opacity: 1; fill-opacity: 0.95; }
+  50% { stroke-opacity: 0.65; fill-opacity: 0.75; }
+}
 
 .mgmtMain {
   background: #0d1828;

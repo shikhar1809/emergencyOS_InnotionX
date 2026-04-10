@@ -24,23 +24,14 @@
       <section id="tab-management" class="tabs active">
         <div class="mgmtLayout">
           <aside class="mgmtSidebar">
-            <div class="mgmtSideTop">
+            <div class="mgmtSideTop mgmtSideTop--two">
               <button class="mgmtNavBtn active" data-mview="fleet">Fleet</button>
-              <button class="mgmtNavBtn" data-mview="patients">Patients</button>
               <button class="mgmtNavBtn" data-mview="staff">Staff</button>
-              <button class="mgmtNavBtn" data-mview="wards">Wards</button>
             </div>
 
             <div class="mgmtSideBlock">
               <div class="muted" style="margin-bottom:8px">Units</div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">EMS-LKO-18</div>
-                <div class="sideUnitSub">Standby • available</div>
-              </div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">EMS-LKO-09</div>
-                <div class="sideUnitSub">Dispatched • en route</div>
-              </div>
+              <div id="mgmtFleetUnits"></div>
             </div>
           </aside>
 
@@ -49,6 +40,7 @@
               <div class="mgmtMainHeader">
                 <div class="mgmtMainTitle">Live Fleet Map</div>
                 <div class="row">
+                  <button class="secondary" id="fleetCredBtn" type="button">Manage credentials</button>
                   <button id="dispatchFleetBtn">Dispatch</button>
                   <button class="secondary" id="returnFleetBtn">Return</button>
                 </div>
@@ -61,32 +53,6 @@
                 <span>🔴 Fleet</span>
                 <span>🔵 Patients</span>
                 <span>🟢 Resolved</span>
-              </div>
-            </div>
-
-            <div id="mview-patients" class="mview">
-              <div class="mgmtMainHeader">
-                <div class="mgmtMainTitle">Patients</div>
-                <span class="badge">Incoming: <b id="emergencyCount">7</b></span>
-              </div>
-              <div class="grid">
-                <article class="card">
-                  <h3>Track Patient</h3>
-                  <div class="row">
-                    <input id="mgmtPatientName" placeholder="Patient name" style="flex:1" />
-                    <input id="mgmtPatientZone" placeholder="Ward/Zone" style="flex:1" />
-                    <button id="mgmtAddPatientBtn">Track</button>
-                  </div>
-                  <ul class="clean" id="mgmtPatientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
-                </article>
-                <article class="card">
-                  <h3>Gemma 4 Demographics</h3>
-                  <p id="mgmtGemmaHint" style="color:#c5d0ec;line-height:1.5">
-                    Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
-                  </p>
-                  <p class="muted" id="mgmtGemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
-                  <button class="secondary" id="mgmtRefreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
-                </article>
               </div>
             </div>
 
@@ -103,44 +69,7 @@
                     <button id="addStaffBtn">Mark On-Duty</button>
                     <button class="secondary" id="removeStaffBtn">Mark Off-Duty</button>
                   </div>
-                </article>
-                <article class="card">
-                  <h3>Credential Generator</h3>
-                  <div class="row">
-                    <input id="credName" placeholder="Full name" style="flex:1;min-width:160px" />
-                    <select id="credRole">
-                      <option value="doctor">Doctor</option>
-                      <option value="worker">Worker</option>
-                      <option value="fleet">Fleet Operator</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                    <button id="genCredBtn">Generate</button>
-                  </div>
-                  <p id="credOut" class="muted" style="margin-top:10px">Fill name and click generate.</p>
-                </article>
-              </div>
-            </div>
-
-            <div id="mview-wards" class="mview">
-              <div class="mgmtMainHeader">
-                <div class="mgmtMainTitle">Wards</div>
-                <button class="secondary" id="refreshWardsBtn">Refresh</button>
-              </div>
-              <div class="grid">
-                <article class="card">
-                  <h3>ICU</h3>
-                  <p class="stat" id="icuText">9<span style="font-size:18px;color:#6a7899">/12</span></p>
-                  <div class="progressBar"><div class="fill" id="icuBar" style="width:75%"></div></div>
-                </article>
-                <article class="card">
-                  <h3>Emergency Room</h3>
-                  <p class="stat" id="erText">14<span style="font-size:18px;color:#6a7899">/20</span></p>
-                  <div class="progressBar"><div class="fill green" id="erBar" style="width:70%"></div></div>
-                </article>
-                <article class="card">
-                  <h3>General Ward</h3>
-                  <p class="stat">38<span style="font-size:18px;color:#6a7899">/60</span></p>
-                  <div class="progressBar"><div class="fill green" style="width:63%"></div></div>
+                  <p class="muted" style="margin-top:12px;font-size:12px">Staff and fleet app logins are issued under <strong>Fleet → Manage credentials</strong>.</p>
                 </article>
               </div>
             </div>

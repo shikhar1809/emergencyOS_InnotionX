@@ -174,9 +174,8 @@ genCredBtn && genCredBtn.addEventListener("click", () => {
   document.getElementById("credOut").textContent = email + " | " + pass;
 });
 
-// ── Patients lists (Management + Map tab) ─────────────────────
+// ── Patients lists (Management tab) ───────────────────────────
 const mgmtPatientListEl = document.getElementById("mgmtPatientList");
-const mapPatientListEl = document.getElementById("mapPatientList");
 
 function addPatientRow(targetListEl, name, zone) {
   const li = document.createElement("li");
@@ -186,7 +185,6 @@ function addPatientRow(targetListEl, name, zone) {
 }
 demoState.patients.forEach((p) => {
   addPatientRow(mgmtPatientListEl, p.name, p.zone);
-  addPatientRow(mapPatientListEl, p.name, p.zone);
 });
 
 const mgmtAddPatientBtn = document.getElementById("mgmtAddPatientBtn");
@@ -197,16 +195,6 @@ mgmtAddPatientBtn && mgmtAddPatientBtn.addEventListener("click", () => {
   addPatientRow(mgmtPatientListEl, name, zone);
   document.getElementById("mgmtPatientName").value = "";
   document.getElementById("mgmtPatientZone").value = "";
-});
-
-const mapAddPatientBtn = document.getElementById("mapAddPatientBtn");
-mapAddPatientBtn && mapAddPatientBtn.addEventListener("click", () => {
-  const name = document.getElementById("mapPatientName").value.trim();
-  const zone = document.getElementById("mapPatientZone").value.trim();
-  if (!name || !zone) return;
-  addPatientRow(mapPatientListEl, name, zone);
-  document.getElementById("mapPatientName").value = "";
-  document.getElementById("mapPatientZone").value = "";
 });
 
 const gemmaHints = [
@@ -241,10 +229,209 @@ let osmMain;
 let osmMgmt;
 let osmMarkersMain = [];
 let osmMarkersMgmt = [];
+let lucknowHexZones = [];
+let hexPolyLayer = null;
 const demoMarkers = [
   ...demoState.fleet.map((f) => ({ type: "fleet", label: f.id + " (" + f.status + ")", lat: f.lat, lng: f.lng })),
   ...demoState.patients.map((p) => ({ type: "patient", label: "Patient: " + p.name + " (" + p.severity + ")", lat: p.lat, lng: p.lng })),
 ];
+
+function hexDiskRadius(Ring) {
+  const cells = [];
+  for (let q = -Ring; q <= Ring; q++) {
+    const rMin = Math.max(-Ring, -q - Ring);
+    const rMax = Math.min(Ring, -q + Ring);
+    for (let r = rMin; r <= rMax; r++) cells.push([q, r]);
+  }
+  return cells;
+}
+
+function axialToCenterLatLng(q, r, centerLat, centerLng, sizeM) {
+  const x = sizeM * Math.sqrt(3) * (q + r / 2);
+  const y = sizeM * (3 / 2) * r;
+  const lat = centerLat + y / 111320;
+  const lng = centerLng + x / (111320 * Math.cos((centerLat * Math.PI) / 180));
+  return [lat, lng];
+}
+
+function hexVerticesPointy(centerLat, centerLng, Rm) {
+  const cosLat = Math.cos((centerLat * Math.PI) / 180);
+  const corners = [];
+  for (let i = 0; i < 6; i++) {
+    const ang = Math.PI / 6 + (i * Math.PI) / 3;
+    const dx = Rm * Math.cos(ang);
+    const dy = Rm * Math.sin(ang);
+    corners.push([centerLat + dy / 111320, centerLng + dx / (111320 * cosLat)]);
+  }
+  return corners;
+}
+
+function buildLucknowHexZones() {
+  const centerLat = 26.8467;
+  const centerLng = 80.9462;
+  const hexSpacingM = 480;
+  const cells = hexDiskRadius(2);
+  const inflows = [12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22];
+  const pops = ["~48k", "~22k", "~61k", "~31k", "~19k", "~55k"];
+  const complaintSets = [
+    ["Chest pain / cardiac workup", "Hypertensive urgency", "Syncope"],
+    ["RTA polytrauma", "Fracture fall", "Head injury"],
+    ["Respiratory distress", "COPD exacerbation", "Pneumonia suspect"],
+    ["GI bleed", "Acute abdomen", "Dehydration"],
+    ["Stroke protocol", "TIA", "Neurology referral"],
+    ["Pediatric fever", "Seizure", "Respiratory"],
+    ["Burn / scald", "Toxicology screen", "Overdose"],
+    ["Obstetric emergency", "Antepartum bleed", "Labor triage"],
+  ];
+  const fleetLines = [
+    "Two active units within 8 min; Hazratganj detour common 17:00–20:00.",
+    "Primary corridor: Sitapur Rd; utility lane closures +3–4 min variance.",
+    "Strong overlap with adjacent zone handoffs; EMS handshake queue avg 2 cases.",
+    "Night shift single-unit cover; backup staged at Kaiserbagh.",
+    "High ambulance turnover near teaching hospital cluster.",
+    "Low winter fog risk; add +2 min ETA after 22:00 in model.",
+    "Gomti bridge approach clear; river-road pinch Sat–Sun evenings.",
+    "ICU bypass routing tested; fleet GPS ping every 42s.",
+  ];
+  const demoLines = [
+    "Median age 52 · male 58% · comorbid diabetes 31%.",
+    "Median age 34 · trauma skew · weekend +22% volume vs weekday.",
+    "Median age 61 · cardiac + respiratory mix peaks 19:00–23:00.",
+    "Pediatric share 14%; school-term afternoons elevated.",
+    "Senior cohort 67%; fall-related presentations trending up week over week.",
+    "Working-age dominant; occupational injury notes in 9% of charts.",
+  ];
+  const zones = cells.map(([q, r], i) => {
+    const [lat, lng] = axialToCenterLatLng(q, r, centerLat, centerLng, hexSpacingM);
+    const name = "Zone " + String.fromCharCode(65 + i);
+    return {
+      q,
+      r,
+      lat,
+      lng,
+      name,
+      inflow24h: inflows[i] != null ? inflows[i] : 16 + i,
+      populationBand: pops[i % pops.length],
+      complaints: complaintSets[i % complaintSets.length],
+      fleetBlurb: fleetLines[i % fleetLines.length],
+      demoBlurb: demoLines[i % demoLines.length],
+    };
+  });
+  const sorted = [...zones].sort((a, b) => b.inflow24h - a.inflow24h);
+  sorted.slice(0, 6).forEach((z) => {
+    z.tier = "high";
+  });
+  sorted.slice(-6).forEach((z) => {
+    z.tier = "low";
+  });
+  zones.forEach((z) => {
+    if (!z.tier) z.tier = "mid";
+  });
+  return zones;
+}
+
+function hexDefaultStyle() {
+  return {
+    color: "#5b8fd8",
+    weight: 1.5,
+    fillColor: "#3f7cff",
+    fillOpacity: 0.07,
+    className: "hexMapCell",
+  };
+}
+
+function hexStyleForZone(z) {
+  const hi = document.getElementById("hexFilterHigh")?.checked;
+  const lo = document.getElementById("hexFilterLow")?.checked;
+  const base = { className: "hexMapCell" };
+  if (z.tier === "high" && hi) {
+    return Object.assign(base, {
+      color: "#35c97a",
+      weight: 2,
+      fillColor: "#35c97a",
+      fillOpacity: 0.34,
+    });
+  }
+  if (z.tier === "low" && lo) {
+    return Object.assign(base, {
+      color: "#ff5252",
+      weight: 2,
+      fillColor: "#ff5252",
+      fillOpacity: 0.3,
+    });
+  }
+  return Object.assign(base, {
+    color: "#5b8fd8",
+    weight: 1.5,
+    fillColor: "#3f7cff",
+    fillOpacity: 0.07,
+  });
+}
+
+function refreshHexStyles() {
+  if (!hexPolyLayer) return;
+  hexPolyLayer.eachLayer((layer) => {
+    const z = layer._hexZone;
+    if (z) layer.setStyle(hexStyleForZone(z));
+  });
+}
+
+function showHexZonePanel(z) {
+  const ph = document.getElementById("hexZonePlaceholder");
+  const det = document.getElementById("hexZoneDetails");
+  if (ph) ph.hidden = true;
+  if (det) det.hidden = false;
+  const nameEl = document.getElementById("hexZoneName");
+  if (nameEl) nameEl.textContent = z.name;
+  const badge = document.getElementById("hexZoneTierBadge");
+  if (badge) {
+    badge.textContent =
+      z.tier === "high" ? "High inflow" : z.tier === "low" ? "Low inflow" : "Typical inflow";
+    badge.className =
+      "badge " + (z.tier === "high" ? "green" : z.tier === "low" ? "red" : "muted");
+  }
+  const inf = document.getElementById("hexZoneInflow");
+  if (inf) inf.textContent = String(z.inflow24h) + " presentations (24h est.)";
+  const pop = document.getElementById("hexZonePop");
+  if (pop) pop.textContent = z.populationBand + " residents (model)";
+  const comp = document.getElementById("hexZoneComplaints");
+  if (comp) comp.textContent = z.complaints.join(" · ");
+  const fl = document.getElementById("hexZoneFleet");
+  if (fl) fl.textContent = z.fleetBlurb;
+  const dm = document.getElementById("hexZoneDemo");
+  if (dm) dm.textContent = z.demoBlurb;
+}
+
+function addHexGridToMainMap(map) {
+  if (!map || !window.L) return;
+  lucknowHexZones = buildLucknowHexZones();
+  const hexSpacingM = 480;
+  if (hexPolyLayer) {
+    try {
+      map.removeLayer(hexPolyLayer);
+    } catch (_) {}
+  }
+  hexPolyLayer = L.layerGroup().addTo(map);
+  lucknowHexZones.forEach((z) => {
+    const verts = hexVerticesPointy(z.lat, z.lng, hexSpacingM * 0.97);
+    const poly = L.polygon(verts, hexStyleForZone(z)).addTo(hexPolyLayer);
+    poly._hexZone = z;
+    poly.on("click", (e) => {
+      L.DomEvent.stopPropagation(e);
+      showHexZonePanel(z);
+    });
+  });
+  const hi = document.getElementById("hexFilterHigh");
+  const lo = document.getElementById("hexFilterLow");
+  if (hi && !hi._hexBound) {
+    hi._hexBound = true;
+    hi.addEventListener("change", refreshHexStyles);
+  }
+  if (lo && !lo._hexBound) {
+    lo._hexBound = true;
+    lo.addEventListener("change", refreshHexStyles);
+  }
+}
 
 function showMapError(id, msg) {
   const el = document.getElementById(id);
@@ -294,26 +481,38 @@ function addLeafletMarkers(map, arr) {
   });
 }
 
-function initLeafletMap(id, errorId) {
+function initLeafletMap(id, errorId, useDarkBasemap) {
   const el = document.getElementById(id);
   if (!el) return null;
   if (!window.L) {
     showMapError(errorId, "Leaflet library failed to load.");
     return null;
   }
-  // Lucknow-ish center (matches your reference screenshot)
   const map = L.map(el, { zoomControl: true }).setView([26.8467, 80.9462], 12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>',
-  }).addTo(map);
+  if (useDarkBasemap) {
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 20,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
+        '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+    }).addTo(map);
+  } else {
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>',
+    }).addTo(map);
+  }
   return map;
 }
 
 function initOpenSourceMaps() {
-  osmMain = initLeafletMap("mapMain", "mapError");
-  osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt");
-  if (osmMain) addLeafletMarkers(osmMain, osmMarkersMain);
+  osmMain = initLeafletMap("mapMain", "mapError", true);
+  osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", true);
+  if (osmMain) {
+    addLeafletMarkers(osmMain, osmMarkersMain);
+    addHexGridToMainMap(osmMain);
+  }
   if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt);
   tryResizeMapsSoon();
 }
@@ -360,6 +559,11 @@ async function askGemma4(prompt) {
     patients: demoState.patients,
     billings: demoState.billings,
     comms: demoState.comms,
+    hexZones: buildLucknowHexZones().map((z) => ({
+      name: z.name,
+      tier: z.tier,
+      inflow24h: z.inflow24h,
+    })),
   };
   const systemCtx =
     "You are Gemma 4, an AI analytics agent for Goel Hospital emergency operations admin panel. " +
