@@ -1,0 +1,358 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #0c101a;
+  color: #dde4f0;
+  padding-bottom: 80px;
+}
+
+/* ── Layout ────────────────────────────────────────── */
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 20px 0;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #1f2c45;
+  padding-bottom: 14px;
+}
+
+.titleRow h1 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #eef2ff;
+}
+
+.muted { color: #8a96b0; font-size: 13px; margin: 0; }
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #2b4070;
+  background: #152040;
+  font-size: 11px;
+  color: #7faaff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge.green { border-color: #1e5c3a; background: #0f3320; color: #4ddb8e; }
+.badge.red   { border-color: #5c1e1e; background: #330f0f; color: #ff6b6b; }
+
+/* ── Tabs ──────────────────────────────────────────── */
+.tabs { display: none; }
+.tabs.active { display: block; }
+
+/* ── Grid ──────────────────────────────────────────── */
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+}
+
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+
+/* ── Cards ─────────────────────────────────────────── */
+.card {
+  background: #111827;
+  border: 1px solid #1e2e4a;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.card-accent-blue  { border-left: 3px solid #3f7cff; }
+.card-accent-green { border-left: 3px solid #35c97a; }
+.card-accent-red   { border-left: 3px solid #ff5c5c; }
+.card-accent-amber { border-left: 3px solid #f5a623; }
+
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a96b0;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.stat {
+  font-size: 36px;
+  font-weight: 800;
+  margin: 4px 0 8px;
+  color: #eef2ff;
+  line-height: 1;
+}
+
+.stat-sub { font-size: 12px; color: #6a7899; margin: 0; }
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #c5d0ec;
+  margin: 20px 0 10px;
+}
+
+/* ── Form elements ─────────────────────────────────── */
+input, select, textarea, button {
+  border: 1px solid #253856;
+  border-radius: 8px;
+  background: #0c1525;
+  color: #dde4f0;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus { border-color: #3f7cff; }
+
+button {
+  cursor: pointer;
+  background: #3f7cff;
+  border-color: #3f7cff;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+button:hover { opacity: 0.88; }
+button.secondary { background: #1c2d4a; border-color: #2c4268; font-weight: 500; }
+button.danger    { background: #3e1515; border-color: #7a2020; color: #ff8a8a; }
+
+textarea { width: 100%; min-height: 80px; resize: vertical; }
+
+/* ── Lists ─────────────────────────────────────────── */
+ul.clean { list-style: none; padding: 0; margin: 0; }
+ul.clean li {
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  border-radius: 9px;
+  border: 1px solid #1d2e47;
+  background: #0d1828;
+  font-size: 13px;
+  color: #b8c4de;
+}
+
+/* ── Row ───────────────────────────────────────────── */
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ── Map mock ──────────────────────────────────────── */
+.mapMock {
+  height: 280px;
+  border-radius: 12px;
+  border: 1px solid #223355;
+  background: #090f1c;
+  background-image:
+    linear-gradient(#1a2640 1px, transparent 1px),
+    linear-gradient(90deg, #1a2640 1px, transparent 1px);
+  background-size: 30px 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pin {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ff5252;
+  box-shadow: 0 0 0 4px rgba(255,82,82,0.25);
+  transform: translate(-50%, -50%);
+}
+
+.pin.blue  { background: #4da8ff; box-shadow: 0 0 0 4px rgba(77,168,255,0.25); }
+.pin.green { background: #4ddb8e; box-shadow: 0 0 0 4px rgba(77,219,142,0.25); }
+
+/* ── Chat ──────────────────────────────────────────── */
+.chatWindow {
+  height: 240px;
+  overflow-y: auto;
+  background: #080e1a;
+  border: 1px solid #1d2e47;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.chatWindow li {
+  border: none;
+  background: none;
+  margin-bottom: 4px;
+  padding: 4px 6px;
+}
+
+.chatWindow li.user { color: #7faaff; text-align: right; }
+.chatWindow li.agent { color: #4ddb8e; }
+.chatWindow li.agent.thinking { color: #6a7899; font-style: italic; }
+
+/* ── Discord-style comms ───────────────────────────── */
+.commsLayout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 12px;
+  height: 400px;
+}
+
+.channelSidebar {
+  background: #0a1220;
+  border: 1px solid #1d2e47;
+  border-radius: 12px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.channelSidebar h4 {
+  color: #5a6a8a;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.channelItem {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #7a8aaa;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.channelItem:hover { background: #111e35; color: #c5d0ec; }
+.channelItem.active { background: #1a2e50; color: #eef2ff; font-weight: 600; }
+
+.commsFeedArea {
+  display: flex;
+  flex-direction: column;
+  background: #0d1828;
+  border: 1px solid #1d2e47;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.commsFeedArea .feedScroll {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+/* ── Progress bars ─────────────────────────────────── */
+.progressBar {
+  background: #1a2640;
+  border-radius: 999px;
+  height: 8px;
+  margin-top: 8px;
+}
+
+.progressBar .fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #3f7cff;
+  transition: width 0.4s;
+}
+
+.progressBar .fill.green { background: #35c97a; }
+.progressBar .fill.red   { background: #ff5c5c; }
+
+/* ── Security table ────────────────────────────────── */
+.secTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.secTable th, .secTable td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #1a2a42;
+  text-align: left;
+}
+.secTable th { color: #6a7899; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.secTable td { color: #b8c4de; }
+.secTable tr:last-child td { border-bottom: none; }
+
+/* ── Taskbar ───────────────────────────────────────── */
+.taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  border-top: 1px solid #18253c;
+  background: rgba(8, 12, 24, 0.96);
+  backdrop-filter: blur(12px);
+  z-index: 9999;
+  padding: 0 12px;
+}
+
+.dock {
+  display: flex;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid #1e2e48;
+  background: #0f1c2f;
+  justify-self: center;
+}
+
+.dock button {
+  min-width: 148px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid #253856;
+  background: #152240;
+  color: #9db5d8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dock button.active {
+  background: #1e40af;
+  border-color: #3f7cff;
+  color: #ffffff;
+}
+
+/* ── Windows-style right tray ──────────────────────── */
+.tray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+  font-size: 13px;
+  color: #c5d0ec;
+}
+
+.tray .trayIcons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+.tray .clockBox {
+  text-align: right;
+  line-height: 1.2;
+  cursor: default;
+  padding: 0 4px;
+}
+
+.tray .clockBox .time { font-size: 15px; font-weight: 600; }
+.tray .clockBox .date { font-size: 11px; color: #8a96b0; }
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 1040px) {
+  .dock { overflow-x: auto; max-width: calc(100vw - 160px); }
+  .dock button { min-width: 120px; font-size: 12px; }
+  .commsLayout { grid-template-columns: 1fr; height: auto; }
+}

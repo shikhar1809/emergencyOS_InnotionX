@@ -3,119 +3,340 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Emergency OS</title>
-    <style>
-      :root {
-        color-scheme: dark;
-      }
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #121212;
-        color: #f1f1f1;
-        padding-bottom: 60px;
-      }
-      .wrap {
-        max-width: 560px;
-        margin: 40px auto;
-        padding: 16px;
-      }
-      .card {
-        background: #1f1f1f;
-        border: 1px solid #2a2a2a;
-        border-radius: 12px;
-        padding: 16px;
-      }
-      h1 {
-        margin: 0 0 8px;
-        font-size: 22px;
-      }
-      p {
-        margin: 6px 0;
-      }
-      .btn {
-        margin-top: 14px;
-        width: 100%;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        background: #7c4dff;
-        color: white;
-        cursor: pointer;
-      }
-      .taskbar {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 58px;
-        background: #1a1b20;
-        border-top: 1px solid #2c2e36;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 8px;
-        z-index: 9999;
-      }
-      .dock {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 8px;
-        background: #20222b;
-        border-radius: 10px;
-      }
-      .dockBtn {
-        width: 46px;
-        height: 46px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #2a2c36;
-        color: #f1f1f1;
-        border: 1px solid #404354;
-        border-radius: 8px;
-        font-size: 22px;
-        text-decoration: none;
-      }
-      .dockBtn:hover {
-        background: #343747;
-      }
-    </style>
+    <title>Goel Hospital – Admin Panel</title>
+    <link rel="stylesheet" href="./app.css" />
   </head>
   <body>
-    <div class="wrap">
-      <div class="card">
-        <h1>Admin Panel</h1>
-        <p>Reports sent: <span id="count">0</span></p>
-        <p>Siren is <span id="siren">OFF</span></p>
-        <button class="btn" id="sendBtn">Send Report</button>
+    <main class="page">
+      <div class="titleRow">
+        <div>
+          <h1 id="pageTitle">Management</h1>
+          <p class="muted">Goel Hospital • Emergency Operations Admin Panel</p>
+        </div>
+        <div class="row" style="gap:8px">
+          <span class="badge green" id="liveIndicator">● LIVE</span>
+          <span class="badge" id="headerDate">--</span>
+        </div>
       </div>
-    </div>
+
+      <!-- ── Management ─────────────────────────────────── -->
+      <section id="tab-management" class="tabs active">
+        <div class="grid">
+          <article class="card card-accent-blue">
+            <h3>Staff On Duty</h3>
+            <p class="stat" id="staffCount">42</p>
+            <p class="stat-sub">6 on leave · 4 unconfirmed</p>
+            <div class="progressBar"><div class="fill" id="staffBar" style="width:72%"></div></div>
+            <div class="row" style="margin-top:12px">
+              <button id="addStaffBtn">Mark On-Duty</button>
+              <button class="secondary" id="removeStaffBtn">Mark Off-Duty</button>
+            </div>
+          </article>
+          <article class="card card-accent-amber">
+            <h3>Fleet Status</h3>
+            <p class="stat" id="fleetCount">10</p>
+            <p class="stat-sub" id="fleetSub">2 dispatched · 12 total</p>
+            <div class="progressBar"><div class="fill" id="fleetBar" style="width:83%"></div></div>
+            <div class="row" style="margin-top:12px">
+              <button id="dispatchFleetBtn">Dispatch</button>
+              <button class="secondary" id="returnFleetBtn">Return Vehicle</button>
+            </div>
+          </article>
+          <article class="card card-accent-red">
+            <h3>Incoming Emergencies</h3>
+            <p class="stat" id="emergencyCount">7</p>
+            <p class="stat-sub">3 critical · 4 stable</p>
+            <div class="progressBar"><div class="fill red" style="width:58%"></div></div>
+            <div class="row" style="margin-top:12px">
+              <button id="addEmergencyBtn">Add Case</button>
+              <button class="secondary" id="resolveEmergencyBtn">Resolve</button>
+            </div>
+          </article>
+        </div>
+
+        <p class="sectionTitle">Ward Load</p>
+        <div class="grid" id="wardGrid">
+          <article class="card">
+            <h3>ICU</h3>
+            <p class="stat" id="icuText">9<span style="font-size:18px;color:#6a7899">/12</span></p>
+            <div class="progressBar"><div class="fill" id="icuBar" style="width:75%"></div></div>
+          </article>
+          <article class="card">
+            <h3>Emergency Room</h3>
+            <p class="stat" id="erText">14<span style="font-size:18px;color:#6a7899">/20</span></p>
+            <div class="progressBar"><div class="fill green" id="erBar" style="width:70%"></div></div>
+          </article>
+          <article class="card">
+            <h3>General Ward</h3>
+            <p class="stat">38<span style="font-size:18px;color:#6a7899">/60</span></p>
+            <div class="progressBar"><div class="fill green" style="width:63%"></div></div>
+          </article>
+        </div>
+
+        <p class="sectionTitle">Credential Generator</p>
+        <article class="card">
+          <div class="row">
+            <input id="credName" placeholder="Full name" style="flex:1;min-width:160px" />
+            <select id="credRole">
+              <option value="doctor">Doctor</option>
+              <option value="worker">Worker</option>
+              <option value="fleet">Fleet Operator</option>
+              <option value="admin">Admin</option>
+            </select>
+            <button id="genCredBtn">Generate</button>
+          </div>
+          <p id="credOut" class="muted" style="margin-top:10px">Fill name and click generate.</p>
+        </article>
+      </section>
+
+      <!-- ── Map & Demographics ─────────────────────────── -->
+      <section id="tab-map" class="tabs">
+        <article class="card" style="margin-bottom:14px">
+          <h3>Live Fleet + Patient Map</h3>
+          <div class="mapMock" id="liveMap">
+            <div class="pin"       style="left:22%;top:38%"  title="Ambulance 3"></div>
+            <div class="pin blue"  style="left:56%;top:46%"  title="Patient: Anjali P"></div>
+            <div class="pin green" style="left:74%;top:25%"  title="Patient: Ravi K"></div>
+            <div class="pin"       style="left:38%;top:62%"  title="Ambulance 1"></div>
+            <div class="pin blue"  style="left:82%;top:54%"  title="Patient: Meera S"></div>
+          </div>
+          <div class="row" style="margin-top:8px;gap:12px">
+            <span>🔴 Fleet</span>
+            <span>🔵 Patients</span>
+            <span>🟢 Resolved</span>
+          </div>
+        </article>
+        <div class="grid">
+          <article class="card">
+            <h3>Track Patient / Vehicle</h3>
+            <div class="row">
+              <input id="patientName" placeholder="Name / unit" style="flex:1" />
+              <input id="patientZone" placeholder="Zone / ward" style="flex:1" />
+              <button id="addPatientBtn">Track</button>
+            </div>
+            <ul class="clean" id="patientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
+          </article>
+          <article class="card">
+            <h3>Gemma 4 Demographic Insights</h3>
+            <p id="gemmaHint" style="color:#c5d0ec;line-height:1.5">
+              Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
+            </p>
+            <p class="muted" id="gemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
+            <button class="secondary" id="refreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ── Insights And Analytics ─────────────────────── -->
+      <section id="tab-insights" class="tabs">
+        <div class="grid">
+          <article class="card card-accent-blue">
+            <h3>Avg Response Time</h3>
+            <p class="stat" id="kpiResponse">08 min</p>
+            <div class="progressBar"><div class="fill" style="width:62%"></div></div>
+          </article>
+          <article class="card card-accent-green">
+            <h3>Live Beds Free</h3>
+            <p class="stat" id="kpiBeds">11</p>
+            <div class="progressBar"><div class="fill green" id="bedBar" style="width:34%"></div></div>
+          </article>
+          <article class="card card-accent-amber">
+            <h3>Emergency Queue</h3>
+            <p class="stat" id="kpiQueue">7</p>
+            <div class="progressBar"><div class="fill" style="background:#f5a623;width:58%"></div></div>
+          </article>
+          <article class="card card-accent-red">
+            <h3>Fleet Readiness</h3>
+            <p class="stat">83<span style="font-size:18px;color:#6a7899">%</span></p>
+            <div class="progressBar"><div class="fill green" style="width:83%"></div></div>
+          </article>
+        </div>
+
+        <p class="sectionTitle">Gemma 4 Analytics Agent</p>
+        <article class="card">
+          <div class="row" style="margin-bottom:10px">
+            <input id="gemmaApiKey" placeholder="Gemini API Key (for Gemma 4 live responses)" style="flex:1;font-size:13px" type="password" />
+            <button class="secondary" id="saveKeyBtn">Save Key</button>
+          </div>
+          <div class="chatWindow" id="chatLog">
+            <ul class="clean" id="chatList"></ul>
+          </div>
+          <div class="row">
+            <input id="chatInput" placeholder="Ask Gemma 4: ICU trend, billing anomalies, fleet status…" style="flex:1" />
+            <button id="sendChatBtn">Ask Gemma 4</button>
+          </div>
+        </article>
+      </section>
+
+      <!-- ── Billings ────────────────────────────────────── -->
+      <section id="tab-billings" class="tabs">
+        <div class="grid">
+          <article class="card">
+            <h3>Total Bills Today</h3>
+            <p class="stat">23</p>
+            <p class="stat-sub">INR 4,82,600 collected</p>
+          </article>
+          <article class="card card-accent-amber">
+            <h3>Pending Approvals</h3>
+            <p class="stat" id="pendingApprovalCount">5</p>
+            <p class="stat-sub">Finance manager review</p>
+          </article>
+          <article class="card card-accent-green">
+            <h3>Fully Cleared</h3>
+            <p class="stat">18</p>
+            <p class="stat-sub">Admin final signed</p>
+          </article>
+        </div>
+
+        <p class="sectionTitle">Create New Bill</p>
+        <div class="grid grid-2">
+          <article class="card">
+            <div class="row" style="flex-direction:column;align-items:stretch;gap:10px">
+              <input id="billPatient" placeholder="Patient full name" />
+              <input id="billDiagnosis" placeholder="Diagnosis / procedure" />
+              <div class="row">
+                <input id="billAmount" type="number" placeholder="Amount (INR)" style="flex:1" />
+                <button id="createBillBtn">Generate Bill</button>
+              </div>
+            </div>
+            <p id="billIdOut" class="muted" style="margin-top:10px">No bill created yet.</p>
+          </article>
+          <article class="card">
+            <h3>QR Identifier</h3>
+            <pre id="billQr" style="color:#4ddb8e;font-size:13px;background:#060e1a;padding:10px;border-radius:8px;overflow-x:auto">QR: [ BILL-NOT-GENERATED ]</pre>
+            <h3 style="margin-top:14px">Authority Flow</h3>
+            <div class="row" style="gap:6px;flex-wrap:nowrap;font-size:13px">
+              <span class="badge">Nurse</span>
+              <span style="color:#6a7899">→</span>
+              <span class="badge" id="finBadge">Finance Mgr</span>
+              <span style="color:#6a7899">→</span>
+              <span class="badge" id="adminBadge">Admin Final</span>
+            </div>
+            <p style="margin:10px 0 10px;font-size:13px">Status: <strong id="approvalStatus">Pending Finance</strong></p>
+            <div class="row">
+              <button id="financeApproveBtn">Finance Upvote</button>
+              <button class="secondary" id="adminApproveBtn">Admin Finalise</button>
+            </div>
+          </article>
+        </div>
+
+        <p class="sectionTitle">Bill Logs</p>
+        <article class="card">
+          <ul class="clean" id="billLogs" style="max-height:200px;overflow-y:auto"></ul>
+        </article>
+      </section>
+
+      <!-- ── Internal Comms ─────────────────────────────── -->
+      <section id="tab-comms" class="tabs">
+        <div class="grid" style="margin-bottom:14px">
+          <article class="card card-accent-blue">
+            <h3>Active Members</h3>
+            <p class="stat">34</p>
+            <p class="stat-sub">Doctors 12 · Workers 16 · Fleet 6</p>
+          </article>
+          <article class="card card-accent-green">
+            <h3>On-Duty Now</h3>
+            <p class="stat" id="onDutyCount">28</p>
+            <p class="stat-sub">Last updated: just now</p>
+          </article>
+          <article class="card">
+            <h3>My Role</h3>
+            <select id="commsRole" style="width:100%;margin-top:6px">
+              <option>Doctor</option>
+              <option>Worker</option>
+              <option>Fleet Operator</option>
+              <option>Admin</option>
+            </select>
+            <div class="row" style="margin-top:10px">
+              <button id="toggleDutyBtn">Toggle Duty</button>
+              <span class="badge green" id="dutyBadge">On Duty</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="commsLayout">
+          <div class="channelSidebar">
+            <h4>Channels</h4>
+            <button class="channelItem active" data-channel="#alerts"># alerts</button>
+            <button class="channelItem" data-channel="#shift-updates"># shift-updates</button>
+            <button class="channelItem" data-channel="#ems-handshake"># ems-handshake</button>
+            <button class="channelItem" data-channel="#admin"># admin</button>
+            <button class="channelItem" data-channel="#fleet-ops"># fleet-ops</button>
+            <h4 style="margin-top:14px">Direct</h4>
+            <button class="channelItem" data-channel="@chief-doctor">@ chief-doctor</button>
+            <button class="channelItem" data-channel="@finance-mgr">@ finance-mgr</button>
+          </div>
+          <div class="commsFeedArea">
+            <div class="feedScroll">
+              <ul class="clean" id="commsFeed"></ul>
+            </div>
+            <div class="row">
+              <input id="commsInput" placeholder="Message #alerts…" style="flex:1" id="commsInput" />
+              <button id="sendCommsBtn">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Auth & Security ────────────────────────────── -->
+      <section id="tab-security" class="tabs">
+        <div class="grid">
+          <article class="card">
+            <h3>Hospital Login</h3>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
+              <input id="loginEmail" placeholder="doctor3@goelhospital.com" type="email" />
+              <input id="loginPassword" placeholder="Password" type="password" />
+              <button id="loginBtn">Login</button>
+            </div>
+            <p id="loginMsg" class="muted">Not logged in.</p>
+          </article>
+          <article class="card">
+            <h3>Security Policies</h3>
+            <table class="secTable">
+              <thead><tr><th>Feature</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Role Guard</td><td><span class="badge green">Active</span></td></tr>
+                <tr><td>Session Timeout</td><td>30 min</td></tr>
+                <tr><td>Activity Logging</td><td><span class="badge green">Active</span></td></tr>
+                <tr><td>EMS Handshake</td><td><span class="badge green">Active</span></td></tr>
+                <tr><td>Credential Rotation</td><td>Monthly</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Recent Audit Logs</h3>
+            <ul class="clean" id="auditLogs" style="max-height:220px;overflow-y:auto"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Taskbar ─────────────────────────────────────── -->
     <div class="taskbar">
-      <div class="dock">
-        <a class="dockBtn" href="./demo1.html" title="Management">🛠️</a>
-        <a class="dockBtn" href="./demo2.html" title="Map & Demographics">🗺️</a>
-        <a class="dockBtn" href="./demo3.html" title="Insights + AI Chat">🤖</a>
-        <a class="dockBtn" href="./demo4.html" title="Billings">🧾</a>
-        <a class="dockBtn" href="./demo5.html" title="Internal Comms">💬</a>
-        <a class="dockBtn" href="./demo6.html" title="Auth & Security">🔐</a>
+      <div></div>
+      <nav class="dock">
+        <button class="dockBtn active" data-tab="management">Management</button>
+        <button class="dockBtn" data-tab="map">Map & Demographics</button>
+        <button class="dockBtn" data-tab="insights">Insights And Analytics</button>
+        <button class="dockBtn" data-tab="billings">Billings</button>
+        <button class="dockBtn" data-tab="comms">Internal Comms</button>
+        <button class="dockBtn" data-tab="security">Auth & Security</button>
+        <a href="./fleet-operator.html" style="display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:600;color:#004592;text-decoration:none;border-left:1px solid rgba(0,0,0,0.1)">Fleet Portal ↗</a>
+      </nav>
+      <div class="tray">
+        <div class="trayIcons">
+          <span title="Hide icons">^</span>
+          <span title="Network">📶</span>
+          <span title="Volume">🔊</span>
+          <span title="Battery">🔋</span>
+        </div>
+        <div class="clockBox">
+          <div class="time" id="trayTime">--:--</div>
+          <div class="date" id="trayDate">--/--/----</div>
+        </div>
       </div>
     </div>
 
-    <script>
-      const countEl = document.getElementById("count");
-      const sirenEl = document.getElementById("siren");
-      const sendBtn = document.getElementById("sendBtn");
-      let count = 0;
-      let sirenOn = false;
-
-      sendBtn.addEventListener("click", () => {
-        count += 1;
-        sirenOn = !sirenOn;
-        countEl.textContent = String(count);
-        sirenEl.textContent = sirenOn ? "ON" : "OFF";
-      });
-    </script>
+    <script src="./app.js"></script>
   </body>
 </html>
