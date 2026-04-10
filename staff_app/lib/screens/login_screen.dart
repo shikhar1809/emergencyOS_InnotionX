@@ -19,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _loading = false;
   bool _obscure = true;
+  static const String _demoEmail = 'doctor3@goelhospital.com';
+  static const String _demoPassword = 'GH@1004';
 
   @override
   void dispose() {
@@ -64,6 +66,15 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _useDemoAndSignIn() async {
+    if (_loading) return;
+    setState(() {
+      _emailCtrl.text = _demoEmail;
+      _passCtrl.text = _demoPassword;
+    });
+    await _signIn();
   }
 
   @override
@@ -220,6 +231,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontSize: 15,
                                     ),
                                   ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Demo credentials
+                        SizedBox(
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            onPressed: _loading ? null : _useDemoAndSignIn,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFc4b5fd),
+                              side: const BorderSide(color: Color(0xFF1e1e3a)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.auto_awesome, size: 18),
+                            label: Text(
+                              'Use Demo Credentials',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ),
                       ],
