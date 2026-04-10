@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:emergencyos_innotionx_hackathon/main.dart';
+import 'package:emergencyos_innovationx_hackathon/main.dart';
 
 void main() {
   testWidgets('basic widgets are visible', (WidgetTester tester) async {

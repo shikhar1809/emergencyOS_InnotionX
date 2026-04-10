@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Management</title>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <main class="page">
+      <div class="titleRow">
+        <div>
+          <h1>Management</h1>
+          <p class="muted">Staff, fleet, wards and credential generation</p>
+        </div>
+        <span class="badge">Admin</span>
+      </div>
+
+      <section class="grid">
+        <article class="card">
+          <h3>Staff</h3>
+          <p>On duty: <strong id="staffOnDuty">28</strong></p>
+          <button id="markShiftBtn">Mark One On-Duty</button>
+        </article>
+        <article class="card">
+          <h3>Fleet</h3>
+          <p>Ready vehicles: <strong id="fleetReady">10</strong></p>
+          <button id="fleetDispatchBtn" class="secondary">Dispatch One</button>
+        </article>
+        <article class="card">
+          <h3>Wards</h3>
+          <p>ICU: 9/12 | ER: 14/20</p>
+          <button class="secondary">Refresh Ward Load</button>
+        </article>
+      </section>
+
+      <section class="card" style="margin-top: 12px">
+        <h3>Generate Credentials</h3>
+        <div class="row">
+          <input id="staffName" placeholder="Staff name" />
+          <select id="staffRole">
+            <option>doctor</option>
+            <option>worker</option>
+            <option>fleet</option>
+          </select>
+          <button id="createCredBtn">Generate</button>
+        </div>
+        <p id="credOutput" class="muted" style="margin-top: 10px">
+          Fill name and click generate
+        </p>
+      </section>
+
+      <!-- Fleet On-Duty Panel -->
+      <section class="card" style="margin-top: 12px">
+        <h3>Fleet On Duty
+          <span id="onDutyCount" style="margin-left:8px;font-size:12px;font-weight:600;background:#d7e2ff;color:#004590;padding:2px 10px;border-radius:999px;vertical-align:middle">0</span>
+        </h3>
+        <p class="muted" style="margin-bottom:10px">Operators currently marked on duty via the Fleet Portal</p>
+        <ul id="onDutyList" style="list-style:none;padding:0;display:flex;flex-direction:column;gap:8px">
+          <li class="muted" id="onDutyEmpty">No operators on duty</li>
+        </ul>
+      </section>
+
+      <!-- Assign Incident to Fleet -->
+      <section class="card" style="margin-top: 12px">
+        <h3>Assign Incident to Fleet</h3>
+        <p class="muted" style="margin-bottom:14px">Select an on-duty operator and set the destination for dispatch</p>
+        <div class="row" style="flex-wrap:wrap;gap:8px">
+          <select id="assignOperator" style="flex:1;min-width:200px">
+            <option value="">— Select on-duty operator —</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="assignIncident" placeholder="Incident description (e.g. Vehicle Accident — High Priority)" style="flex:1" />
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="assignDestination" placeholder="Destination address (e.g. 45 Hospital Road, City Center)" style="flex:1" />
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="assignBtn">Assign Incident</button>
+          <button id="clearAssignBtn" class="secondary">Clear Assignment</button>
+        </div>
+        <p id="assignOutput" class="muted" style="margin-top:10px">Select an operator and fill in details to assign</p>
+      </section>
+    </main>
+
+    <div class="taskbar">
+      <nav class="dock">
+        <a class="active" href="./management.html">Management</a>
+        <a href="./map-demographics.html">Map & Demographics</a>
+        <a href="./insights-chat.html">Insights + AI Chat</a>
+        <a href="./billings.html">Billings</a>
+        <a href="./internal-comms.html">Internal Comms</a>
+        <a href="./auth-security.html">Auth & Security</a>
+        <a href="./fleet-operator.html" style="color:#004592;font-weight:600">Fleet Portal ↗</a>
+      </nav>
+    </div>
+
+    <script>
+      const staffOnDutyEl = document.getElementById("staffOnDuty");
+      const fleetReadyEl = document.getElementById("fleetReady");
+      const markShiftBtn = document.getElementById("markShiftBtn");
+      const fleetDispatchBtn = document.getElementById("fleetDispatchBtn");
+      const createCredBtn = document.getElementById("createCredBtn");
+      const staffNameEl = document.getElementById("staffName");
+      const staffRoleEl = document.getElementById("staffRole");
+      const credOutputEl = document.getElementById("credOutput");
+
+      let staffOnDuty = 28;
+      let fleetReady = 10;
+      let generatedCount = 3;
+
+      markShiftBtn.addEventListener("click", () => {
+        staffOnDuty += 1;
+        staffOnDutyEl.textContent = String(staffOnDuty);
+      });
+
+      fleetDispatchBtn.addEventListener("click", () => {
+        if (fleetReady > 0) fleetReady -= 1;
+        fleetReadyEl.textContent = String(fleetReady);
+      });
+
+      createCredBtn.addEventListener("click", () => {
+        const nameRaw = staffNameEl.value.trim();
+        if (!nameRaw) {
+          credOutputEl.textContent = "Please add a name first.";
+          return;
+        }
+        generatedCount += 1;
+        const role = staffRoleEl.value;
+        const alias = nameRaw.toLowerCase().replace(/\s+/g, "");
+        const email = role + generatedCount + "@" + alias + ".goelhospital.com";
+        const password = "GH@" + (1000 + generatedCount);
+        credOutputEl.textContent = "Generated: " + email + " | " + password;
+      });
+
+      /* ── Fleet On-Duty Panel ─────────────────────────────── */
+      const ON_DUTY_KEY     = "fleet_on_duty";
+      const ASSIGNMENTS_KEY = "fleet_assignments";
+
+      function getOnDuty()      { return JSON.parse(localStorage.getItem(ON_DUTY_KEY) || "{}"); }
+      function getAssignments() { return JSON.parse(localStorage.getItem(ASSIGNMENTS_KEY) || "{}"); }
+
+      function refreshOnDutyPanel() {
+        const onDuty      = getOnDuty();
+        const assignments = getAssignments();
+        const onDutyList  = document.getElementById("onDutyList");
+        const onDutyCount = document.getElementById("onDutyCount");
+        const emptyEl     = document.getElementById("onDutyEmpty");
+        const operatorSel = document.getElementById("assignOperator");
+
+        const activeOps = Object.keys(onDuty).filter(e => onDuty[e] === true);
+        onDutyCount.textContent = String(activeOps.length);
+
+        // Rebuild list
+        onDutyList.innerHTML = "";
+        if (activeOps.length === 0) {
+          const li = document.createElement("li");
+          li.className = "muted";
+          li.id = "onDutyEmpty";
+          li.textContent = "No operators on duty";
+          onDutyList.appendChild(li);
+        } else {
+          activeOps.forEach(email => {
+            const li = document.createElement("li");
+            const assigned = assignments[email];
+            li.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f3f3fa;border-radius:6px;font-size:13px";
+            const badge = assigned
+              ? '<span style="background:#fff3e0;color:#bf360c;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">ASSIGNED</span>'
+              : '<span style="background:#e8f5e9;color:#1b5e20;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">WAITING</span>';
+            li.innerHTML = '<span style="color:#191c21;font-weight:500">' + email + '</span>' + badge;
+            onDutyList.appendChild(li);
+          });
+        }
+
+        // Rebuild operator dropdown
+        const prevVal = operatorSel.value;
+        operatorSel.innerHTML = '<option value="">— Select on-duty operator —</option>';
+        activeOps.forEach(email => {
+          const opt = document.createElement("option");
+          opt.value = email;
+          opt.textContent = email;
+          operatorSel.appendChild(opt);
+        });
+        if (prevVal) operatorSel.value = prevVal;
+      }
+
+      /* ── Assign Incident ─────────────────────────────────── */
+      const assignBtn      = document.getElementById("assignBtn");
+      const clearAssignBtn = document.getElementById("clearAssignBtn");
+      const assignOutput   = document.getElementById("assignOutput");
+
+      assignBtn.addEventListener("click", () => {
+        const operator    = document.getElementById("assignOperator").value.trim();
+        const incident    = document.getElementById("assignIncident").value.trim();
+        const destination = document.getElementById("assignDestination").value.trim();
+
+        if (!operator) { assignOutput.textContent = "Please select an on-duty operator."; return; }
+        if (!incident)  { assignOutput.textContent = "Please enter an incident description."; return; }
+        if (!destination) { assignOutput.textContent = "Please enter a destination address."; return; }
+
+        const assignments = getAssignments();
+        const now = new Date();
+        assignments[operator] = {
+          incident:    incident,
+          destination: destination,
+          assignedAt:  now.getHours().toString().padStart(2,"0") + ":" + now.getMinutes().toString().padStart(2,"0")
+        };
+        localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+        assignOutput.textContent = "Assigned to " + operator + " — destination: " + destination;
+        refreshOnDutyPanel();
+      });
+
+      clearAssignBtn.addEventListener("click", () => {
+        const operator = document.getElementById("assignOperator").value.trim();
+        if (!operator) { assignOutput.textContent = "Select an operator first."; return; }
+        const assignments = getAssignments();
+        delete assignments[operator];
+        localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+        assignOutput.textContent = "Assignment cleared for " + operator;
+        refreshOnDutyPanel();
+      });
+
+      // Auto-refresh every 5 seconds
+      refreshOnDutyPanel();
+      setInterval(refreshOnDutyPanel, 5000);
+    </script>
+  </body>
+</html>

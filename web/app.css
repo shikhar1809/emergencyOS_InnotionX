@@ -157,6 +157,141 @@ ul.clean li {
   overflow: hidden;
 }
 
+/* Google map canvas wrapper */
+.mapWrap {
+  position: relative;
+  height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #223355;
+  background: #090f1c;
+}
+
+.gmapCanvas {
+  width: 100%;
+  height: 100%;
+}
+
+.mapError {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(9, 15, 28, 0.94);
+  color: #c5d0ec;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Leaflet tweaks for dark UI */
+.leaflet-container {
+  background: #090f1c;
+  font: inherit;
+}
+.leaflet-control-attribution {
+  background: rgba(8, 12, 24, 0.6) !important;
+  color: #a7b1c8 !important;
+  border-radius: 8px !important;
+  padding: 2px 8px !important;
+}
+
+/* Management (reference image style) */
+.mgmtLayout {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: 14px;
+  min-height: 520px;
+}
+
+.mgmtSidebar {
+  background: #0a1220;
+  border: 1px solid #1d2e47;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.mgmtSideTop {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mgmtNavBtn {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #253856;
+  background: #0c1525;
+  color: #9db5d8;
+  cursor: pointer;
+  font-weight: 600;
+}
+.mgmtNavBtn.active {
+  background: #1a2e50;
+  border-color: #3f7cff;
+  color: #eef2ff;
+}
+
+.mgmtSideBlock {
+  border-top: 1px solid #1a2a42;
+  padding-top: 12px;
+}
+
+.sideUnit {
+  border: 1px solid #1d2e47;
+  background: #0d1828;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.sideUnitTitle { font-weight: 700; font-size: 13px; color: #eef2ff; }
+.sideUnitSub { font-size: 12px; color: #8a96b0; margin-top: 4px; }
+
+.mgmtMain {
+  background: #0d1828;
+  border: 1px solid #1d2e47;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.mgmtMainHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.mgmtMainTitle {
+  font-weight: 800;
+  color: #eef2ff;
+  letter-spacing: 0.2px;
+}
+
+.mview { display: none; }
+.mview.active { display: block; }
+
+.mgmtDetails {
+  background: #0a1220;
+  border: 1px solid #1d2e47;
+  border-radius: 14px;
+  padding: 12px;
+}
+.mgmtDetailsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #9db5d8;
+  font-weight: 700;
+  border-bottom: 1px solid #1a2a42;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 1040px) {
+  .mgmtLayout { grid-template-columns: 1fr; }
+}
+
 .pin {
   position: absolute;
   width: 13px;

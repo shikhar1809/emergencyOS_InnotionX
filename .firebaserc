@@ -1,5 +1,20 @@
 {
   "projects": {
     "default": "emergencyos-innovationx"
+  },
+  "targets": {
+    "emergencyos-innovationx": {
+      "hosting": {
+        "admin": [
+          "emergencyos-innovationx"
+        ],
+        "fleet": [
+          "emergencyos-innovationx-fleet"
+        ],
+        "staff": [
+          "emergencyos-innovationx-staff"
+        ]
+      }
+    }
   }
 }

@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Goel Hospital – Admin Panel</title>
     <link rel="stylesheet" href="./app.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
   </head>
   <body>
     <main class="page">
@@ -21,84 +27,149 @@
 
       <!-- ── Management ─────────────────────────────────── -->
       <section id="tab-management" class="tabs active">
-        <div class="grid">
-          <article class="card card-accent-blue">
-            <h3>Staff On Duty</h3>
-            <p class="stat" id="staffCount">42</p>
-            <p class="stat-sub">6 on leave · 4 unconfirmed</p>
-            <div class="progressBar"><div class="fill" id="staffBar" style="width:72%"></div></div>
-            <div class="row" style="margin-top:12px">
-              <button id="addStaffBtn">Mark On-Duty</button>
-              <button class="secondary" id="removeStaffBtn">Mark Off-Duty</button>
+        <div class="mgmtLayout">
+          <aside class="mgmtSidebar">
+            <div class="mgmtSideTop">
+              <button class="mgmtNavBtn active" data-mview="fleet">Fleet</button>
+              <button class="mgmtNavBtn" data-mview="patients">Patients</button>
+              <button class="mgmtNavBtn" data-mview="staff">Staff</button>
+              <button class="mgmtNavBtn" data-mview="wards">Wards</button>
             </div>
-          </article>
-          <article class="card card-accent-amber">
-            <h3>Fleet Status</h3>
-            <p class="stat" id="fleetCount">10</p>
-            <p class="stat-sub" id="fleetSub">2 dispatched · 12 total</p>
-            <div class="progressBar"><div class="fill" id="fleetBar" style="width:83%"></div></div>
-            <div class="row" style="margin-top:12px">
-              <button id="dispatchFleetBtn">Dispatch</button>
-              <button class="secondary" id="returnFleetBtn">Return Vehicle</button>
-            </div>
-          </article>
-          <article class="card card-accent-red">
-            <h3>Incoming Emergencies</h3>
-            <p class="stat" id="emergencyCount">7</p>
-            <p class="stat-sub">3 critical · 4 stable</p>
-            <div class="progressBar"><div class="fill red" style="width:58%"></div></div>
-            <div class="row" style="margin-top:12px">
-              <button id="addEmergencyBtn">Add Case</button>
-              <button class="secondary" id="resolveEmergencyBtn">Resolve</button>
-            </div>
-          </article>
-        </div>
 
-        <p class="sectionTitle">Ward Load</p>
-        <div class="grid" id="wardGrid">
-          <article class="card">
-            <h3>ICU</h3>
-            <p class="stat" id="icuText">9<span style="font-size:18px;color:#6a7899">/12</span></p>
-            <div class="progressBar"><div class="fill" id="icuBar" style="width:75%"></div></div>
-          </article>
-          <article class="card">
-            <h3>Emergency Room</h3>
-            <p class="stat" id="erText">14<span style="font-size:18px;color:#6a7899">/20</span></p>
-            <div class="progressBar"><div class="fill green" id="erBar" style="width:70%"></div></div>
-          </article>
-          <article class="card">
-            <h3>General Ward</h3>
-            <p class="stat">38<span style="font-size:18px;color:#6a7899">/60</span></p>
-            <div class="progressBar"><div class="fill green" style="width:63%"></div></div>
-          </article>
-        </div>
+            <div class="mgmtSideBlock">
+              <div class="muted" style="margin-bottom:8px">Units</div>
+              <div class="sideUnit">
+                <div class="sideUnitTitle">EMS-LKO-18</div>
+                <div class="sideUnitSub">Standby • available</div>
+              </div>
+              <div class="sideUnit">
+                <div class="sideUnitTitle">EMS-LKO-09</div>
+                <div class="sideUnitSub">Dispatched • en route</div>
+              </div>
+            </div>
+          </aside>
 
-        <p class="sectionTitle">Credential Generator</p>
-        <article class="card">
-          <div class="row">
-            <input id="credName" placeholder="Full name" style="flex:1;min-width:160px" />
-            <select id="credRole">
-              <option value="doctor">Doctor</option>
-              <option value="worker">Worker</option>
-              <option value="fleet">Fleet Operator</option>
-              <option value="admin">Admin</option>
-            </select>
-            <button id="genCredBtn">Generate</button>
-          </div>
-          <p id="credOut" class="muted" style="margin-top:10px">Fill name and click generate.</p>
-        </article>
+          <section class="mgmtMain">
+            <div id="mview-fleet" class="mview active">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Live Fleet Map</div>
+                <div class="row">
+                  <button id="dispatchFleetBtn">Dispatch</button>
+                  <button class="secondary" id="returnFleetBtn">Return</button>
+                </div>
+              </div>
+              <div class="mapWrap">
+            <div id="mapMgmt" class="gmapCanvas" aria-label="OpenStreetMap"></div>
+                <div id="mapErrorMgmt" class="mapError" style="display:none"></div>
+              </div>
+              <div class="row" style="margin-top:10px;gap:12px">
+                <span>🔴 Fleet</span>
+                <span>🔵 Patients</span>
+                <span>🟢 Resolved</span>
+              </div>
+            </div>
+
+            <div id="mview-patients" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Patients</div>
+                <span class="badge">Incoming: <b id="emergencyCount">7</b></span>
+              </div>
+              <div class="grid">
+                <article class="card">
+                  <h3>Track Patient</h3>
+                  <div class="row">
+                    <input id="patientName" placeholder="Patient name" style="flex:1" />
+                    <input id="patientZone" placeholder="Ward/Zone" style="flex:1" />
+                    <button id="addPatientBtn">Track</button>
+                  </div>
+                  <ul class="clean" id="patientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
+                </article>
+                <article class="card">
+                  <h3>Gemma 4 Demographics</h3>
+                  <p id="gemmaHint" style="color:#c5d0ec;line-height:1.5">
+                    Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
+                  </p>
+                  <p class="muted" id="gemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
+                  <button class="secondary" id="refreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
+                </article>
+              </div>
+            </div>
+
+            <div id="mview-staff" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Staff</div>
+                <span class="badge">On Duty: <b id="staffCount">42</b></span>
+              </div>
+              <div class="grid">
+                <article class="card">
+                  <h3>Duty Control</h3>
+                  <div class="progressBar"><div class="fill" id="staffBar" style="width:72%"></div></div>
+                  <div class="row" style="margin-top:12px">
+                    <button id="addStaffBtn">Mark On-Duty</button>
+                    <button class="secondary" id="removeStaffBtn">Mark Off-Duty</button>
+                  </div>
+                </article>
+                <article class="card">
+                  <h3>Credential Generator</h3>
+                  <div class="row">
+                    <input id="credName" placeholder="Full name" style="flex:1;min-width:160px" />
+                    <select id="credRole">
+                      <option value="doctor">Doctor</option>
+                      <option value="worker">Worker</option>
+                      <option value="fleet">Fleet Operator</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <button id="genCredBtn">Generate</button>
+                  </div>
+                  <p id="credOut" class="muted" style="margin-top:10px">Fill name and click generate.</p>
+                </article>
+              </div>
+            </div>
+
+            <div id="mview-wards" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Wards</div>
+                <button class="secondary" id="refreshWardsBtn">Refresh</button>
+              </div>
+              <div class="grid">
+                <article class="card">
+                  <h3>ICU</h3>
+                  <p class="stat" id="icuText">9<span style="font-size:18px;color:#6a7899">/12</span></p>
+                  <div class="progressBar"><div class="fill" id="icuBar" style="width:75%"></div></div>
+                </article>
+                <article class="card">
+                  <h3>Emergency Room</h3>
+                  <p class="stat" id="erText">14<span style="font-size:18px;color:#6a7899">/20</span></p>
+                  <div class="progressBar"><div class="fill green" id="erBar" style="width:70%"></div></div>
+                </article>
+                <article class="card">
+                  <h3>General Ward</h3>
+                  <p class="stat">38<span style="font-size:18px;color:#6a7899">/60</span></p>
+                  <div class="progressBar"><div class="fill green" style="width:63%"></div></div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <aside class="mgmtDetails">
+            <div class="mgmtDetailsHeader">
+              <div>Details</div>
+              <div style="opacity:0.8">›</div>
+            </div>
+            <p class="muted" style="margin-top:14px" id="detailsText">
+              Tap a fleet marker or pick a unit from the list to manage it.
+            </p>
+          </aside>
+        </div>
       </section>
 
       <!-- ── Map & Demographics ─────────────────────────── -->
       <section id="tab-map" class="tabs">
         <article class="card" style="margin-bottom:14px">
           <h3>Live Fleet + Patient Map</h3>
-          <div class="mapMock" id="liveMap">
-            <div class="pin"       style="left:22%;top:38%"  title="Ambulance 3"></div>
-            <div class="pin blue"  style="left:56%;top:46%"  title="Patient: Anjali P"></div>
-            <div class="pin green" style="left:74%;top:25%"  title="Patient: Ravi K"></div>
-            <div class="pin"       style="left:38%;top:62%"  title="Ambulance 1"></div>
-            <div class="pin blue"  style="left:82%;top:54%"  title="Patient: Meera S"></div>
+          <div class="mapWrap">
+            <div id="mapMain" class="gmapCanvas" aria-label="OpenStreetMap"></div>
+            <div id="mapError" class="mapError" style="display:none"></div>
           </div>
           <div class="row" style="margin-top:8px;gap:12px">
             <span>🔴 Fleet</span>
@@ -338,5 +409,10 @@
     </div>
 
     <script src="./app.js"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
   </body>
 </html>

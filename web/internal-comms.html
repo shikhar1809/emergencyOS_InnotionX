@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Internal Comms</title>
+    <link rel="stylesheet" href="./app.css" />
+    <style>
+      #msgList {
+        max-height: 340px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 4px 0;
+      }
+      .msg-item {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .msg-item.hazard {
+        background: rgba(185,28,28,0.18);
+        border-color: rgba(239,68,68,0.35);
+        color: #fca5a5;
+      }
+      .msg-item .meta {
+        font-size: 11px;
+        opacity: 0.45;
+        margin-bottom: 2px;
+      }
+      .msg-item .text { color: #f3f4f6; }
+      .empty-state {
+        color: #4b5563;
+        font-size: 13px;
+        padding: 12px 0;
+      }
+      #loadingSpinner {
+        color: #6b7280;
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      .channel-active { border-color: #7c3aed !important; color: #c4b5fd !important; }
+      .hazard-badge {
+        display: inline-block;
+        background: rgba(185,28,28,0.3);
+        border: 1px solid rgba(239,68,68,0.4);
+        color: #fca5a5;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        margin-left: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="titleRow">
+        <div>
+          <h1>Internal Comms</h1>
+          <p class="muted">Discord-style channels — shared with Staff Portal in real-time</p>
+        </div>
+        <span class="badge">Comms</span>
+      </div>
+
+      <section class="grid">
+        <article class="card">
+          <h3>Channels</h3>
+          <div class="row">
+            <button class="secondary channelBtn channel-active" data-channel="alerts">#alerts</button>
+            <button class="secondary channelBtn" data-channel="shift-updates">#shift-updates</button>
+            <button class="secondary channelBtn" data-channel="ems-handshake">#ems-handshake</button>
+            <button class="secondary channelBtn" data-channel="admin">#admin</button>
+          </div>
+          <p style="margin-top: 10px">Current channel: <strong id="activeChannelLabel">#alerts</strong></p>
+        </article>
+        <article class="card">
+          <h3>Role + Duty</h3>
+          <div class="row">
+            <select id="roleSelect">
+              <option>Admin</option>
+              <option>Doctor</option>
+              <option>Worker</option>
+              <option>Fleet Operator</option>
+            </select>
+            <button id="toggleDutyBtn">Toggle Duty</button>
+          </div>
+          <p>Status: <strong id="dutyStatus">On Duty</strong></p>
+        </article>
+      </section>
+
+      <section class="card" style="margin-top: 12px">
+        <h3>
+          Message Feed
+          <span id="liveIndicator" style="font-size:11px;color:#4ade80;font-weight:400;margin-left:8px;">● Live</span>
+        </h3>
+        <div id="loadingSpinner">Loading messages...</div>
+        <ul class="clean" id="msgList" style="display:none;list-style:none;margin:0;padding:0;"></ul>
+        <div class="row" style="margin-top: 10px">
+          <input id="msgInput" placeholder="Type update..." style="flex: 1" />
+          <button id="sendMsgBtn">Send</button>
+        </div>
+      </section>
+    </main>
+
+    <div class="taskbar">
+      <nav class="dock">
+        <a href="./management.html">Management</a>
+        <a href="./map-demographics.html">Map &amp; Demographics</a>
+        <a href="./insights-chat.html">Insights + AI Chat</a>
+        <a href="./billings.html">Billings</a>
+        <a class="active" href="./internal-comms.html">Internal Comms</a>
+        <a href="./auth-security.html">Auth &amp; Security</a>
+      </nav>
+    </div>
+
+    <!-- Firebase JS SDK (compat) -->
+    <!-- Replace placeholder values with your real Firebase project config -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+    <script>
+      // ── Firebase config ──────────────────────────────────────────────────────
+      // Replace ALL placeholder values with your real config from:
+      // Firebase Console → Project Settings → Your apps → Web app
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "emergencyos-innovationx.firebaseapp.com",
+        projectId: "emergencyos-innovationx",
+        storageBucket: "emergencyos-innovationx.firebasestorage.app",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const db = firebase.firestore();
+
+      // ── State ─────────────────────────────────────────────────────────────────
+      let activeChannel = "alerts";
+      let onDuty = true;
+      let unsubscribe = null;
+
+      const activeChannelLabelEl = document.getElementById("activeChannelLabel");
+      const roleSelectEl = document.getElementById("roleSelect");
+      const dutyStatusEl = document.getElementById("dutyStatus");
+      const toggleDutyBtn = document.getElementById("toggleDutyBtn");
+      const msgListEl = document.getElementById("msgList");
+      const msgInputEl = document.getElementById("msgInput");
+      const sendMsgBtn = document.getElementById("sendMsgBtn");
+      const loadingSpinner = document.getElementById("loadingSpinner");
+
+      // ── Helpers ───────────────────────────────────────────────────────────────
+      function formatTime(ts) {
+        if (!ts) return "";
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function renderMessages(msgs) {
+        loadingSpinner.style.display = "none";
+        msgListEl.style.display = "flex";
+        msgListEl.innerHTML = "";
+
+        if (msgs.length === 0) {
+          msgListEl.innerHTML = '<li class="empty-state">No messages in #' + activeChannel + ' yet.</li>';
+          return;
+        }
+
+        msgs.forEach(function(msg) {
+          const li = document.createElement("li");
+          const isHazard = (msg.role === "HAZARD ALERT") || (msg.text && msg.text.startsWith("🚨"));
+          li.className = "msg-item" + (isHazard ? " hazard" : "");
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          const hazardBadge = isHazard ? '<span class="hazard-badge">HAZARD</span>' : "";
+          meta.innerHTML = "<strong>" + (msg.senderName || "System") + "</strong>" +
+            " · " + (msg.role || "") + hazardBadge +
+            " · " + formatTime(msg.timestamp);
+
+          const text = document.createElement("div");
+          text.className = "text";
+          text.textContent = msg.text || "";
+
+          li.appendChild(meta);
+          li.appendChild(text);
+          msgListEl.appendChild(li);
+        });
+
+        // Scroll to latest
+        msgListEl.scrollTop = msgListEl.scrollHeight;
+      }
+
+      // ── Subscribe to Firestore channel ────────────────────────────────────────
+      function subscribeToChannel(channel) {
+        if (unsubscribe) unsubscribe();
+        loadingSpinner.style.display = "block";
+        msgListEl.style.display = "none";
+        msgListEl.innerHTML = "";
+
+        unsubscribe = db
+          .collection("comms")
+          .doc(channel)
+          .collection("messages")
+          .orderBy("timestamp", "asc")
+          .limitToLast(80)
+          .onSnapshot(function(snap) {
+            const msgs = snap.docs.map(function(d) {
+              return Object.assign({ id: d.id }, d.data());
+            });
+            renderMessages(msgs);
+          }, function(err) {
+            loadingSpinner.textContent = "Error loading messages: " + err.message;
+          });
+      }
+
+      // ── Send message ──────────────────────────────────────────────────────────
+      function sendMessage() {
+        const text = msgInputEl.value.trim();
+        if (!text) return;
+        const role = roleSelectEl.value;
+        db.collection("comms")
+          .doc(activeChannel)
+          .collection("messages")
+          .add({
+            channel: activeChannel,
+            senderUid: "admin",
+            senderName: "Admin",
+            role: role,
+            text: text,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          })
+          .then(function() {
+            msgInputEl.value = "";
+          })
+          .catch(function(err) {
+            alert("Failed to send: " + err.message);
+          });
+      }
+
+      // ── Event listeners ───────────────────────────────────────────────────────
+      document.querySelectorAll(".channelBtn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll(".channelBtn").forEach(function(b) {
+            b.classList.remove("channel-active");
+          });
+          btn.classList.add("channel-active");
+          activeChannel = btn.dataset.channel;
+          activeChannelLabelEl.textContent = "#" + activeChannel;
+          subscribeToChannel(activeChannel);
+        });
+      });
+
+      toggleDutyBtn.addEventListener("click", function() {
+        onDuty = !onDuty;
+        dutyStatusEl.textContent = onDuty ? "On Duty" : "Off Duty";
+        // Optionally post duty change to channel
+        db.collection("comms")
+          .doc(activeChannel)
+          .collection("messages")
+          .add({
+            channel: activeChannel,
+            senderUid: "admin",
+            senderName: "Admin",
+            role: roleSelectEl.value,
+            text: "Admin changed status to " + dutyStatusEl.textContent,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+      });
+
+      sendMsgBtn.addEventListener("click", sendMessage);
+      msgInputEl.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // ── Init ──────────────────────────────────────────────────────────────────
+      subscribeToChannel(activeChannel);
+    </script>
+  </body>
+</html>

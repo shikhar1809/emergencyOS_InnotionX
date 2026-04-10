@@ -24,6 +24,11 @@ function switchTab(tab) {
   }
   tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
   pageTitleEl.textContent = tabTitles[tab];
+
+  // If map is visible after tab switch, resize map
+  if (tab === "map" || tab === "management") {
+    tryResizeMapsSoon();
+  }
 }
 tabButtons.forEach((btn) => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
 
@@ -41,6 +46,24 @@ function updateTray() {
 }
 updateTray();
 setInterval(updateTray, 1000);
+
+// ── Management side navigation (Fleet/Patients/Staff/Wards) ──
+const mgmtBtns = Array.from(document.querySelectorAll(".mgmtNavBtn"));
+const mgmtViews = {
+  fleet: document.getElementById("mview-fleet"),
+  patients: document.getElementById("mview-patients"),
+  staff: document.getElementById("mview-staff"),
+  wards: document.getElementById("mview-wards"),
+};
+
+function switchMgmtView(name) {
+  mgmtBtns.forEach((b) => b.classList.toggle("active", b.dataset.mview === name));
+  Object.entries(mgmtViews).forEach(([k, el]) => el && el.classList.toggle("active", k === name));
+  // Resize maps when fleet view opens
+  if (name === "fleet") tryResizeMapsSoon();
+}
+
+mgmtBtns.forEach((b) => b.addEventListener("click", () => switchMgmtView(b.dataset.mview)));
 
 // ── Management tab ────────────────────────────────────────────
 let staffCount = 42;
@@ -112,7 +135,7 @@ document.getElementById("genCredBtn").addEventListener("click", () => {
   document.getElementById("credOut").textContent = email + " | " + pass;
 });
 
-// ── Map tab ───────────────────────────────────────────────────
+// ── Map tab + Patients list (shared) ──────────────────────────
 const patientListEl = document.getElementById("patientList");
 function addPatientRow(name, zone) {
   const li = document.createElement("li");
@@ -144,6 +167,95 @@ document.getElementById("refreshGemmaBtn").addEventListener("click", () => {
   gemmaIdx = (gemmaIdx + 1) % gemmaHints.length;
   document.getElementById("gemmaHint").textContent = gemmaHints[gemmaIdx];
   document.getElementById("gemmaTs").textContent = "Model: Gemma 4 · Updated " + new Date().toLocaleTimeString();
+});
+
+// ── Open-source maps (Leaflet + OpenStreetMap) ────────────────
+let osmMain;
+let osmMgmt;
+let osmMarkersMain = [];
+let osmMarkersMgmt = [];
+const demoMarkers = [
+  { type: "fleet", label: "Ambulance 3", lat: 28.6139, lng: 77.2090 },
+  { type: "patient", label: "Patient: Anjali P", lat: 28.6109, lng: 77.2140 },
+  { type: "patient", label: "Patient: Ravi K", lat: 28.6172, lng: 77.2062 },
+  { type: "fleet", label: "Ambulance 1", lat: 28.6097, lng: 77.2051 },
+  { type: "patient", label: "Patient: Meera S", lat: 28.6160, lng: 77.2178 },
+];
+
+function showMapError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = "flex";
+  el.innerHTML =
+    "<div><b>Map not loaded</b><br/>" +
+    msg +
+    "<br/><br/>Common fixes:<br/>" +
+    "- Check if your network blocks tile servers<br/>" +
+    "- Try again on a different connection<br/>" +
+    "- Ensure JavaScript is enabled</div>";
+}
+
+function tryResizeMapsSoon() {
+  setTimeout(() => {
+    try {
+      if (osmMain) osmMain.invalidateSize();
+      if (osmMgmt) osmMgmt.invalidateSize();
+    } catch (_) {}
+  }, 250);
+}
+
+function clearLeafletMarkers(arr) {
+  arr.forEach((m) => m.remove());
+  arr.length = 0;
+}
+
+function markerColor(type) {
+  if (type === "fleet") return "#ff5252";
+  if (type === "patient") return "#4da8ff";
+  return "#4ddb8e";
+}
+
+function addLeafletMarkers(map, arr) {
+  clearLeafletMarkers(arr);
+  demoMarkers.forEach((p) => {
+    const marker = L.circleMarker([p.lat, p.lng], {
+      radius: 8,
+      color: markerColor(p.type),
+      fillColor: markerColor(p.type),
+      fillOpacity: 0.9,
+      weight: 2,
+    }).addTo(map);
+    marker.bindPopup("<b>" + p.label + "</b>");
+    arr.push(marker);
+  });
+}
+
+function initLeafletMap(id, errorId) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  if (!window.L) {
+    showMapError(errorId, "Leaflet library failed to load.");
+    return null;
+  }
+  const map = L.map(el, { zoomControl: true }).setView([28.6139, 77.2090], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>',
+  }).addTo(map);
+  return map;
+}
+
+function initOpenSourceMaps() {
+  osmMain = initLeafletMap("mapMain", "mapError");
+  osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt");
+  if (osmMain) addLeafletMarkers(osmMain, osmMarkersMain);
+  if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt);
+  tryResizeMapsSoon();
+}
+
+// Leaflet loads via script tag; run after DOM is ready
+window.addEventListener("load", () => {
+  initOpenSourceMaps();
 });
 
 // ── Insights tab – Gemma 4 via Gemini API ────────────────────
