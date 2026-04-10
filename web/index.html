@@ -48,41 +48,38 @@
         left: 0;
         right: 0;
         bottom: 0;
-        height: 52px;
-        background: #1b1c22;
-        border-top: 1px solid #2f313b;
+        height: 58px;
+        background: #1a1b20;
+        border-top: 1px solid #2c2e36;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        padding: 0 10px;
+        justify-content: center;
+        padding: 0 8px;
         z-index: 9999;
       }
-      .tray {
+      .dock {
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 15px;
-      }
-      .clockBox {
-        text-align: right;
-        line-height: 1.1;
-        margin-left: 4px;
-      }
-      .clock {
-        font-size: 20px;
-      }
-      .date {
-        font-size: 13px;
-        color: #d4d4d4;
+        gap: 6px;
+        padding: 4px 8px;
+        background: #20222b;
+        border-radius: 10px;
       }
       .dockBtn {
-        background: #30323d;
+        width: 46px;
+        height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #2a2c36;
         color: #f1f1f1;
-        border: 1px solid #4a4d5e;
-        border-radius: 6px;
-        padding: 5px 10px;
-        font-size: 13px;
+        border: 1px solid #404354;
+        border-radius: 8px;
+        font-size: 22px;
         text-decoration: none;
+      }
+      .dockBtn:hover {
+        background: #343747;
       }
     </style>
   </head>
@@ -96,18 +93,13 @@
       </div>
     </div>
     <div class="taskbar">
-      <div class="tray">
-        <a class="dockBtn" href="./demo.html">Demo</a>
-        <span>^</span>
-        <span>☁️</span>
-        <span>ENG IN</span>
-        <span>📶</span>
-        <span>🔊</span>
-        <span>🔋</span>
-        <div class="clockBox">
-          <div class="clock" id="clock">10:55</div>
-          <div class="date" id="date">10-04-2026</div>
-        </div>
+      <div class="dock">
+        <a class="dockBtn" href="./demo1.html" title="Demo 1">🪟</a>
+        <a class="dockBtn" href="./demo2.html" title="Demo 2">📁</a>
+        <a class="dockBtn" href="./demo3.html" title="Demo 3">🌐</a>
+        <a class="dockBtn" href="./demo5.html" title="Demo 4">🎯</a>
+        <a class="dockBtn" href="./demo5.html" title="Demo 5">🔷</a>
+        <a class="dockBtn" href="./demo5.html" title="Demo 6">🗒️</a>
       </div>
     </div>
 
@@ -115,8 +107,6 @@
       const countEl = document.getElementById("count");
       const sirenEl = document.getElementById("siren");
       const sendBtn = document.getElementById("sendBtn");
-      const clockEl = document.getElementById("clock");
-      const dateEl = document.getElementById("date");
       let count = 0;
       let sirenOn = false;
 
@@ -126,22 +116,6 @@
         countEl.textContent = String(count);
         sirenEl.textContent = sirenOn ? "ON" : "OFF";
       });
-
-      function refreshClock() {
-        const now = new Date();
-        const h = String(now.getHours()).padStart(2, "0");
-        const m = String(now.getMinutes()).padStart(2, "0");
-
-        const d = String(now.getDate()).padStart(2, "0");
-        const mo = String(now.getMonth() + 1).padStart(2, "0");
-        const y = now.getFullYear();
-
-        clockEl.textContent = h + ":" + m;
-        dateEl.textContent = d + "-" + mo + "-" + y;
-      }
-
-      refreshClock();
-      setInterval(refreshClock, 1000);
     </script>
   </body>
 </html>
