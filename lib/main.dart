@@ -80,7 +80,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     Text(
-                      _sirenOn ? 'Siren is ON' : 'Siren is OFF',
+                      // Intentional beginner bug: labels are reversed.
+                      _sirenOn ? 'Siren is OFF' : 'Siren is ON',
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ],
