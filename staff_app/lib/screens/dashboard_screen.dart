@@ -4,6 +4,8 @@ import '../models/doctor_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../services/demo_session.dart';
+import 'alerts_screen.dart';
+import 'reception_checkin_screen.dart';
 import 'shift_screen.dart';
 import 'ward_screen.dart';
 import 'duty_screen.dart';
@@ -215,6 +217,15 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
             actions: [
+              IconButton(
+                tooltip: 'Alerts',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => AlertsScreen(doctorUid: doctor.uid)),
+                  );
+                },
+                icon: const Icon(Icons.notifications_none),
+              ),
               // Duty status badge
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 10),
@@ -267,6 +278,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   offset: const Offset(0, 40),
                   onSelected: (v) {
                     if (v == 'signout') _signOut();
+                    if (v == 'reception') {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ReceptionCheckInScreen(staff: doctor)),
+                      );
+                    }
                   },
                   itemBuilder: (_) => [
                     PopupMenuItem(
@@ -286,6 +302,21 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
                     const PopupMenuDivider(),
+                    if (doctor.role.toLowerCase().contains('reception') ||
+                        doctor.role.toLowerCase().contains('admin'))
+                      PopupMenuItem(
+                        value: 'reception',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.qr_code_scanner,
+                                color: Color(0xFF9ca3af), size: 16),
+                            const SizedBox(width: 8),
+                            Text('Reception check-in',
+                                style: GoogleFonts.inter(
+                                    color: const Color(0xFF9ca3af), fontSize: 13)),
+                          ],
+                        ),
+                      ),
                     PopupMenuItem(
                       value: 'signout',
                       child: Row(

@@ -4,19 +4,17 @@ const tabSections = {
   overview: document.getElementById("tab-overview"),
   management: document.getElementById("tab-management"),
   operations: document.getElementById("tab-operations"),
-  patients: document.getElementById("tab-patients"),
   insights: document.getElementById("tab-insights"),
   billings: document.getElementById("tab-billings"),
   comms: document.getElementById("tab-comms"),
 };
 const tabTitles = {
   overview: "Overview",
-  management: "Management",
+  management: "Manage",
   operations: "Operations",
-  patients: "Patients",
-  insights: "Insights And Analytics",
+  insights: "Report",
   billings: "Billings",
-  comms: "Internal Comms",
+  comms: "Comms",
 };
 const pageTitleEl = document.getElementById("pageTitle");
 
@@ -118,7 +116,13 @@ function switchTab(tab) {
     if (!section) continue;
     section.classList.toggle("active", name === tab);
   }
-  tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
+  tabButtons.forEach((btn) => {
+    const on = btn.dataset.tab === tab;
+    btn.classList.toggle("active", on);
+    if (btn.getAttribute("role") === "tab") {
+      btn.setAttribute("aria-selected", on ? "true" : "false");
+    }
+  });
   pageTitleEl.textContent = tabTitles[tab];
 
   // If map is visible after tab switch, resize map
@@ -181,6 +185,33 @@ function refreshOverviewKpis() {
       (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
     bedsEl.textContent = String(free);
   }
+
+  const fleetEl2 = document.getElementById("ovFleetCount2");
+  if (fleetEl2) fleetEl2.textContent = String(demoState.fleet.length);
+  const patEl2 = document.getElementById("ovPatientCount2");
+  if (patEl2) patEl2.textContent = String(demoState.patients.length);
+  const bedsEl2 = document.getElementById("ovBedsFree2");
+  if (bedsEl2) {
+    const w = demoState.wards;
+    const free =
+      (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
+    bedsEl2.textContent = String(free);
+  }
+}
+
+// Sync KPI values in Overview sidebar blocks too.
+function refreshOverviewSideStats() {
+  const fc = document.getElementById("ovFleetCount");
+  const pc = document.getElementById("ovPatientCount");
+  const bc = document.getElementById("ovBedsFree");
+  if (fc) fc.textContent = String(demoState.fleet.length);
+  if (pc) pc.textContent = String(demoState.patients.length);
+  if (bc) {
+    const w = demoState.wards;
+    const free =
+      (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
+    bc.textContent = String(free);
+  }
 }
 
 function tickSystemHealth() {
@@ -194,132 +225,342 @@ function tickSystemHealth() {
 tickSystemHealth();
 setInterval(tickSystemHealth, 2500);
 refreshOverviewKpis();
+refreshOverviewSideStats();
 
-// ── Operations section (same layout as Management) ─────────────
-const opsBtns = Array.from(document.querySelectorAll(".opsNavBtn"));
-const opsViews = {
-  overview: document.getElementById("oview-overview"),
-  incidents: document.getElementById("oview-incidents"),
-  analytics: document.getElementById("oview-analytics"),
-  logs: document.getElementById("oview-logs"),
+// ── Operations: human-in-loop feed ────────────────────────────
+const opsState = {
+  items: [],
+  selectedId: "",
+  filter: "all", // all | fleet | patients | staff
+  aiEnabled: true,
 };
 
-function switchOpsView(name) {
-  opsBtns.forEach((b) => b.classList.toggle("active", b.dataset.oview === name));
-  Object.entries(opsViews).forEach(([k, el]) => el && el.classList.toggle("active", k === name));
+function opsNowTs() {
+  return Date.now();
 }
 
-opsBtns.forEach((b) => b.addEventListener("click", () => switchOpsView(b.dataset.oview)));
+function opsFmtTime(ms) {
+  try {
+    return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch (_) {
+    return "";
+  }
+}
 
-const demoOpsQueue = [
-  { id: "OPS-1182", title: "P1 surge: trauma corridor", sev: "P1", note: "Add standby near IT Crossing" },
-  { id: "OPS-1186", title: "ICU saturation alert", sev: "P2", note: "Step-down move-out plan ready" },
-  { id: "OPS-1189", title: "Fleet GPS jitter", sev: "P3", note: "Signal dip near bridge zone" },
-  { id: "OPS-1191", title: "Shift gap: ER nurse", sev: "P2", note: "Call backup roster" },
-];
+function opsTypeLabel(t) {
+  if (t === "fleet") return "Fleet";
+  if (t === "patients") return "Patients";
+  if (t === "staff") return "Staff";
+  return "Ops";
+}
 
-function renderOpsQueue() {
-  const el = document.getElementById("opsQueueList");
-  if (!el) return;
-  el.innerHTML = "";
-  demoOpsQueue.forEach((q) => {
-    const div = document.createElement("div");
-    div.className = "sideUnit sideUnitClick";
-    div.dataset.opsId = q.id;
-    div.innerHTML = '<div class="sideUnitTitle"></div><div class="sideUnitSub"></div>';
-    div.querySelector(".sideUnitTitle").textContent = q.id + " · " + q.sev;
-    div.querySelector(".sideUnitSub").textContent = q.title;
-    div.addEventListener("click", () => showOpsDetail(q.id));
-    el.appendChild(div);
+function opsStatusLabel(s) {
+  if (s === "approved") return "Approved";
+  if (s === "rejected") return "Rejected";
+  if (s === "hold") return "Hold";
+  return "Pending";
+}
+
+function addOpsItem(partial) {
+  const id = partial.id || ("OPS-" + Math.floor(Math.random() * 900000));
+  const item = Object.assign(
+    {
+      id,
+      type: "ops",
+      title: "",
+      summary: "",
+      createdAt: opsNowTs(),
+      status: "pending",
+      payload: {},
+      aiSuggestion: null,
+    },
+    partial
+  );
+  opsState.items.unshift(item);
+  // Keep list sane.
+  if (opsState.items.length > 120) opsState.items.length = 120;
+  if (!opsState.selectedId) opsState.selectedId = item.id;
+  renderOpsFeed();
+  renderOpsDetailById(opsState.selectedId);
+  refreshOpsKpis();
+}
+
+function emitOpsFromModule(type, title, summary, payload) {
+  addOpsItem({
+    type,
+    title,
+    summary,
+    payload: payload || {},
+    createdAt: opsNowTs(),
+    status: "pending",
   });
 }
 
-function showOpsDetail(id) {
-  const d = demoOpsQueue.find((x) => x.id === id);
+function filteredOpsItems() {
+  if (opsState.filter === "all") return opsState.items;
+  return opsState.items.filter((i) => i.type === opsState.filter);
+}
+
+function refreshOpsKpis() {
+  const fleet = opsState.items.filter((i) => i.type === "fleet").length;
+  const pat = opsState.items.filter((i) => i.type === "patients").length;
+  const st = opsState.items.filter((i) => i.type === "staff").length;
+  const elF = document.getElementById("opsKpiFleet");
+  const elP = document.getElementById("opsKpiPatients");
+  const elS = document.getElementById("opsKpiStaff");
+  if (elF) elF.textContent = String(fleet);
+  if (elP) elP.textContent = String(pat);
+  if (elS) elS.textContent = String(st);
+
+  const badge = document.getElementById("opsFeedBadge");
+  if (badge) {
+    const pending = opsState.items.filter((i) => i.status === "pending").length;
+    badge.textContent = "Pending: " + pending;
+  }
+}
+
+function renderOpsFeed() {
+  const list = document.getElementById("opsFeedList");
+  if (!list) return;
+  list.innerHTML = "";
+
+  const items = filteredOpsItems();
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "muted";
+    empty.style.padding = "10px 2px";
+    empty.textContent = "No updates yet.";
+    list.appendChild(empty);
+    return;
+  }
+
+  items.forEach((it) => {
+    const row = document.createElement("div");
+    row.className = "opsFeedRow" + (it.id === opsState.selectedId ? " active" : "");
+    row.setAttribute("role", "button");
+    row.setAttribute("tabindex", "0");
+    row.setAttribute("aria-label", "Open update " + it.id);
+    row.dataset.opsId = it.id;
+
+    row.innerHTML =
+      "<div class=\"opsFeedTop\">" +
+      "<span class=\"opsTag opsTag--" + it.type + "\">" + opsTypeLabel(it.type) + "</span>" +
+      "<span class=\"opsTime\">" + opsFmtTime(it.createdAt) + "</span>" +
+      "</div>" +
+      "<div class=\"opsTitle\"></div>" +
+      "<div class=\"opsSub\"></div>" +
+      "<div class=\"opsStatus opsStatus--" + it.status + "\">" + opsStatusLabel(it.status) + "</div>";
+
+    row.querySelector(".opsTitle").textContent = it.title || it.id;
+    row.querySelector(".opsSub").textContent = it.summary || "";
+
+    function open() {
+      opsState.selectedId = it.id;
+      renderOpsFeed();
+      renderOpsDetailById(it.id);
+    }
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") open();
+    });
+
+    list.appendChild(row);
+  });
+}
+
+function renderOpsDetailById(id) {
+  const it = opsState.items.find((x) => x.id === id);
+  renderOpsDetail(it || null);
+}
+
+function renderOpsDetail(it) {
   const out = document.getElementById("opsDetailsText");
-  if (!out || !d) return;
+  const actions = document.getElementById("opsDetailActions");
+  if (!out) return;
+  if (!it) {
+    out.textContent = "Select an update to review.";
+    if (actions) actions.hidden = true;
+    return;
+  }
+
+  if (actions) actions.hidden = false;
+
+  const payload = it.payload || {};
+  const ai = it.aiSuggestion;
+  const aiBox = ai
+    ? ("<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Gemini suggestion</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
+        (ai.decision || "needs-human") +
+        "</span><br/>" +
+        (ai.reason || "") +
+        "</div></div>")
+    : "";
+
   out.innerHTML =
     "<div class=\"detailsTitle\">" +
-    d.title +
+    it.title +
     "</div>" +
     "<div class=\"detailsBlocks\">" +
     "<div class=\"detailsGrid\">" +
-    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Ticket</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
-    d.id +
+    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Source</div><div class=\"detailsValue\"><span class=\"detailsValueStrong\">" +
+    opsTypeLabel(it.type) +
     "</span></div></div>" +
-    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Severity</div><div class=\"detailsValue\">" +
-    d.sev +
+    "<div class=\"detailsBlock\"><div class=\"detailsLabel\">Status</div><div class=\"detailsValue\">" +
+    opsStatusLabel(it.status) +
     "</div></div>" +
     "</div>" +
-    "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Action</div><div class=\"detailsValue\">" +
-    d.note +
+    "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Summary</div><div class=\"detailsValue\">" +
+    (it.summary || "—") +
     "</div></div>" +
+    "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Payload</div><div class=\"detailsValue\"><pre style=\"margin:0;white-space:pre-wrap;word-break:break-word;background:#060e1a;border:1px solid #1a2a42;padding:10px;border-radius:10px;max-height:220px;overflow:auto\">" +
+    String(JSON.stringify(payload, null, 2)).replace(/</g, "&lt;") +
+    "</pre></div></div>" +
+    aiBox +
     "</div>";
+
+  const approveBtn = document.getElementById("opsApproveBtn");
+  const rejectBtn = document.getElementById("opsRejectBtn");
+  const askBtn = document.getElementById("opsAskGeminiBtn");
+  const holdBtn = document.getElementById("opsHoldBtn");
+
+  if (approveBtn) approveBtn.disabled = it.status === "approved";
+  if (rejectBtn) rejectBtn.disabled = it.status === "rejected";
+  if (holdBtn) holdBtn.textContent = it.status === "hold" ? "Unhold" : "Hold";
+  if (askBtn) askBtn.disabled = !opsState.aiEnabled || it.status === "hold";
 }
 
-function seedOpsPanels() {
-  renderOpsQueue();
-  const notes = document.getElementById("opsQuickNotes");
-  if (notes) {
-    notes.innerHTML = "";
-    [
-      "19:00–22:00: expect congestion; keep 1 extra unit standby.",
-      "ICU: keep discharge coordination ready after 21:30.",
-      "EMS handshake: test token renewal at 02:00.",
-    ].forEach((t) => {
-      const li = document.createElement("li");
-      li.textContent = t;
-      notes.appendChild(li);
-    });
-  }
-  const inc = document.getElementById("opsIncidentList");
-  if (inc) {
-    inc.innerHTML = "";
-    demoOpsQueue.forEach((q) => {
-      const li = document.createElement("li");
-      li.textContent = q.id + " · " + q.title + " (" + q.sev + ")";
-      li.style.cursor = "pointer";
-      li.addEventListener("click", () => showOpsDetail(q.id));
-      inc.appendChild(li);
-    });
-  }
-  const logs = document.getElementById("opsLogs");
-  if (logs) {
-    logs.innerHTML = "";
-    ["[08:11] Auto-triage thresholds updated", "[07:58] Fleet unit EMS-LKO-09 dispatched", "[07:42] ICU move-out request approved"].forEach((t) => {
-      const li = document.createElement("li");
-      li.textContent = t;
-      logs.appendChild(li);
-    });
-  }
-  document.getElementById("opsAddLogBtn")?.addEventListener("click", () => {
-    const logs = document.getElementById("opsLogs");
-    if (!logs) return;
-    const li = document.createElement("li");
-    li.textContent = "[" + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + "] Manual note added by admin (demo)";
-    logs.prepend(li);
+function bindOpsActionsOnce() {
+  const approveBtn = document.getElementById("opsApproveBtn");
+  const rejectBtn = document.getElementById("opsRejectBtn");
+  const askBtn = document.getElementById("opsAskGeminiBtn");
+  const holdBtn = document.getElementById("opsHoldBtn");
+  const stop = document.getElementById("opsAiStop");
+  const badge = document.getElementById("opsFeedBadge");
+
+  if (badge && !badge._opsBound) badge._opsBound = true;
+
+  stop && stop.addEventListener("change", () => {
+    opsState.aiEnabled = !stop.checked;
+    renderOpsDetailById(opsState.selectedId);
   });
-  showOpsDetail(demoOpsQueue[0].id);
+
+  document.querySelectorAll(".opsFilterBtn").forEach((b) => {
+    if (b._opsBound) return;
+    b._opsBound = true;
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".opsFilterBtn").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      opsState.filter = b.dataset.filter || "all";
+      renderOpsFeed();
+    });
+  });
+
+  approveBtn && approveBtn.addEventListener("click", () => {
+    const it = opsState.items.find((x) => x.id === opsState.selectedId);
+    if (!it) return;
+    it.status = "approved";
+    renderOpsFeed();
+    renderOpsDetail(it);
+    refreshOpsKpis();
+  });
+  rejectBtn && rejectBtn.addEventListener("click", () => {
+    const it = opsState.items.find((x) => x.id === opsState.selectedId);
+    if (!it) return;
+    it.status = "rejected";
+    renderOpsFeed();
+    renderOpsDetail(it);
+    refreshOpsKpis();
+  });
+  holdBtn && holdBtn.addEventListener("click", () => {
+    const it = opsState.items.find((x) => x.id === opsState.selectedId);
+    if (!it) return;
+    it.status = it.status === "hold" ? "pending" : "hold";
+    renderOpsFeed();
+    renderOpsDetail(it);
+    refreshOpsKpis();
+  });
+
+  askBtn && askBtn.addEventListener("click", () => {
+    const it = opsState.items.find((x) => x.id === opsState.selectedId);
+    if (!it) return;
+    if (!opsState.aiEnabled) {
+      alert("AI paused by admin (Stop AI is enabled).");
+      return;
+    }
+    if (it.status === "hold") {
+      alert("This item is on hold; unhold to ask Gemini.");
+      return;
+    }
+    askBtn.disabled = true;
+    askBtn.textContent = "Asking…";
+    (async () => {
+      let suggestion = null;
+      try {
+        suggestion = await suggestOpsDecision(it);
+      } catch (e) {
+        suggestion = { decision: "needs-human", reason: "Client error: " + (e && e.message ? e.message : String(e)) };
+      }
+      it.aiSuggestion = suggestion;
+      renderOpsDetail(it);
+      askBtn.disabled = false;
+      askBtn.textContent = "Ask Gemini";
+    })();
+  });
 }
 
-seedOpsPanels();
+function seedOpsFeed() {
+  if (opsState.items.length) return;
+  addOpsItem({
+    id: "OPS-BOOT-1",
+    type: "staff",
+    title: "Shift update: ER coverage ok",
+    summary: "ER Shift A has 12 staff; last check-in 10:42.",
+    payload: { module: "staff", ward: "ER", onDuty: 12 },
+  });
+  addOpsItem({
+    id: "OPS-BOOT-2",
+    type: "patients",
+    title: "Consult request: cardiology",
+    summary: "Patient Ravi Kumar requested cardiology consult.",
+    payload: { module: "patients", patient: "Ravi Kumar", request: "consultation", specialty: "Cardiology" },
+  });
+  addOpsItem({
+    id: "OPS-BOOT-3",
+    type: "fleet",
+    title: "Unit EMS-LKO-09 dispatched",
+    summary: "Assigned to incident by admin; status now dispatched.",
+    payload: { module: "fleet", unit: "EMS-LKO-09", action: "assign" },
+  });
+}
 
-// ── Management side navigation (Patients / Fleet / Staff / Ward / Bed) ──
+bindOpsActionsOnce();
+seedOpsFeed();
+renderOpsFeed();
+renderOpsDetailById(opsState.selectedId);
+refreshOpsKpis();
+
+// ── Management side navigation (Patients / Fleet / Staff) ──
 const mgmtBtns = Array.from(document.querySelectorAll(".mgmtNavBtn"));
 const mgmtViews = {
   patients: document.getElementById("mview-patients"),
   fleet: document.getElementById("mview-fleet"),
   staff: document.getElementById("mview-staff"),
-  wards: document.getElementById("mview-wards"),
-  beds: document.getElementById("mview-beds"),
 };
 
 function switchMgmtView(name) {
   mgmtBtns.forEach((b) => b.classList.toggle("active", b.dataset.mview === name));
   Object.entries(mgmtViews).forEach(([k, el]) => el && el.classList.toggle("active", k === name));
+  const unitsBlock = document.getElementById("mgmtUnitsBlock");
+  const staffBlock = document.getElementById("mgmtStaffBlock");
+  const patientBlock = document.getElementById("mgmtPatientsBlock");
+  if (unitsBlock) unitsBlock.hidden = name === "staff" || name === "patients";
+  if (staffBlock) staffBlock.hidden = name !== "staff";
+  if (patientBlock) patientBlock.hidden = name !== "patients";
   // Resize maps when fleet view opens
   if (name === "fleet") tryResizeMapsSoon();
-  if (name === "patients") refreshMgmtPatientsQuickView();
+  if (name === "patients") {
+    refreshMgmtPatientsQuickView();
+    renderMgmtPatientRoster();
+  }
   if (name === "staff") {
     renderMgmtStaffList();
     if (!selectedStaffId) {
@@ -327,8 +568,6 @@ function switchMgmtView(name) {
       if (firstOnDuty) selectStaff(firstOnDuty.id);
     }
   }
-  if (name === "wards") refreshMgmtWardCards();
-  if (name === "beds") renderBedBoard();
 }
 
 mgmtBtns.forEach((b) => b.addEventListener("click", () => switchMgmtView(b.dataset.mview)));
@@ -387,58 +626,47 @@ function refreshMgmtPatientsQuickView() {
   }
 }
 
-// ── Management: ward cards + bed board ─────────────────────────
-function refreshMgmtWardCards() {
-  const w = demoState.wards;
-  const fmt = (used, total) => used + '<span style="font-size:18px;color:#6a7899">/' + total + "</span>";
-  const icu = document.getElementById("mgmtIcuText");
-  const er = document.getElementById("mgmtErText");
-  const gen = document.getElementById("mgmtGenText");
-  if (icu) icu.innerHTML = fmt(w.ICU.used, w.ICU.total);
-  if (er) er.innerHTML = fmt(w.ER.used, w.ER.total);
-  if (gen) gen.innerHTML = fmt(w.General.used, w.General.total);
-  setBar("mgmtIcuBar", Math.round((w.ICU.used / w.ICU.total) * 100));
-  setBar("mgmtErBar", Math.round((w.ER.used / w.ER.total) * 100));
-  setBar("mgmtGenBar", Math.round((w.General.used / w.General.total) * 100));
-}
+function renderMgmtPatientRoster() {
+  const listEl = document.getElementById("mgmtPatientRoster");
+  if (!listEl) return;
+  const qEl = document.getElementById("patientSearch");
+  const q = qEl ? qEl.value.trim().toLowerCase() : "";
 
-document.getElementById("mgmtWardRefreshBtn")?.addEventListener("click", () => {
-  // Tiny demo fluctuation
-  demoState.wards.ICU.used = Math.max(6, Math.min(demoState.wards.ICU.total, demoState.wards.ICU.used + (Math.random() > 0.5 ? 1 : -1)));
-  demoState.wards.ER.used = Math.max(8, Math.min(demoState.wards.ER.total, demoState.wards.ER.used + (Math.random() > 0.5 ? 1 : -1)));
-  demoState.wards.General.used = Math.max(22, Math.min(demoState.wards.General.total, demoState.wards.General.used + (Math.random() > 0.5 ? 2 : -2)));
-  refreshMgmtWardCards();
-  tickSystemHealth();
-});
+  const filtered = demoState.patients.filter((p) => {
+    if (!q) return true;
+    const hay = (p.name + " " + p.zone + " " + p.severity + " " + p.age).toLowerCase();
+    return hay.includes(q);
+  });
 
-function renderBedBoard() {
-  const icu = document.getElementById("bedBoardIcu");
-  const er = document.getElementById("bedBoardEr");
-  if (icu) icu.innerHTML = "";
-  if (er) er.innerHTML = "";
-
-  const usedIcu = demoState.wards.ICU.used;
-  const totalIcu = demoState.wards.ICU.total;
-  for (let i = 1; i <= totalIcu; i++) {
-    if (!icu) break;
-    const li = document.createElement("li");
-    const occ = i <= usedIcu;
-    li.textContent = "ICU-" + String(i).padStart(2, "0") + " · " + (occ ? "Occupied" : "Free");
-    li.style.borderColor = occ ? "rgba(239,68,68,0.35)" : "rgba(34,197,94,0.28)";
-    icu.appendChild(li);
+  listEl.innerHTML = "";
+  if (!filtered.length) {
+    const empty = document.createElement("div");
+    empty.className = "muted";
+    empty.textContent = "No patients match your search.";
+    listEl.appendChild(empty);
+    return;
   }
 
-  const usedEr = demoState.wards.ER.used;
-  const totalEr = demoState.wards.ER.total;
-  for (let i = 1; i <= totalEr; i++) {
-    if (!er) break;
-    const li = document.createElement("li");
-    const occ = i <= usedEr;
-    li.textContent = "ER-Bay " + i + " · " + (occ ? "Busy" : "Ready");
-    li.style.borderColor = occ ? "rgba(245,158,11,0.35)" : "rgba(34,197,94,0.28)";
-    er.appendChild(li);
-  }
+  filtered.forEach((p) => {
+    const row = document.createElement("div");
+    row.className = "staffRow staffRowClick";
+    row.innerHTML =
+      "<div class=\"staffRowTop\">" +
+      "<div class=\"staffName\"></div>" +
+      "<div class=\"staffTag\"></div>" +
+      "</div>" +
+      "<div class=\"staffSub\"></div>";
+    row.querySelector(".staffName").textContent = p.name;
+    row.querySelector(".staffTag").textContent = String(p.severity || "").toUpperCase();
+    row.querySelector(".staffSub").textContent = (p.zone || "—") + " · age " + p.age;
+    row.addEventListener("click", () => renderMgmtDetails("patient", p));
+    listEl.appendChild(row);
+  });
 }
+
+document.getElementById("patientSearch")?.addEventListener("input", renderMgmtPatientRoster);
+
+// (Ward view removed from Manage; ward data still used in Overview/Operations.)
 
 // ── Management: staff roster + details ─────────────────────────
 let selectedStaffId = "";
@@ -494,6 +722,11 @@ function renderMgmtDetails(kind, payload) {
 
   if (kind === "fleet") {
     const f = payload;
+    const activeFleetCreds = activeFleetCredAccounts().filter((a) => a.kind === "fleet");
+    const guessCred =
+      activeFleetCreds.find((a) => String(a.displayName || "").toUpperCase() === String(f.id || "").toUpperCase()) ||
+      activeFleetCreds[activeFleetCreds.length - 1] ||
+      null;
     det.innerHTML =
       base +
       "<div class=\"detailsTitle\" style=\"margin-top:12px\">Fleet unit</div>" +
@@ -506,10 +739,16 @@ function renderMgmtDetails(kind, payload) {
       fleetStatusLabel(f) +
       "</div></div>" +
       "</div>" +
+      "<div class=\"detailsBlock\" style=\"margin-top:10px\"><div class=\"detailsLabel\">Credentials</div><div class=\"detailsValue\">" +
+      (guessCred ?
+        ("<span class=\"detailsValueStrong\">" + guessCred.email + "</span><br/>Pass: " + guessCred.password)
+      : "No fleet credentials issued yet. Use Manage credentials to create one.") +
+      "</div></div>" +
       "<div class=\"row\" style=\"margin-top:10px;gap:8px\">" +
       "<button type=\"button\" id=\"fleetAssignBtn\" aria-label=\"Assign unit to incident\">Assign</button>" +
       "<button type=\"button\" class=\"secondary\" id=\"fleetCallBackBtn\" aria-label=\"Call back unit\">Call back</button>" +
       "<button type=\"button\" class=\"danger\" id=\"fleetRevokeBtn\" aria-label=\"Revoke unit\">Revoke</button>" +
+      "<button type=\"button\" class=\"secondary\" id=\"fleetOpenCredBtn\" aria-label=\"Open credentials console\">Credentials</button>" +
       "</div>" +
       "</div>";
 
@@ -520,17 +759,38 @@ function renderMgmtDetails(kind, payload) {
       refreshOverviewKpis();
       tickSystemHealth();
       renderMgmtDetails("fleet", f);
+      emitOpsFromModule(
+        "fleet",
+        "Fleet assigned: " + f.id,
+        "Unit assigned to an incident. Status → dispatched.",
+        { unit: f.id, action: "assign", status: f.status }
+      );
     });
     document.getElementById("fleetCallBackBtn")?.addEventListener("click", () => {
       f.status = "standby";
       renderMgmtFleetSidebar();
       renderMgmtDetails("fleet", f);
+      emitOpsFromModule(
+        "fleet",
+        "Fleet call-back: " + f.id,
+        "Unit called back. Status → standby.",
+        { unit: f.id, action: "callback", status: f.status }
+      );
     });
     document.getElementById("fleetRevokeBtn")?.addEventListener("click", () => {
       f.status = "service";
       renderMgmtFleetSidebar();
       tickSystemHealth();
       renderMgmtDetails("fleet", f);
+      emitOpsFromModule(
+        "fleet",
+        "Fleet revoked: " + f.id,
+        "Unit access revoked for now. Status → service.",
+        { unit: f.id, action: "revoke", status: f.status }
+      );
+    });
+    document.getElementById("fleetOpenCredBtn")?.addEventListener("click", () => {
+      openFleetCredModal();
     });
     return;
   }
@@ -586,9 +846,21 @@ function renderMgmtDetails(kind, payload) {
       refreshOverviewKpis();
       tickSystemHealth();
       renderMgmtDetails("staff", s);
+      emitOpsFromModule(
+        "staff",
+        "Staff duty change: " + s.name,
+        s.onDuty ? "Marked on-duty." : "Marked off-duty.",
+        { staffId: s.id, name: s.name, action: "duty", onDuty: s.onDuty, ward: s.ward }
+      );
     });
     document.getElementById("staffCallReceptionBtn")?.addEventListener("click", () => {
       alert("Reception called for " + s.name + " (demo).");
+      emitOpsFromModule(
+        "staff",
+        "Reception call: " + s.name,
+        "Reception called (demo).",
+        { staffId: s.id, name: s.name, action: "call_reception", ward: s.ward }
+      );
     });
     return;
   }
@@ -620,9 +892,21 @@ function renderMgmtDetails(kind, payload) {
       "</div>";
     document.getElementById("patientEscalateBtn")?.addEventListener("click", () => {
       alert("Escalated " + p.name + " (demo).");
+      emitOpsFromModule(
+        "patients",
+        "Patient escalated: " + p.name,
+        "Escalation requested. Severity: " + p.severity + ".",
+        { name: p.name, action: "escalate", severity: p.severity, zone: p.zone, age: p.age }
+      );
     });
     document.getElementById("patientCallNurseBtn")?.addEventListener("click", () => {
       alert("Nurse notified for " + p.name + " (demo).");
+      emitOpsFromModule(
+        "patients",
+        "Nurse called: " + p.name,
+        "Nurse notified for patient (demo).",
+        { name: p.name, action: "call_nurse", severity: p.severity, zone: p.zone, age: p.age }
+      );
     });
     return;
   }
@@ -917,7 +1201,6 @@ function showCredPanel(tab) {
   });
 }
 
-document.getElementById("fleetCredBtn")?.addEventListener("click", openFleetCredModal);
 document.getElementById("fleetCredModalClose")?.addEventListener("click", closeFleetCredModal);
 document.getElementById("fleetCredModalBackdrop")?.addEventListener("click", closeFleetCredModal);
 
@@ -1361,6 +1644,60 @@ async function askGemma4(prompt) {
 
   const data = await res.json();
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from model.";
+}
+
+async function suggestOpsDecision(item) {
+  const it = item || null;
+  if (!it) return { decision: "needs-human", reason: "No item selected." };
+  if (!geminiApiKey) return { decision: "needs-human", reason: "No Gemini API key set (Gemma 4 panel)." };
+
+  const snapshot = {
+    wards: demoState.wards,
+    fleet: demoState.fleet,
+    patients: demoState.patients,
+    staff: demoState.staff.map((s) => ({ id: s.id, name: s.name, ward: s.ward, onDuty: s.onDuty, role: s.role })),
+    billings: demoState.billings,
+  };
+
+  const systemCtx =
+    "You are Gemma 4 helping an admin review hospital Operations feed items. " +
+    "Return a short suggestion ONLY in valid JSON with keys: decision, reason, nextSteps. " +
+    "decision must be one of: approve, reject, needs-human. " +
+    "Keep reason under 2 lines. nextSteps is an array of short strings.\n\n" +
+    "Today is " + new Date().toDateString() + ".\n\n" +
+    "Snapshot JSON:\n" + JSON.stringify(snapshot) + "\n\n" +
+    "Ops item JSON:\n" + JSON.stringify({ id: it.id, type: it.type, title: it.title, summary: it.summary, payload: it.payload, status: it.status });
+
+  const body = {
+    contents: [{ role: "user", parts: [{ text: systemCtx }] }],
+    generationConfig: { maxOutputTokens: 220, temperature: 0.2 },
+  };
+
+  const res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=" + geminiApiKey,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return { decision: "needs-human", reason: "API error " + res.status + ": " + (err?.error?.message || "Unknown error.") };
+  }
+
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  // Try parse JSON; fallback to raw text.
+  try {
+    const cleaned = text.trim().replace(/^```json/i, "```").replace(/^```/, "").replace(/```$/, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return {
+      decision: parsed.decision || "needs-human",
+      reason: parsed.reason || "",
+      nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [],
+      raw: text,
+    };
+  } catch (_) {
+    return { decision: "needs-human", reason: (text || "No structured suggestion returned.").slice(0, 240), nextSteps: [], raw: text };
+  }
 }
 
 const sendChatBtn = document.getElementById("sendChatBtn");

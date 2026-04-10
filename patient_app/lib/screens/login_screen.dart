@@ -1,30 +1,32 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../services/auth_service.dart';
 import '../services/demo_session.dart';
-import 'dashboard_screen.dart';
+import 'patient_home_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class PatientLoginScreen extends StatefulWidget {
+  const PatientLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<PatientLoginScreen> createState() => _PatientLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _PatientLoginScreenState extends State<PatientLoginScreen> {
   static const _cardBorder = Color(0xFF1e1e3a);
   static const _muted = Color(0xFF6b7280);
 
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  final _authService = AuthService();
+  final _authService = PatientAuthService();
 
   bool _loading = false;
   bool _obscure = true;
-  static const String _demoEmail = 'doctor3@goelhospital.com';
-  static const String _demoPassword = 'GH@1004';
+
+  static const String _demoEmail = 'patient1@goelhospital.com';
+  static const String _demoPassword = 'GH@3001';
 
   @override
   void dispose() {
@@ -36,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // If user typed (or auto-filled) the demo credentials, bypass Firebase Auth.
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
     if (email.toLowerCase() == _demoEmail.toLowerCase() && pass == _demoPassword) {
@@ -52,17 +53,16 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
-      // AuthGate listens to [DemoSession.activeNotifier] and swaps to dashboard.
       return;
     }
 
     setState(() => _loading = true);
     try {
-      final doctor = await _authService.signIn(_emailCtrl.text, _passCtrl.text);
+      final patient = await _authService.signIn(email, pass);
       if (!mounted) return;
-      if (doctor != null) {
+      if (patient != null) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => DashboardScreen(doctor: doctor)),
+          MaterialPageRoute(builder: (_) => PatientHomeScreen(patient: patient)),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -120,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo / header
                 Container(
                   width: 72,
                   height: 72,
@@ -135,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.local_hospital, color: Colors.white, size: 36),
+                  child: const Icon(Icons.person, color: Colors.white, size: 36),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -149,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Staff Portal',
+                  'Patient Portal',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     color: const Color(0xFF9ca3af),
@@ -158,8 +157,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-
-                // Card
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF13132a),
@@ -173,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Sign in to your account',
+                          'Sign in',
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -182,22 +179,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Use your hospital credentials',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: _muted,
-                          ),
+                          'Use your patient account',
+                          style: GoogleFonts.inter(fontSize: 13, color: _muted),
                         ),
                         const SizedBox(height: 24),
-
-                        // Email
                         _label('Email address'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                          decoration: _inputDecoration('doctor@hospital.com', Icons.email_outlined),
+                          decoration: _inputDecoration('patient@domain.com', Icons.email_outlined),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Email is required';
                             if (!v.contains('@')) return 'Enter a valid email';
@@ -205,8 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-
-                        // Password
                         _label('Password'),
                         const SizedBox(height: 6),
                         TextFormField(
@@ -231,8 +221,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           onFieldSubmitted: (_) => _signIn(),
                         ),
                         const SizedBox(height: 28),
-
-                        // Sign in button
                         SizedBox(
                           height: 48,
                           child: ElevatedButton(
@@ -265,8 +253,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // One demo control only — mirrors Fleet Portal (OutlinedButton)
                         SizedBox(
                           height: 48,
                           child: OutlinedButton(
@@ -290,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Access restricted to authorised hospital staff only.',
+                  'For scheduled consultations only. In emergency, call your local emergency number.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 12,
@@ -344,3 +330,4 @@ class _LoginScreenState extends State<LoginScreen> {
         errorStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFf87171)),
       );
 }
+

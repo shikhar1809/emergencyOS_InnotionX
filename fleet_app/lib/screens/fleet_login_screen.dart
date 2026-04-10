@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/auth_service.dart';
-import '../services/demo_session.dart';
-import 'dashboard_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+import '../services/fleet_auth.dart';
+import '../services/fleet_storage.dart';
+
+/// Staff-portal–inspired auth layout with blue accents (replacing purple).
+class FleetLoginScreen extends StatefulWidget {
+  const FleetLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<FleetLoginScreen> createState() => _FleetLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _FleetLoginScreenState extends State<FleetLoginScreen> {
+  static const _bg = Color(0xFF0d0d1a);
+  static const _card = Color(0xFF13132a);
   static const _cardBorder = Color(0xFF1e1e3a);
+  static const _inputFill = Color(0xFF0d0d1a);
   static const _muted = Color(0xFF6b7280);
+  static const _label = Color(0xFFd1d5db);
+  static const _primaryBlue = Color(0xFF2563EB);
+  static const _primaryBlueDark = Color(0xFF1d4ed8);
 
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  final _authService = AuthService();
-
-  bool _loading = false;
   bool _obscure = true;
-  static const String _demoEmail = 'doctor3@goelhospital.com';
-  static const String _demoPassword = 'GH@1004';
+  bool _invalid = false;
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -34,84 +37,42 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // If user typed (or auto-filled) the demo credentials, bypass Firebase Auth.
-    final email = _emailCtrl.text.trim();
-    final pass = _passCtrl.text.trim();
-    if (email.toLowerCase() == _demoEmail.toLowerCase() && pass == _demoPassword) {
-      try {
-        await DemoSession.enable();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not start demo mode: $e'),
-            backgroundColor: const Color(0xFFb91c1c),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      // AuthGate listens to [DemoSession.activeNotifier] and swaps to dashboard.
+    setState(() {
+      _loading = true;
+      _invalid = false;
+    });
+
+    final email = _emailCtrl.text.trim().toLowerCase();
+    final pass = _passCtrl.text;
+
+    await Future<void>.delayed(Duration.zero);
+
+    if (!mounted) return;
+
+    if (!FleetAuth.validate(email, pass)) {
+      setState(() {
+        _invalid = true;
+        _loading = false;
+      });
       return;
     }
 
-    setState(() => _loading = true);
-    try {
-      final doctor = await _authService.signIn(_emailCtrl.text, _passCtrl.text);
-      if (!mounted) return;
-      if (doctor != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => DashboardScreen(doctor: doctor)),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String msg = 'Sign in failed. Please check your credentials.';
-      if (e.code == 'user-not-found') msg = 'No account found for this email.';
-      if (e.code == 'wrong-password') msg = 'Incorrect password.';
-      if (e.code == 'invalid-email') msg = 'Invalid email address.';
-      if (e.code == 'too-many-requests') msg = 'Too many attempts. Try again later.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: const Color(0xFFb91c1c),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: const Color(0xFFb91c1c),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    setState(() => _loading = false);
+    FleetStorage.setSessionEmail(email);
   }
 
-  Future<void> _demo() async {
-    if (_loading) return;
-    setState(() {
-      _emailCtrl.text = _demoEmail;
-      _passCtrl.text = _demoPassword;
-    });
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Demo credentials filled. Tap Sign In.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  void _demo() {
+    _emailCtrl.text = 'fleet4@driver.goelhospital.com';
+    _passCtrl.text = 'GH@1004';
+    _signIn();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0d0d1a),
+      backgroundColor: _bg,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -120,16 +81,20 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo / header
+                // Logo — rounded square, blue gradient + glow (staff uses purple)
                 Container(
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF7c3aed),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [_primaryBlue, _primaryBlueDark],
+                    ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF7c3aed).withOpacity(0.4),
+                        color: _primaryBlue.withOpacity(0.45),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -149,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Staff Portal',
+                  'Fleet Portal',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     color: const Color(0xFF9ca3af),
@@ -162,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Card
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF13132a),
+                    color: _card,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: _cardBorder),
                   ),
@@ -182,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Use your hospital credentials',
+                          'Use your fleet credentials from hospital admin',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: _muted,
@@ -190,14 +155,35 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Email
-                        _label('Email address'),
+                        if (_invalid) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7f1d1d),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFb91c1c)),
+                            ),
+                            child: Text(
+                              'Invalid credentials. Use fleet credentials from admin panel.',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: const Color(0xFFfecaca),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        _fieldLabel('Email address'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                          decoration: _inputDecoration('doctor@hospital.com', Icons.email_outlined),
+                          decoration: _inputDecoration(
+                            'fleet4@driver.goelhospital.com',
+                            Icons.email_outlined,
+                          ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Email is required';
                             if (!v.contains('@')) return 'Enter a valid email';
@@ -206,8 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Password
-                        _label('Password'),
+                        _fieldLabel('Password'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _passCtrl,
@@ -225,22 +210,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Password is required';
-                            if (v.length < 6) return 'Password too short';
                             return null;
                           },
                           onFieldSubmitted: (_) => _signIn(),
                         ),
                         const SizedBox(height: 28),
 
-                        // Sign in button
                         SizedBox(
                           height: 48,
                           child: ElevatedButton(
                             onPressed: _loading ? null : _signIn,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF7c3aed),
+                              backgroundColor: _primaryBlue,
                               foregroundColor: Colors.white,
-                              disabledBackgroundColor: const Color(0xFF4c1d95),
+                              disabledBackgroundColor: const Color(0xFF1e3a5f),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -248,11 +231,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: _loading
                                 ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                    width: 22,
+                                    height: 22,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   )
                                 : Text(
@@ -265,8 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // One demo control only — mirrors Fleet Portal (OutlinedButton)
                         SizedBox(
                           height: 48,
                           child: OutlinedButton(
@@ -288,9 +269,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
                 Text(
-                  'Access restricted to authorised hospital staff only.',
+                  'Access restricted to authorised fleet operators only.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 12,
@@ -305,12 +287,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _label(String text) => Text(
+  Widget _fieldLabel(String text) => Text(
         text,
         style: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: const Color(0xFFd1d5db),
+          color: _label,
         ),
       );
 
@@ -319,19 +301,19 @@ class _LoginScreenState extends State<LoginScreen> {
         hintStyle: GoogleFonts.inter(color: const Color(0xFF374151), fontSize: 14),
         prefixIcon: Icon(icon, color: const Color(0xFF6b7280), size: 18),
         filled: true,
-        fillColor: const Color(0xFF0d0d1a),
+        fillColor: _inputFill,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF1e1e3a)),
+          borderSide: const BorderSide(color: _cardBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF1e1e3a)),
+          borderSide: const BorderSide(color: _cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF7c3aed), width: 1.5),
+          borderSide: const BorderSide(color: _primaryBlue, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

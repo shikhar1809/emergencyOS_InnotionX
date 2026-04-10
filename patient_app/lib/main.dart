@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'firebase_options.dart';
+import 'models/patient_model.dart';
 import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/patient_home_screen.dart';
 import 'services/auth_service.dart';
 import 'services/demo_session.dart';
 
@@ -12,16 +14,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await DemoSession.hydrate();
-  runApp(const StaffApp());
+  runApp(const PatientApp());
 }
 
-class StaffApp extends StatelessWidget {
-  const StaffApp({super.key});
+class PatientApp extends StatelessWidget {
+  const PatientApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EmergencyOS — Staff Portal',
+      title: 'EmergencyOS — Patient Portal',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -48,12 +50,12 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
+    final authService = PatientAuthService();
     return ValueListenableBuilder<bool>(
       valueListenable: DemoSession.activeNotifier,
       builder: (context, demoActive, _) {
         if (demoActive) {
-          return DashboardScreen(doctor: DemoSession.demoDoctor(), isDemo: true);
+          return PatientHomeScreen(patient: DemoSession.demoPatient(), isDemo: true);
         }
 
         return StreamBuilder<User?>(
@@ -63,32 +65,17 @@ class AuthGate extends StatelessWidget {
               return const Scaffold(
                 backgroundColor: Color(0xFF0d0d1a),
                 body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Color(0xFF7c3aed)),
-                      SizedBox(height: 16),
-                      Text(
-                        'EmergencyOS',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
                 ),
               );
             }
 
             final user = snapshot.data;
             if (user == null) {
-              return const LoginScreen();
+              return const PatientLoginScreen();
             }
 
-            // User is signed in — load their profile and go to dashboard
-            return FutureBuilder(
+            return FutureBuilder<PatientModel?>(
               future: authService.fetchProfile(user.uid),
               builder: (context, profileSnap) {
                 if (profileSnap.connectionState == ConnectionState.waiting) {
@@ -99,13 +86,12 @@ class AuthGate extends StatelessWidget {
                     ),
                   );
                 }
-                final doctor = profileSnap.data;
-                if (doctor == null) {
-                  // Profile not found — sign out and show login
+                final patient = profileSnap.data;
+                if (patient == null) {
                   FirebaseAuth.instance.signOut();
-                  return const LoginScreen();
+                  return const PatientLoginScreen();
                 }
-                return DashboardScreen(doctor: doctor);
+                return PatientHomeScreen(patient: patient);
               },
             );
           },
@@ -114,3 +100,4 @@ class AuthGate extends StatelessWidget {
     );
   }
 }
+

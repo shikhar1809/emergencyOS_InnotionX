@@ -1023,21 +1023,68 @@ path.leaflet-emergency-marker {
   justify-self: center;
 }
 
-.dock button {
-  min-width: 148px;
-  height: 44px;
-  border-radius: 8px;
-  border: 1px solid #253856;
-  background: #152240;
-  color: #9db5d8;
-  font-size: 13px;
-  font-weight: 500;
+.dock--icon {
+  gap: 8px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(15, 28, 47, 0.92);
 }
 
-.dock button.active {
-  background: #1e40af;
-  border-color: #3f7cff;
-  color: #ffffff;
+.dockIconBtn {
+  min-width: 110px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #9db5d8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.dockIconBtn:focus {
+  outline: 2px solid rgba(63, 124, 255, 0.55);
+  outline-offset: 2px;
+}
+
+.dockIcon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: currentColor;
+  opacity: 0.9;
+}
+
+.dockIcon svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.dockLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8aaa;
+  line-height: 1;
+}
+
+.dockIconBtn.active {
+  background: rgba(30, 64, 175, 0.35);
+  border-color: rgba(63, 124, 255, 0.55);
+  color: #6ea3ff;
+}
+
+.dockIconBtn.active .dockLabel {
+  color: #6ea3ff;
+}
+
+.dockIconBtn:hover {
+  background: rgba(17, 30, 53, 0.7);
 }
 
 /* ── Windows-style right tray ──────────────────────── */
@@ -1120,10 +1167,97 @@ path.leaflet-emergency-marker {
 .tray .clockBox .time { font-size: 15px; font-weight: 600; }
 .tray .clockBox .date { font-size: 11px; color: #8a96b0; }
 
+/* Operations feed (human-in-loop) */
+.opsFeedList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.opsFeedRow {
+  border: 1px solid #1a2a42;
+  background: rgba(8, 14, 26, 0.55);
+  border-radius: 14px;
+  padding: 10px 10px 9px;
+  cursor: pointer;
+  outline: none;
+}
+
+.opsFeedRow:hover {
+  border-color: rgba(63, 124, 255, 0.55);
+}
+
+.opsFeedRow:focus {
+  box-shadow: 0 0 0 3px rgba(63, 124, 255, 0.22);
+}
+
+.opsFeedRow.active {
+  border-color: #3f7cff;
+  background: rgba(63, 124, 255, 0.08);
+}
+
+.opsFeedTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.opsTime {
+  font-size: 11px;
+  color: #8a96b0;
+  font-weight: 700;
+}
+
+.opsTag {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.opsTag--fleet { background: rgba(63,124,255,0.12); color: #b7d0ff; border-color: rgba(63,124,255,0.28); }
+.opsTag--patients { background: rgba(245,166,35,0.12); color: #ffd9a1; border-color: rgba(245,166,35,0.28); }
+.opsTag--staff { background: rgba(53,201,122,0.12); color: #b8ffd9; border-color: rgba(53,201,122,0.28); }
+
+.opsTitle {
+  font-size: 13px;
+  font-weight: 900;
+  color: #eef2ff;
+  line-height: 1.25;
+}
+
+.opsSub {
+  font-size: 12px;
+  color: #9aa6c0;
+  margin-top: 4px;
+  line-height: 1.25;
+}
+
+.opsStatus {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a96b0;
+}
+
+.opsStatus--pending { color: #f5a623; }
+.opsStatus--approved { color: #4ddb8e; }
+.opsStatus--rejected { color: #ff8a8a; }
+.opsStatus--hold { color: #b7d0ff; }
+
 /* ── Responsive ────────────────────────────────────── */
 @media (max-width: 1040px) {
   .dock { overflow-x: auto; max-width: calc(100vw - 160px); }
-  .dock button { min-width: 120px; font-size: 12px; }
+  .dockIconBtn { min-width: 92px; height: 54px; }
+  .dockLabel { font-size: 11px; }
   .commsLayout { grid-template-columns: 1fr; height: auto; }
   .commsRoster { display: none; }
 }

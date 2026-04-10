@@ -1,12 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/doctor_model.dart';
+import '../models/patient_model.dart';
 
 class DemoSession {
   static const _kEnabled = 'demo_enabled';
 
-  /// Drives [AuthGate] so demo login works without Navigator hacks.
   static final ValueNotifier<bool> activeNotifier = ValueNotifier<bool>(false);
 
   static Future<bool> isEnabled() async {
@@ -14,7 +13,6 @@ class DemoSession {
     return prefs.getBool(_kEnabled) ?? false;
   }
 
-  /// Call once before [runApp] so the first frame matches persisted demo state.
   static Future<void> hydrate() async {
     activeNotifier.value = await isEnabled();
   }
@@ -31,16 +29,12 @@ class DemoSession {
     activeNotifier.value = false;
   }
 
-  static DoctorModel demoDoctor() {
-    return const DoctorModel(
-      uid: 'demo_doctor3',
-      name: 'Demo Doctor (doctor3)',
-      email: 'doctor3@goelhospital.com',
-      role: 'Doctor',
-      wardId: 'ER',
-      shiftId: 'DEMO',
-      onDuty: true,
-      department: 'Emergency',
+  static PatientModel demoPatient() {
+    return const PatientModel(
+      uid: 'demo_patient1',
+      name: 'Demo Patient',
+      email: 'patient1@goelhospital.com',
+      phone: '+91 90000 00001',
     );
   }
 }

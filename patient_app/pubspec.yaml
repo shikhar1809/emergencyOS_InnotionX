@@ -1,5 +1,5 @@
-name: staff_app
-description: EmergencyOS InnovationX — Hospital Staff Portal
+name: patient_app
+description: EmergencyOS InnovationX — Patient Portal
 publish_to: "none"
 version: 1.0.0+1
 
@@ -13,9 +13,8 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   google_fonts: ^6.2.1
-  intl: ^0.19.0
   shared_preferences: ^2.3.2
-  mobile_scanner: ^5.2.3
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +23,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+

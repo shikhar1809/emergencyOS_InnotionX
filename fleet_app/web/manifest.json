@@ -1,0 +1,11 @@
+{
+  "name": "EmergencyOS — Fleet Portal",
+  "short_name": "Fleet Portal",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#131313",
+  "theme_color": "#131313",
+  "description": "Fleet operator portal for EmergencyOS InnovationX",
+  "icons": []
+}
+

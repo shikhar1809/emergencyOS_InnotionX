@@ -11,6 +11,9 @@
         "fleet": [
           "emergencyos-innovationx-fleet"
         ],
+        "patient": [
+          "emergencyos-innovationx-patient"
+        ],
         "staff": [
           "emergencyos-innovation-staff"
         ],
@@ -19,5 +22,6 @@
         ]
       }
     }
-  }
+  },
+  "etags": {}
 }
