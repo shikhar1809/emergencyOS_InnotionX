@@ -1,57 +1,76 @@
-# EmergencyOS · InnovationX
+# EmergencyOS – InnovationX
 
-**Goel Hospital — emergency operations demo stack:** static **admin** panel (Leaflet overview, billings, comms hooks), **patient** and **staff** Flutter web apps, Firebase Hosting, and optional Cloud Functions.
+> real-time emergency operations platform for Goel Hospital, Lucknow.
+> built during a hackathon sprint. still rough in a few places but core flows work.
 
-**Repository:** [github.com/shikhar1809/emergencyOS_InnotionX](https://github.com/shikhar1809/emergencyOS_InnotionX)  
-**Firebase project:** `emergencyos-innovationx`
-
----
-
-## Live pages (Firebase Hosting)
-
-| App | What it is | URL |
-| --- | --- | --- |
-| **Admin panel** | Operations admin UI (maps, zones, billings, reports, internal comms) | [emergencyos-innovationx.web.app](https://emergencyos-innovationx.web.app) |
-| **Patient app** | Patient-facing Flutter web (home, bills, demo flows) | [emergencyos-innovationx-patient.web.app](https://emergencyos-innovationx-patient.web.app) |
-| **Staff app** | Staff Flutter web (dashboard, alerts) | [emergencyos-innovation-staff.web.app](https://emergencyos-innovation-staff.web.app) |
-| **Staff app (alt target)** | Same build, alternate hosting target | [emergencyos-innovationx-staff.web.app](https://emergencyos-innovationx-staff.web.app) |
-
-**Firebase console:** [console.firebase.google.com/project/emergencyos-innovationx](https://console.firebase.google.com/project/emergencyos-innovationx/overview)
+this is a full-stack demo that ties together an admin ops panel, a patient-facing app, and a staff/fleet app — all talking through Firebase. the idea was: what if a mid-size hospital could get a situation-room style dashboard without paying for enterprise software?
 
 ---
 
-## Admin panel — in-app sections (one URL)
+## live links
 
-Open the [admin URL](https://emergencyos-innovationx.web.app) and use the bottom dock:
-
-| Section | Focus |
-| --- | --- |
-| **Overview** | Lucknow hex zones (A–S), map, zone intelligence |
-| **Manage** | Patient roster, staff, embedded maps |
-| **Operations** | Human-in-loop feed, approvals |
-| **Comms** | Internal comms (Firebase when configured) |
-| **Report** | KPIs, demo exports, Gemma / Gemini chat |
-| **Billings** | Demo incidents, patient push, quick bill / QR flow |
+| what | url |
+|------|-----|
+| admin panel | https://emergencyos-innovationx.web.app |
+| patient app | https://emergencyos-innovationx-patient.web.app |
+| staff app | https://emergencyos-innovation-staff.web.app |
+| firebase console | https://console.firebase.google.com/project/emergencyos-innovationx |
+| github | https://github.com/shikhar1809/emergencyOS_InnotionX |
 
 ---
 
-## Local development
+## what it does
 
-From the repo root:
+**admin panel** (`web/`) — the main ops dashboard. has a few screens:
+- **Overview** — leaflet map of Lucknow with hex zone grid (zones A–S). click a zone and you get demographics, patient forecast, clinical mix for that area. the selected hex turns green on the map
+- **Manage** — patient roster and staff on-duty list. can mark staff on/off duty, escalate patients, call nurse etc.
+- **Operations** — human-in-the-loop feed. incoming slot requests from the patient app show up here, admin approves/rejects with optional Gemini suggestion
+- **Billings** — 24 demo billing incidents across various departments. can push a billing notice directly to the patient app. quick-bill tool with finance → admin approval flow
+- **Report** — KPI cards, 7-day export, shift handoffs, Gemma 4 analytics chat (needs Gemini API key)
+- **Comms** — internal messaging over Firestore, presence tracking, channel-based (#announcements, #alerts etc)
+
+**patient app** (`patient_app/`) — Flutter web. patients can see their bills, demo appointment flows, push notifications from admin
+
+**staff app** (`staff_app/`) — Flutter web. dashboard + alerts view for hospital staff / fleet operators
+
+---
+
+## tech stack
+
+- **frontend (admin)** — vanilla js + css, no framework. leaflet.js for maps (osm + carto tiles). firebase hosting
+- **patient + staff** — flutter web (dart). firebase hosting
+- **backend / infra** — firebase firestore (realtime db), firebase hosting, cloud functions (in `/functions`, not fully wired yet)
+- **AI** — Gemini API (gemma-3-27b-it) for ops suggestions and the analytics chat in Report tab. totally optional, works fine without a key
+- **maps** — leaflet 1.9.4, vendor-bundled + unpkg CDN fallback. tiles from CartoDB dark + OSM
+- **auth** — demo-mode only right now. firebase auth hooks are there but not enforced in the UI
+
+---
+
+## vision
+
+the goal was basically: *give a hospital's night-shift admin the kind of real-time awareness that only big systems have*.
+
+most hospital ops tools are either expensive enterprise stuff or just spreadsheets. we wanted something that:
+1. shows WHERE the demand is coming from (hence the lucknow hex zone map with inflow predictions)
+2. keeps the human in the loop for approvals instead of full automation (gemini suggests, admin decides)
+3. connects admin ↔ patient ↔ staff in one system instead of three separate apps
+4. can run as a static site with just Firebase — no backend servers to manage
+
+obviously theres a lot still to do — proper auth, real patient data integration, mobile-native patient app, etc. but the core flows (zone intel, billing lifecycle, ops feed, patient push) are working in demo mode.
+
+---
+
+## run locally
 
 ```bash
 npm install
+npm run dev:admin    # localhost:3000  (admin panel)
+npm run dev:patient  # localhost:3001  (patient app, needs flutter build first)
+npm run dev:staff    # localhost:3002  (staff app, needs flutter build first)
+npm run dev:all      # all three at once
 ```
 
-| Page / app | Command | URL |
-| --- | --- | --- |
-| Admin (static `web/`) | `npm run dev:admin` | [http://localhost:3000](http://localhost:3000) |
-| Patient (needs `flutter build web` first) | `npm run dev:patient` | [http://localhost:3001](http://localhost:3001) |
-| Staff (needs `flutter build web` first) | `npm run dev:staff` | [http://localhost:3002](http://localhost:3002) |
-| All three | `npm run dev:all` | 3000 / 3001 / 3002 |
-
-Build Flutter web outputs:
-
+build flutter apps first if you haven't:
 ```bash
 npm run build:patient
 npm run build:staff
@@ -59,14 +78,22 @@ npm run build:staff
 
 ---
 
-## Deploy (summary)
+## deploy
 
-- **Admin:** `firebase deploy --only hosting:admin` (publishes `web/`)
-- **Patient / staff:** build Flutter web, then `firebase deploy --only hosting:patient` / `hosting:staff` as configured in `firebase.json` and `.firebaserc`
+```bash
+# admin only
+firebase deploy --only hosting:admin
+
+# patient + staff (after flutter build)
+firebase deploy --only hosting:patient
+firebase deploy --only hosting:staff
+```
 
 ---
 
-## Configuration notes
+## notes
 
-- **`web/gemini-config.js`** is gitignored; use env or local file for Gemini keys (see admin Report tab).
-- **`functions/`** — Firebase Functions when used with this project.
+- `web/gemini-config.js` is gitignored — copy from `gemini-config.example.js` and add your key if you want the AI features
+- the `/__/firebase/init.js` 404 on localhost is expected — firebase injects it automatically on hosting
+- billings and ops feed use demo/seed data. firestore rules are open for demo, dont deploy to prod without locking those down
+- map tiles might not load on restricted networks (corporate proxies etc) — vendor leaflet is bundled so the hex grid still renders even if tiles are blocked
