@@ -11,22 +11,6 @@
       ]
     },
     {
-      "target": "fleet",
-      "public": "fleet_app/build/web",
-      "cleanUrls": true,
-      "rewrites": [
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ],
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ]
-    },
-    {
       "target": "patient",
       "public": "patient_app/build/web",
       "cleanUrls": true,

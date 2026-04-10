@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/auth_service.dart';
-import '../services/demo_session.dart';
 import 'patient_home_screen.dart';
 
 class PatientLoginScreen extends StatefulWidget {
@@ -25,9 +24,6 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   bool _loading = false;
   bool _obscure = true;
 
-  static const String _demoEmail = 'patient1@goelhospital.com';
-  static const String _demoPassword = 'GH@3001';
-
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -40,21 +36,6 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
 
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
-    if (email.toLowerCase() == _demoEmail.toLowerCase() && pass == _demoPassword) {
-      try {
-        await DemoSession.enable();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not start demo mode: $e'),
-            backgroundColor: const Color(0xFFb91c1c),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
 
     setState(() => _loading = true);
     try {
@@ -91,21 +72,6 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  Future<void> _demo() async {
-    if (_loading) return;
-    setState(() {
-      _emailCtrl.text = _demoEmail;
-      _passCtrl.text = _demoPassword;
-    });
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Demo credentials filled. Tap Sign In.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
@@ -253,23 +219,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        SizedBox(
-                          height: 48,
-                          child: OutlinedButton(
-                            onPressed: _loading ? null : _demo,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF9ca3af),
-                              side: const BorderSide(color: _cardBorder),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'Use demo credentials',
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
-                            ),
-                          ),
-                        ),
+                        // Demo mode removed.
                       ],
                     ),
                   ),

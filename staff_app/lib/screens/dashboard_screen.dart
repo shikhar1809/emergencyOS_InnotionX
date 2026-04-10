@@ -3,21 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/doctor_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
-import '../services/demo_session.dart';
-import 'alerts_screen.dart';
-import 'reception_checkin_screen.dart';
+import 'alerts_only_screen.dart';
 import 'shift_screen.dart';
-import 'ward_screen.dart';
-import 'duty_screen.dart';
 import 'comms_screen.dart';
-import 'hazard_screen.dart';
 import 'login_screen.dart';
 import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
   final DoctorModel doctor;
-  final bool isDemo;
-  const DashboardScreen({super.key, required this.doctor, this.isDemo = false});
+  const DashboardScreen({super.key, required this.doctor});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -30,30 +24,110 @@ class _DashboardScreenState extends State<DashboardScreen>
   final _firestoreService = FirestoreService();
   Timer? _presenceTimer;
   DoctorModel? _latestDoctor;
+  bool _dutyPromptShown = false;
+  bool _togglingDuty = false;
 
-  static const _tabLabels = ['Shifts', 'Ward', 'Duty', 'Comms', 'Hazard'];
+  static const _tabLabels = ['Alerts', 'Comms', 'Schedule'];
   static const _tabIcons = [
-    Icons.schedule_outlined,
-    Icons.meeting_room_outlined,
-    Icons.toggle_on_outlined,
-    Icons.chat_bubble_outline,
     Icons.warning_amber_outlined,
+    Icons.chat_bubble_outline,
+    Icons.schedule_outlined,
   ];
   static const _tabActiveIcons = [
-    Icons.schedule,
-    Icons.meeting_room,
-    Icons.toggle_on,
-    Icons.chat_bubble,
     Icons.warning_amber,
+    Icons.chat_bubble,
+    Icons.schedule,
   ];
 
   List<Widget> _buildScreens(DoctorModel doc) => [
-        ShiftScreen(doctor: doc, firestoreService: _firestoreService),
-        WardScreen(doctor: doc, firestoreService: _firestoreService),
-        DutyScreen(doctor: doc, firestoreService: _firestoreService),
+        AlertsOnlyScreen(doctor: doc, firestoreService: _firestoreService),
         CommsScreen(doctor: doc, firestoreService: _firestoreService),
-        HazardScreen(doctor: doc, firestoreService: _firestoreService),
+        ShiftScreen(doctor: doc, firestoreService: _firestoreService),
       ];
+
+  Future<void> _maybePromptDuty(DoctorModel doctor) async {
+    if (_dutyPromptShown) return;
+    if (doctor.onDuty) return;
+    _dutyPromptShown = true;
+
+    if (!mounted) return;
+    final goOnDuty = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF13132a),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Text(
+          'Go On Duty?',
+          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+        content: Text(
+          'Admin can only see you when you are On Duty. Turn it on now?',
+          style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Not now', style: GoogleFonts.inter(color: const Color(0xFF6b7280))),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16a34a),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Go On Duty', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (goOnDuty == true) {
+      try {
+        await _firestoreService.setDutyStatus(doctor.uid, true);
+        if (!mounted) return;
+        setState(() => _selectedIndex = 0);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to go On Duty: $e'),
+            backgroundColor: const Color(0xFFb91c1c),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleDuty(DoctorModel doctor) async {
+    if (_togglingDuty) return;
+    setState(() => _togglingDuty = true);
+    try {
+      await _firestoreService.setDutyStatus(doctor.uid, !doctor.onDuty);
+      // Stream will update the UI; we just show quick feedback.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(doctor.onDuty ? 'Marked Off Duty' : 'Marked On Duty'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update duty: $e'),
+          backgroundColor: const Color(0xFFb91c1c),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _togglingDuty = false);
+    }
+  }
 
   @override
   void initState() {
@@ -69,7 +143,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _startPresenceLoop(DoctorModel doctor) {
-    if (widget.isDemo) return;
     // Avoid restarting timer excessively.
     if (_presenceTimer != null) return;
 
@@ -83,7 +156,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _stopPresenceLoopAndSetOffline(DoctorModel doctor) async {
-    if (widget.isDemo) return;
     _presenceTimer?.cancel();
     _presenceTimer = null;
     await _firestoreService.setPresenceOffline(doctor: doctor);
@@ -91,7 +163,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (widget.isDemo) return;
     final doc = _latestDoctor ?? widget.doctor;
     if (state == AppLifecycleState.resumed) {
       _firestoreService.setPresenceOnline(doctor: doc, state: 'online');
@@ -135,11 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (confirmed == true) {
       final doc = _latestDoctor ?? widget.doctor;
       await _stopPresenceLoopAndSetOffline(doc);
-      if (widget.isDemo) {
-        await DemoSession.disable();
-      } else {
-        await _authService.signOut();
-      }
+      await _authService.signOut();
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -150,13 +217,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isDemo) {
-      final doctor = widget.doctor;
-      _latestDoctor = doctor;
-      final screens = _buildScreens(doctor);
-      return _buildScaffold(doctor: doctor, screens: screens);
-    }
-
     return StreamBuilder<DoctorModel>(
       stream: _firestoreService.doctorStream(widget.doctor.uid),
       initialData: widget.doctor,
@@ -164,6 +224,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         final doctor = snapshot.data ?? widget.doctor;
         _latestDoctor = doctor;
         _startPresenceLoop(doctor);
+        _maybePromptDuty(doctor);
         final screens = _buildScreens(doctor);
 
         return _buildScaffold(
@@ -205,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
                     Text(
-                      widget.isDemo ? 'Staff Portal · DEMO' : 'Staff Portal',
+                      'Staff Portal',
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: const Color(0xFF6b7280),
@@ -217,15 +278,33 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
             actions: [
-              IconButton(
-                tooltip: 'Alerts',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => AlertsScreen(doctorUid: doctor.uid)),
-                  );
-                },
-                icon: const Icon(Icons.notifications_none),
+              // Duty toggle (moved to top)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: ElevatedButton.icon(
+                  onPressed: _togglingDuty ? null : () => _toggleDuty(doctor),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: doctor.onDuty ? const Color(0xFF16a34a) : const Color(0xFF374151),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  ),
+                  icon: _togglingDuty
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Icon(doctor.onDuty ? Icons.toggle_on : Icons.toggle_off, size: 18),
+                  label: Text(
+                    doctor.onDuty ? 'On duty' : 'Off duty',
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
               ),
+              const SizedBox(width: 8),
+
               // Duty status badge
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 10),
@@ -278,11 +357,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   offset: const Offset(0, 40),
                   onSelected: (v) {
                     if (v == 'signout') _signOut();
-                    if (v == 'reception') {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => ReceptionCheckInScreen(staff: doctor)),
-                      );
-                    }
                   },
                   itemBuilder: (_) => [
                     PopupMenuItem(
@@ -302,21 +376,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
                     const PopupMenuDivider(),
-                    if (doctor.role.toLowerCase().contains('reception') ||
-                        doctor.role.toLowerCase().contains('admin'))
-                      PopupMenuItem(
-                        value: 'reception',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.qr_code_scanner,
-                                color: Color(0xFF9ca3af), size: 16),
-                            const SizedBox(width: 8),
-                            Text('Reception check-in',
-                                style: GoogleFonts.inter(
-                                    color: const Color(0xFF9ca3af), fontSize: 13)),
-                          ],
-                        ),
-                      ),
                     PopupMenuItem(
                       value: 'signout',
                       child: Row(

@@ -8,12 +8,10 @@ import 'models/patient_model.dart';
 import 'screens/login_screen.dart';
 import 'screens/patient_home_screen.dart';
 import 'services/auth_service.dart';
-import 'services/demo_session.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await DemoSession.hydrate();
   runApp(const PatientApp());
 }
 
@@ -51,17 +49,27 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = PatientAuthService();
-    return ValueListenableBuilder<bool>(
-      valueListenable: DemoSession.activeNotifier,
-      builder: (context, demoActive, _) {
-        if (demoActive) {
-          return PatientHomeScreen(patient: DemoSession.demoPatient(), isDemo: true);
+    return StreamBuilder<User?>(
+      stream: authService.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0d0d1a),
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+            ),
+          );
         }
 
-        return StreamBuilder<User?>(
-          stream: authService.authStateChanges,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+        final user = snapshot.data;
+        if (user == null) {
+          return const PatientLoginScreen();
+        }
+
+        return FutureBuilder<PatientModel?>(
+          future: authService.fetchProfile(user.uid),
+          builder: (context, profileSnap) {
+            if (profileSnap.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: Color(0xFF0d0d1a),
                 body: Center(
@@ -69,31 +77,12 @@ class AuthGate extends StatelessWidget {
                 ),
               );
             }
-
-            final user = snapshot.data;
-            if (user == null) {
+            final patient = profileSnap.data;
+            if (patient == null) {
+              FirebaseAuth.instance.signOut();
               return const PatientLoginScreen();
             }
-
-            return FutureBuilder<PatientModel?>(
-              future: authService.fetchProfile(user.uid),
-              builder: (context, profileSnap) {
-                if (profileSnap.connectionState == ConnectionState.waiting) {
-                  return const Scaffold(
-                    backgroundColor: Color(0xFF0d0d1a),
-                    body: Center(
-                      child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
-                    ),
-                  );
-                }
-                final patient = profileSnap.data;
-                if (patient == null) {
-                  FirebaseAuth.instance.signOut();
-                  return const PatientLoginScreen();
-                }
-                return PatientHomeScreen(patient: patient);
-              },
-            );
+            return PatientHomeScreen(patient: patient);
           },
         );
       },

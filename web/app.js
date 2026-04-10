@@ -18,97 +18,19 @@ const tabTitles = {
 };
 const pageTitleEl = document.getElementById("pageTitle");
 
-// ── Demo dataset (so analytics/Gemma has context) ──────────────
+// ── Data sources ───────────────────────────────────────────────
+// Demo data removed. Populate these from backend services.
 const demoState = {
   wards: {
-    ICU: { used: 9, total: 12 },
-    ER: { used: 14, total: 20 },
-    General: { used: 38, total: 60 },
+    ICU: { used: 0, total: 0 },
+    ER: { used: 0, total: 0 },
+    General: { used: 0, total: 0 },
   },
-  staff: [
-    {
-      id: "STF-001",
-      name: "Dr. Aanya Verma",
-      role: "Emergency Physician",
-      ward: "ER",
-      onDuty: true,
-      duty: "Triage Lead",
-      assignment: "ER Bay 2 • Trauma intake & stabilization",
-      since: Date.now() - 1000 * 60 * 60 * 3 - 1000 * 60 * 17,
-      lastCheckIn: Date.now() - 1000 * 60 * 7,
-      contact: "aanya.verma@goelhospital.com",
-    },
-    {
-      id: "STF-002",
-      name: "Nurse Kavya Singh",
-      role: "ICU Nurse",
-      ward: "ICU",
-      onDuty: true,
-      duty: "Ventilator Rounds",
-      assignment: "ICU Bed 4–6 • vitals monitoring & meds",
-      since: Date.now() - 1000 * 60 * 60 * 5 - 1000 * 60 * 2,
-      lastCheckIn: Date.now() - 1000 * 60 * 2,
-      contact: "kavya.singh@goelhospital.com",
-    },
-    {
-      id: "STF-003",
-      name: "Dr. Rohan Mehta",
-      role: "Cardiologist (On-call)",
-      ward: "ICU",
-      onDuty: false,
-      duty: "On-call",
-      assignment: "On call for cardiac consults",
-      since: Date.now() - 1000 * 60 * 60 * 12,
-      lastCheckIn: Date.now() - 1000 * 60 * 45,
-      contact: "rohan.mehta@goelhospital.com",
-    },
-    {
-      id: "STF-004",
-      name: "Tech Arjun Rao",
-      role: "Radiology Tech",
-      ward: "ER",
-      onDuty: true,
-      duty: "Portable X-Ray",
-      assignment: "ER Bay 1–3 • imaging requests queue",
-      since: Date.now() - 1000 * 60 * 60 * 1 - 1000 * 60 * 28,
-      lastCheckIn: Date.now() - 1000 * 60 * 11,
-      contact: "arjun.rao@goelhospital.com",
-    },
-    {
-      id: "STF-005",
-      name: "Dr. Neha Kapoor",
-      role: "General Physician",
-      ward: "General",
-      onDuty: true,
-      duty: "Ward Coverage",
-      assignment: "Ward A • rounds, discharge review, consults",
-      since: Date.now() - 1000 * 60 * 60 * 2 - 1000 * 60 * 41,
-      lastCheckIn: Date.now() - 1000 * 60 * 5,
-      contact: "neha.kapoor@goelhospital.com",
-    },
-  ],
-  fleet: [
-    { id: "EMS-LKO-18", status: "standby", lat: 26.8467, lng: 80.9462 },
-    { id: "EMS-LKO-09", status: "dispatched", lat: 26.8585, lng: 80.9605 },
-    { id: "EMS-LKO-03", status: "available", lat: 26.8382, lng: 80.9341 },
-    { id: "EMS-LKO-12", status: "service", lat: 26.8721, lng: 80.9414 },
-  ],
-  patients: [
-    { name: "Anjali Patel", zone: "Ward A", severity: "stable", age: 44, lat: 26.8460, lng: 80.9490 },
-    { name: "Ravi Kumar", zone: "Trauma Desk", severity: "critical", age: 52, lat: 26.8526, lng: 80.9412 },
-    { name: "Meera Singh", zone: "Ward C", severity: "stable", age: 38, lat: 26.8397, lng: 80.9542 },
-    { name: "Sanjay Verma", zone: "ER Bay 2", severity: "critical", age: 61, lat: 26.8602, lng: 80.9521 },
-  ],
-  billings: [
-    { id: "BL-2026-0090", patient: "Anjali Patel", amount: 12500, status: "cleared" },
-    { id: "BL-2026-0091", patient: "Ravi Kumar", amount: 35600, status: "pending_finance" },
-    { id: "BL-2026-0092", patient: "Meera Singh", amount: 8900, status: "pending_admin" },
-  ],
-  comms: {
-    alerts: 6,
-    shifts: 4,
-    handshake: 2,
-  },
+  staff: [],
+  fleet: [],
+  patients: [],
+  billings: [],
+  comms: { alerts: 0, shifts: 0, handshake: 0 },
 };
 
 function switchTab(tab) {
@@ -176,42 +98,14 @@ function computeSystemHealth() {
 function refreshOverviewKpis() {
   const fleetEl = document.getElementById("ovFleetCount");
   if (fleetEl) fleetEl.textContent = String(demoState.fleet.length);
-  const patEl = document.getElementById("ovPatientCount");
-  if (patEl) patEl.textContent = String(demoState.patients.length);
-  const bedsEl = document.getElementById("ovBedsFree");
-  if (bedsEl) {
-    const w = demoState.wards;
-    const free =
-      (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
-    bedsEl.textContent = String(free);
-  }
-
   const fleetEl2 = document.getElementById("ovFleetCount2");
   if (fleetEl2) fleetEl2.textContent = String(demoState.fleet.length);
-  const patEl2 = document.getElementById("ovPatientCount2");
-  if (patEl2) patEl2.textContent = String(demoState.patients.length);
-  const bedsEl2 = document.getElementById("ovBedsFree2");
-  if (bedsEl2) {
-    const w = demoState.wards;
-    const free =
-      (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
-    bedsEl2.textContent = String(free);
-  }
 }
 
 // Sync KPI values in Overview sidebar blocks too.
 function refreshOverviewSideStats() {
   const fc = document.getElementById("ovFleetCount");
-  const pc = document.getElementById("ovPatientCount");
-  const bc = document.getElementById("ovBedsFree");
   if (fc) fc.textContent = String(demoState.fleet.length);
-  if (pc) pc.textContent = String(demoState.patients.length);
-  if (bc) {
-    const w = demoState.wards;
-    const free =
-      (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
-    bc.textContent = String(free);
-  }
 }
 
 function tickSystemHealth() {
@@ -231,7 +125,7 @@ refreshOverviewSideStats();
 const opsState = {
   items: [],
   selectedId: "",
-  filter: "all", // all | fleet | patients | staff
+  filter: "all", // all | patients | staff
   aiEnabled: true,
 };
 
@@ -248,7 +142,6 @@ function opsFmtTime(ms) {
 }
 
 function opsTypeLabel(t) {
-  if (t === "fleet") return "Fleet";
   if (t === "patients") return "Patients";
   if (t === "staff") return "Staff";
   return "Ops";
@@ -302,13 +195,10 @@ function filteredOpsItems() {
 }
 
 function refreshOpsKpis() {
-  const fleet = opsState.items.filter((i) => i.type === "fleet").length;
   const pat = opsState.items.filter((i) => i.type === "patients").length;
   const st = opsState.items.filter((i) => i.type === "staff").length;
-  const elF = document.getElementById("opsKpiFleet");
   const elP = document.getElementById("opsKpiPatients");
   const elS = document.getElementById("opsKpiStaff");
-  if (elF) elF.textContent = String(fleet);
   if (elP) elP.textContent = String(pat);
   if (elS) elS.textContent = String(st);
 
@@ -508,28 +398,8 @@ function bindOpsActionsOnce() {
 }
 
 function seedOpsFeed() {
-  if (opsState.items.length) return;
-  addOpsItem({
-    id: "OPS-BOOT-1",
-    type: "staff",
-    title: "Shift update: ER coverage ok",
-    summary: "ER Shift A has 12 staff; last check-in 10:42.",
-    payload: { module: "staff", ward: "ER", onDuty: 12 },
-  });
-  addOpsItem({
-    id: "OPS-BOOT-2",
-    type: "patients",
-    title: "Consult request: cardiology",
-    summary: "Patient Ravi Kumar requested cardiology consult.",
-    payload: { module: "patients", patient: "Ravi Kumar", request: "consultation", specialty: "Cardiology" },
-  });
-  addOpsItem({
-    id: "OPS-BOOT-3",
-    type: "fleet",
-    title: "Unit EMS-LKO-09 dispatched",
-    summary: "Assigned to incident by admin; status now dispatched.",
-    payload: { module: "fleet", unit: "EMS-LKO-09", action: "assign" },
-  });
+  // Demo seed removed.
+  return;
 }
 
 bindOpsActionsOnce();
@@ -538,25 +408,20 @@ renderOpsFeed();
 renderOpsDetailById(opsState.selectedId);
 refreshOpsKpis();
 
-// ── Management side navigation (Patients / Fleet / Staff) ──
+// ── Management side navigation (Patients / Staff) ──
 const mgmtBtns = Array.from(document.querySelectorAll(".mgmtNavBtn"));
 const mgmtViews = {
   patients: document.getElementById("mview-patients"),
-  fleet: document.getElementById("mview-fleet"),
   staff: document.getElementById("mview-staff"),
 };
 
 function switchMgmtView(name) {
   mgmtBtns.forEach((b) => b.classList.toggle("active", b.dataset.mview === name));
   Object.entries(mgmtViews).forEach(([k, el]) => el && el.classList.toggle("active", k === name));
-  const unitsBlock = document.getElementById("mgmtUnitsBlock");
   const staffBlock = document.getElementById("mgmtStaffBlock");
   const patientBlock = document.getElementById("mgmtPatientsBlock");
-  if (unitsBlock) unitsBlock.hidden = name === "staff" || name === "patients";
   if (staffBlock) staffBlock.hidden = name !== "staff";
   if (patientBlock) patientBlock.hidden = name !== "patients";
-  // Resize maps when fleet view opens
-  if (name === "fleet") tryResizeMapsSoon();
   if (name === "patients") {
     refreshMgmtPatientsQuickView();
     renderMgmtPatientRoster();
@@ -573,10 +438,10 @@ function switchMgmtView(name) {
 mgmtBtns.forEach((b) => b.addEventListener("click", () => switchMgmtView(b.dataset.mview)));
 
 // ── Management tab ────────────────────────────────────────────
-let staffCount = 42;
-let fleetCount = 10;
-let dispatched = 2;
-let emergencyCount = 7;
+let staffCount = 0;
+let fleetCount = 0;
+let dispatched = 0;
+let emergencyCount = 0;
 
 const staffCountEl   = document.getElementById("staffCount");
 const fleetCountEl   = document.getElementById("fleetCount");
@@ -970,20 +835,7 @@ function renderMgmtStaffList() {
 const staffSearchEl = document.getElementById("staffSearch");
 staffSearchEl && staffSearchEl.addEventListener("input", () => renderMgmtStaffList());
 
-const dispatchFleetBtn = document.getElementById("dispatchFleetBtn");
-dispatchFleetBtn && dispatchFleetBtn.addEventListener("click", () => {
-  if (fleetCount > 0) { fleetCount -= 1; dispatched += 1; }
-  fleetCountEl && (fleetCountEl.textContent = String(fleetCount));
-  fleetSubEl && (fleetSubEl.textContent = dispatched + " dispatched · " + (fleetCount + dispatched) + " total");
-  setBar("fleetBar", Math.round(fleetCount / (fleetCount + dispatched) * 100));
-});
-const returnFleetBtn = document.getElementById("returnFleetBtn");
-returnFleetBtn && returnFleetBtn.addEventListener("click", () => {
-  if (dispatched > 0) { dispatched -= 1; fleetCount += 1; }
-  fleetCountEl && (fleetCountEl.textContent = String(fleetCount));
-  fleetSubEl && (fleetSubEl.textContent = dispatched + " dispatched · " + (fleetCount + dispatched) + " total");
-  setBar("fleetBar", Math.round(fleetCount / (fleetCount + dispatched) * 100));
-});
+// Fleet actions removed from admin panel.
 
 // (buttons may not exist in current layout; keep safe)
 const addEmergencyBtn = document.getElementById("addEmergencyBtn");
@@ -1280,6 +1132,7 @@ let osmMarkersMain = [];
 let osmMarkersMgmt = [];
 let lucknowHexZones = [];
 let hexPolyLayer = null;
+let selectedHexZoneName = "";
 const demoMarkers = [
   ...demoState.fleet.map((f) => ({ type: "fleet", label: f.id + " (" + f.status + ")", lat: f.lat, lng: f.lng })),
   ...demoState.patients.map((p) => ({ type: "patient", label: "Patient: " + p.name + " (" + p.severity + ")", lat: p.lat, lng: p.lng })),
@@ -1318,8 +1171,10 @@ function hexVerticesPointy(centerLat, centerLng, Rm) {
 function buildLucknowHexZones() {
   const centerLat = 26.8467;
   const centerLng = 80.9462;
-  const hexSpacingM = 480;
-  const cells = hexDiskRadius(2);
+  // Scale up to cover Lucknow core region (not just a small cluster).
+  // (hexSpacingM is effectively the hex "size" used in axial transform + vertices below.)
+  const hexSpacingM = 1700;
+  const cells = hexDiskRadius(6);
   const inflows = [12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22];
   const pops = ["~48k", "~22k", "~61k", "~31k", "~19k", "~55k"];
   const complaintSets = [
@@ -1353,13 +1208,18 @@ function buildLucknowHexZones() {
   const zones = cells.map(([q, r], i) => {
     const [lat, lng] = axialToCenterLatLng(q, r, centerLat, centerLng, hexSpacingM);
     const name = "Zone " + String.fromCharCode(65 + i);
+    const inflow = inflows[i] != null ? inflows[i] : 16 + i;
+    const recentAdm = Math.max(0, Math.round(inflow / 10) + ((i % 3) - 1));
+    const admFrom = ["ER Bay 2", "Trauma Desk", "Ward A", "Ward C", "ICU", "Registration"].at(i % 6);
     return {
       q,
       r,
       lat,
       lng,
       name,
-      inflow24h: inflows[i] != null ? inflows[i] : 16 + i,
+      inflow24h: inflow,
+      admissions6h: recentAdm,
+      latestAdmissionFrom: admFrom + " · " + (10 + (i % 40)) + " min ago",
       populationBand: pops[i % pops.length],
       complaints: complaintSets[i % complaintSets.length],
       fleetBlurb: fleetLines[i % fleetLines.length],
@@ -1393,6 +1253,14 @@ function hexStyleForZone(z) {
   const hi = document.getElementById("hexFilterHigh")?.checked;
   const lo = document.getElementById("hexFilterLow")?.checked;
   const base = { className: "hexMapCell" };
+  if (selectedHexZoneName && z.name === selectedHexZoneName) {
+    return Object.assign(base, {
+      color: "#35c97a",
+      weight: 2.5,
+      fillColor: "#35c97a",
+      fillOpacity: 0.5,
+    });
+  }
   if (z.tier === "high" && hi) {
     return Object.assign(base, {
       color: "#35c97a",
@@ -1425,6 +1293,81 @@ function refreshHexStyles() {
   });
 }
 
+function highlightZoneRow(name) {
+  document.querySelectorAll(".zoneRow").forEach((n) => {
+    n.classList.toggle("zoneRowActive", !!name && n.dataset.zoneName === name);
+  });
+}
+
+function setSelectedZone(z) {
+  if (!z) return;
+  selectedHexZoneName = z.name;
+  highlightZoneRow(selectedHexZoneName);
+  refreshHexStyles();
+  showHexZonePanel(z);
+
+  const n = document.getElementById("ovSelectedZoneName");
+  if (n) n.textContent = z.name || "—";
+  const t = document.getElementById("ovSelectedZoneTier");
+  if (t) t.textContent = z.tier === "high" ? "High" : z.tier === "low" ? "Low" : "Mid";
+  const i = document.getElementById("ovSelectedZoneInflow");
+  if (i) i.textContent = String(z.inflow24h ?? "—");
+}
+
+function renderOverviewZoneList() {
+  const listEl = document.getElementById("ovZoneList");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+
+  if (!Array.isArray(lucknowHexZones) || lucknowHexZones.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "muted";
+    empty.textContent = "Loading zones…";
+    listEl.appendChild(empty);
+    return;
+  }
+
+  const zones = [...lucknowHexZones].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  if (!selectedHexZoneName && zones.length) {
+    // Pick a sensible default so the UI isn't empty.
+    setSelectedZone(zones[Math.floor(zones.length / 2)]);
+  }
+  zones.forEach((z) => {
+    const row = document.createElement("div");
+    row.className = "zoneRow";
+    row.dataset.zoneName = z.name;
+    row.setAttribute("role", "button");
+    row.setAttribute("tabindex", "0");
+    row.setAttribute("aria-label", "Select " + z.name);
+    row.innerHTML =
+      "<div class=\"zoneRowTop\">" +
+      "<div class=\"zoneName\"></div>" +
+      "<div class=\"zoneTag\"></div>" +
+      "</div>" +
+      "<div class=\"zoneSub\"></div>";
+    row.querySelector(".zoneName").textContent = z.name;
+    row.querySelector(".zoneTag").textContent =
+      z.tier === "high" ? "HIGH" : z.tier === "low" ? "LOW" : "MID";
+    row.querySelector(".zoneSub").textContent = "Inflow 24h: " + String(z.inflow24h ?? "—");
+
+    function open() {
+      setSelectedZone(z);
+      if (osmMain && window.L) {
+        try {
+          osmMain.setView([z.lat, z.lng], Math.max(osmMain.getZoom(), 12));
+        } catch (_) {}
+      }
+    }
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") open();
+    });
+    listEl.appendChild(row);
+  });
+
+  highlightZoneRow(selectedHexZoneName);
+}
+
 function showHexZonePanel(z) {
   const ph = document.getElementById("hexZonePlaceholder");
   const det = document.getElementById("hexZoneDetails");
@@ -1441,12 +1384,14 @@ function showHexZonePanel(z) {
   }
   const inf = document.getElementById("hexZoneInflow");
   if (inf) inf.textContent = String(z.inflow24h) + " presentations (24h est.)";
+  const ac = document.getElementById("hexZoneAdmCount");
+  if (ac) ac.textContent = String(z.admissions6h ?? "—") + " (demo)";
+  const af = document.getElementById("hexZoneAdmFrom");
+  if (af) af.textContent = String(z.latestAdmissionFrom || "—");
   const pop = document.getElementById("hexZonePop");
   if (pop) pop.textContent = z.populationBand + " residents (model)";
   const comp = document.getElementById("hexZoneComplaints");
   if (comp) comp.textContent = z.complaints.join(" · ");
-  const fl = document.getElementById("hexZoneFleet");
-  if (fl) fl.textContent = z.fleetBlurb;
   const dm = document.getElementById("hexZoneDemo");
   if (dm) dm.textContent = z.demoBlurb;
 }
@@ -1454,22 +1399,31 @@ function showHexZonePanel(z) {
 function addHexGridToMainMap(map) {
   if (!map || !window.L) return;
   lucknowHexZones = buildLucknowHexZones();
-  const hexSpacingM = 480;
+  const hexSpacingM = 1700;
   if (hexPolyLayer) {
     try {
       map.removeLayer(hexPolyLayer);
     } catch (_) {}
   }
   hexPolyLayer = L.layerGroup().addTo(map);
+  const bounds = L.latLngBounds([]);
   lucknowHexZones.forEach((z) => {
     const verts = hexVerticesPointy(z.lat, z.lng, hexSpacingM * 0.97);
     const poly = L.polygon(verts, hexStyleForZone(z)).addTo(hexPolyLayer);
     poly._hexZone = z;
     poly.on("click", (e) => {
       L.DomEvent.stopPropagation(e);
-      showHexZonePanel(z);
+      setSelectedZone(z);
     });
+    try {
+      bounds.extend(poly.getBounds());
+    } catch (_) {}
   });
+  try {
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16] });
+  } catch (_) {}
+
+  renderOverviewZoneList();
   const hi = document.getElementById("hexFilterHigh");
   const lo = document.getElementById("hexFilterLow");
   if (hi && !hi._hexBound) {
@@ -1515,9 +1469,15 @@ function markerColor(type) {
   return "#4ddb8e";
 }
 
-function addLeafletMarkers(map, arr) {
+function addLeafletMarkers(map, arr, opts) {
   clearLeafletMarkers(arr);
+  const o = opts || {};
+  const includeFleet = o.includeFleet !== false;
+  const includePatients = o.includePatients !== false;
+
   demoMarkers.forEach((p) => {
+    if (p.type === "fleet" && !includeFleet) return;
+    if (p.type === "patient" && !includePatients) return;
     const marker = L.circleMarker([p.lat, p.lng], {
       radius: 8,
       color: markerColor(p.type),
@@ -1556,13 +1516,15 @@ function initLeafletMap(id, errorId, useDarkBasemap) {
 }
 
 function initOpenSourceMaps() {
-  osmMain = initLeafletMap("mapMain", "mapError", true);
-  osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", true);
+  osmMain = initLeafletMap("mapMain", "mapError", false);
+  osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false);
   if (osmMain) {
-    addLeafletMarkers(osmMain, osmMarkersMain);
+    // Overview map: keep it clean (no fleet references).
+    addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: false, includePatients: true });
     addHexGridToMainMap(osmMain);
   }
-  if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt);
+  // Manage map: keep fleet + patients.
+  if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt, { includeFleet: false, includePatients: true });
   renderMgmtFleetSidebar();
   renderMgmtStaffList();
   tryResizeMapsSoon();
@@ -1807,14 +1769,88 @@ const commsChannelMeta = {
 let commsDb = null;
 function initCommsFirebaseIfPossible() {
   try {
-    if (!window.firebase || !window.__FIREBASE_CONFIG__) return null;
-    if (!firebase.apps.length) firebase.initializeApp(window.__FIREBASE_CONFIG__);
+    if (!window.firebase) return null;
+    // Preferred: on Firebase Hosting, /__/firebase/init.js auto-initializes firebase.
+    // Fallback: allow legacy builds to set window.__FIREBASE_CONFIG__.
+    if (!firebase.apps.length) {
+      if (window.__FIREBASE_CONFIG__) {
+        firebase.initializeApp(window.__FIREBASE_CONFIG__);
+      } else {
+        return null;
+      }
+    }
     return firebase.firestore();
   } catch (_) {
     return null;
   }
 }
 commsDb = initCommsFirebaseIfPossible();
+
+// ── Operations: realtime from Firestore ─────────────────────────
+let opsUnsubAppointments = null;
+const opsSeen = {
+  appointmentAdd: new Set(),
+  checkIn: new Set(),
+};
+
+function opsSafeStr(x) {
+  return x == null ? "" : String(x);
+}
+
+function opsSubscribeAppointmentsIfPossible() {
+  if (!commsDb) return;
+  if (opsUnsubAppointments) return;
+
+  try {
+    opsUnsubAppointments = commsDb
+      .collection("appointments")
+      .orderBy("createdAt", "desc")
+      .limit(60)
+      .onSnapshot(
+        (snap) => {
+          snap.docChanges().forEach((chg) => {
+            const id = chg.doc.id;
+            const data = chg.doc.data() || {};
+
+            // New appointment → Patients queue item
+            if (chg.type === "added" && !opsSeen.appointmentAdd.has(id)) {
+              opsSeen.appointmentAdd.add(id);
+              const pName = opsSafeStr(data.patientNameSnapshot) || opsSafeStr(data.patientName) || "Patient";
+              const dept = opsSafeStr(data.department) || "—";
+              const docName = opsSafeStr(data.doctorNameSnapshot) || "Doctor";
+              emitOpsFromModule(
+                "patients",
+                "New slot: " + dept,
+                pName + " scheduled with " + docName,
+                Object.assign({ appointmentId: id }, data)
+              );
+            }
+
+            // Check-in event → Patients queue item
+            if (chg.type !== "removed") {
+              const status = opsSafeStr(data.status);
+              if (status === "checked_in" && !opsSeen.checkIn.has(id)) {
+                opsSeen.checkIn.add(id);
+                const pName = opsSafeStr(data.patientNameSnapshot) || "Patient";
+                const docName = opsSafeStr(data.doctorNameSnapshot) || "Doctor";
+                emitOpsFromModule(
+                  "patients",
+                  "Reception check-in",
+                  pName + " checked-in for " + docName,
+                  Object.assign({ appointmentId: id }, data)
+                );
+              }
+            }
+          });
+        },
+        (_) => {
+          // If query fails (missing index/field), keep demo feed instead of crashing.
+        }
+      );
+  } catch (_) {
+    // No-op
+  }
+}
 
 function formatTime(ts) {
   try {
@@ -2155,4 +2191,5 @@ window.addEventListener("beforeunload", () => {
 subscribeCommsChannel(commsActiveChannel);
 subscribeRoster();
 startPresenceHeartbeat();
+opsSubscribeAppointmentsIfPossible();
 

@@ -11,7 +11,7 @@
       <div class="titleRow">
         <div>
           <h1>Management</h1>
-          <p class="muted">Staff, fleet, wards and credential generation</p>
+          <p class="muted">Staff, wards and credential generation</p>
         </div>
         <span class="badge">Admin</span>
       </div>
@@ -21,11 +21,6 @@
           <h3>Staff</h3>
           <p>On duty: <strong id="staffOnDuty">28</strong></p>
           <button id="markShiftBtn">Mark One On-Duty</button>
-        </article>
-        <article class="card">
-          <h3>Fleet</h3>
-          <p>Ready vehicles: <strong id="fleetReady">10</strong></p>
-          <button id="fleetDispatchBtn" class="secondary">Dispatch One</button>
         </article>
         <article class="card">
           <h3>Wards</h3>
@@ -41,46 +36,12 @@
           <select id="staffRole">
             <option>doctor</option>
             <option>worker</option>
-            <option>fleet</option>
           </select>
           <button id="createCredBtn">Generate</button>
         </div>
         <p id="credOutput" class="muted" style="margin-top: 10px">
           Fill name and click generate
         </p>
-      </section>
-
-      <!-- Fleet On-Duty Panel -->
-      <section class="card" style="margin-top: 12px">
-        <h3>Fleet On Duty
-          <span id="onDutyCount" style="margin-left:8px;font-size:12px;font-weight:600;background:#d7e2ff;color:#004590;padding:2px 10px;border-radius:999px;vertical-align:middle">0</span>
-        </h3>
-        <p class="muted" style="margin-bottom:10px">Operators currently marked on duty via the Fleet Portal</p>
-        <ul id="onDutyList" style="list-style:none;padding:0;display:flex;flex-direction:column;gap:8px">
-          <li class="muted" id="onDutyEmpty">No operators on duty</li>
-        </ul>
-      </section>
-
-      <!-- Assign Incident to Fleet -->
-      <section class="card" style="margin-top: 12px">
-        <h3>Assign Incident to Fleet</h3>
-        <p class="muted" style="margin-bottom:14px">Select an on-duty operator and set the destination for dispatch</p>
-        <div class="row" style="flex-wrap:wrap;gap:8px">
-          <select id="assignOperator" style="flex:1;min-width:200px">
-            <option value="">— Select on-duty operator —</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <input id="assignIncident" placeholder="Incident description (e.g. Vehicle Accident — High Priority)" style="flex:1" />
-        </div>
-        <div class="row" style="margin-top:8px">
-          <input id="assignDestination" placeholder="Destination address (e.g. 45 Hospital Road, City Center)" style="flex:1" />
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button id="assignBtn">Assign Incident</button>
-          <button id="clearAssignBtn" class="secondary">Clear Assignment</button>
-        </div>
-        <p id="assignOutput" class="muted" style="margin-top:10px">Select an operator and fill in details to assign</p>
       </section>
     </main>
 
@@ -96,26 +57,18 @@
 
     <script>
       const staffOnDutyEl = document.getElementById("staffOnDuty");
-      const fleetReadyEl = document.getElementById("fleetReady");
       const markShiftBtn = document.getElementById("markShiftBtn");
-      const fleetDispatchBtn = document.getElementById("fleetDispatchBtn");
       const createCredBtn = document.getElementById("createCredBtn");
       const staffNameEl = document.getElementById("staffName");
       const staffRoleEl = document.getElementById("staffRole");
       const credOutputEl = document.getElementById("credOutput");
 
       let staffOnDuty = 28;
-      let fleetReady = 10;
       let generatedCount = 3;
 
       markShiftBtn.addEventListener("click", () => {
         staffOnDuty += 1;
         staffOnDutyEl.textContent = String(staffOnDuty);
-      });
-
-      fleetDispatchBtn.addEventListener("click", () => {
-        if (fleetReady > 0) fleetReady -= 1;
-        fleetReadyEl.textContent = String(fleetReady);
       });
 
       createCredBtn.addEventListener("click", () => {
@@ -131,13 +84,6 @@
         const password = "GH@" + (1000 + generatedCount);
         credOutputEl.textContent = "Generated: " + email + " | " + password;
       });
-
-      /* ── Fleet On-Duty Panel ─────────────────────────────── */
-      const ON_DUTY_KEY     = "fleet_on_duty";
-      const ASSIGNMENTS_KEY = "fleet_assignments";
-
-      function getOnDuty()      { return JSON.parse(localStorage.getItem(ON_DUTY_KEY) || "{}"); }
-      function getAssignments() { return JSON.parse(localStorage.getItem(ASSIGNMENTS_KEY) || "{}"); }
 
       function refreshOnDutyPanel() {
         const onDuty      = getOnDuty();

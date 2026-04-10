@@ -6,13 +6,11 @@ import '../models/appointment_model.dart';
 import '../models/patient_model.dart';
 import '../services/appointment_service.dart';
 import '../services/auth_service.dart';
-import '../services/demo_session.dart';
 import 'login_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   final PatientModel patient;
-  final bool isDemo;
-  const PatientHomeScreen({super.key, required this.patient, this.isDemo = false});
+  const PatientHomeScreen({super.key, required this.patient});
 
   @override
   State<PatientHomeScreen> createState() => _PatientHomeScreenState();
@@ -71,11 +69,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
     if (confirmed != true) return;
 
-    if (widget.isDemo) {
-      await DemoSession.disable();
-    } else {
-      await _auth.signOut();
-    }
+    await _auth.signOut();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const PatientLoginScreen()),
@@ -157,7 +151,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                   ),
                 ),
                 Text(
-                  widget.isDemo ? 'Patient Portal · DEMO' : 'Patient Portal',
+                  'Patient Portal',
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     color: const Color(0xFF6b7280),

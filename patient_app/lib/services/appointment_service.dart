@@ -26,14 +26,19 @@ class AppointmentService {
     required String department,
     required String symptoms,
   }) async {
-    Query query = _db.collection('users').where('role', isEqualTo: 'Doctor').where('onDuty', isEqualTo: true);
-    if (department.trim().isNotEmpty) {
-      query = query.where('department', isEqualTo: department.trim());
-    }
+    Query base = _db.collection('users').where('role', isEqualTo: 'Doctor').where('onDuty', isEqualTo: true);
+    Query query = base;
+    final dept = department.trim();
+    if (dept.isNotEmpty) query = query.where('department', isEqualTo: dept);
 
-    final snap = await query.limit(1).get();
+    QuerySnapshot snap = await query.limit(1).get();
     if (snap.docs.isEmpty) {
-      throw StateError('No on-duty doctor available for $department');
+      // Fallback: if department filtering is too strict (common when doctor profile department is blank),
+      // still allow a slot by routing to any on-duty doctor.
+      snap = await base.limit(1).get();
+    }
+    if (snap.docs.isEmpty) {
+      throw StateError(dept.isEmpty ? 'No on-duty doctor available' : 'No on-duty doctor available for $dept');
     }
 
     final doctorDoc = snap.docs.first;

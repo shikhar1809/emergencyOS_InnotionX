@@ -389,13 +389,10 @@ ul.clean li {
   color: #c5d0ec;
 }
 
-.mapMainDark.leaflet-container,
-.mapMainDark .leaflet-container {
-  background: #050a14;
-}
-
-.mapWrap--hex .leaflet-tile-pane {
-  filter: saturate(1.08) hue-rotate(-12deg) brightness(0.92);
+/* White/light map across the app */
+.leaflet-container {
+  background: #ffffff;
+  font: inherit;
 }
 
 path.hexMapCell {
@@ -415,14 +412,9 @@ path.hexMapCell {
   line-height: 1.45;
 }
 
-/* Leaflet tweaks for dark UI */
-.leaflet-container {
-  background: #090f1c;
-  font: inherit;
-}
 .leaflet-control-attribution {
-  background: rgba(8, 12, 24, 0.6) !important;
-  color: #a7b1c8 !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  color: #22314f !important;
   border-radius: 8px !important;
   padding: 2px 8px !important;
 }
@@ -569,6 +561,56 @@ path.hexMapCell {
   overflow-y: auto;
   display: grid;
   gap: 8px;
+}
+
+/* Overview → zone list */
+.zoneRosterList {
+  max-height: 520px;
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.zoneRow {
+  border: 1px solid #1d2e47;
+  background: #0d1828;
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+}
+.zoneRow:hover {
+  border-color: #3f7cff;
+}
+.zoneRowActive {
+  border-color: #35c97a;
+  box-shadow: 0 0 0 1px rgba(53, 201, 122, 0.22);
+}
+.zoneRowTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.zoneName {
+  font-weight: 900;
+  font-size: 13px;
+  color: #eef2ff;
+}
+.zoneTag {
+  font-size: 11px;
+  color: #9db5d8;
+  border: 1px solid #253856;
+  background: #0c1525;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.zoneSub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8a96b0;
+  line-height: 1.35;
 }
 .staffRow {
   border: 1px solid #1d2e47;

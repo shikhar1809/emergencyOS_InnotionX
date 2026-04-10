@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import '../services/demo_session.dart';
 import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,8 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _loading = false;
   bool _obscure = true;
-  static const String _demoEmail = 'doctor3@goelhospital.com';
-  static const String _demoPassword = 'GH@1004';
 
   @override
   void dispose() {
@@ -36,25 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // If user typed (or auto-filled) the demo credentials, bypass Firebase Auth.
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
-    if (email.toLowerCase() == _demoEmail.toLowerCase() && pass == _demoPassword) {
-      try {
-        await DemoSession.enable();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not start demo mode: $e'),
-            backgroundColor: const Color(0xFFb91c1c),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      // AuthGate listens to [DemoSession.activeNotifier] and swaps to dashboard.
-      return;
-    }
 
     setState(() => _loading = true);
     try {
@@ -91,21 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  Future<void> _demo() async {
-    if (_loading) return;
-    setState(() {
-      _emailCtrl.text = _demoEmail;
-      _passCtrl.text = _demoPassword;
-    });
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Demo credentials filled. Tap Sign In.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
@@ -266,24 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // One demo control only — mirrors Fleet Portal (OutlinedButton)
-                        SizedBox(
-                          height: 48,
-                          child: OutlinedButton(
-                            onPressed: _loading ? null : _demo,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF9ca3af),
-                              side: const BorderSide(color: _cardBorder),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'Use demo credentials',
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
-                            ),
-                          ),
-                        ),
+                        // Demo mode removed.
                       ],
                     ),
                   ),

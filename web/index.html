@@ -20,15 +20,9 @@
       <section id="tab-management" class="tabs">
         <div class="mgmtLayout">
           <aside class="mgmtSidebar">
-            <div class="mgmtSideTop mgmtSideTop--five">
-              <button class="mgmtNavBtn" data-mview="patients">Patients</button>
-              <button class="mgmtNavBtn active" data-mview="fleet">Fleet</button>
+            <div class="mgmtSideTop mgmtSideTop--two">
+              <button class="mgmtNavBtn active" data-mview="patients">Patients</button>
               <button class="mgmtNavBtn" data-mview="staff">Staff</button>
-            </div>
-
-            <div class="mgmtSideBlock" id="mgmtUnitsBlock">
-              <div class="muted" style="margin-bottom:8px">Units</div>
-              <div id="mgmtFleetUnits"></div>
             </div>
 
             <div class="mgmtSideBlock" id="mgmtPatientsBlock" hidden>
@@ -60,6 +54,10 @@
                 <div class="mgmtMainTitle">Patients (quick view)</div>
                 <span class="badge">Incoming: <b id="mgmtIncomingCount">7</b></span>
               </div>
+              <div class="mapWrap" style="margin-bottom:12px">
+                <div id="mapMgmt" class="gmapCanvas" aria-label="Manage map (patients)"></div>
+                <div id="mapErrorMgmt" class="mapError" style="display:none"></div>
+              </div>
               <div class="grid">
                 <article class="card">
                   <h3>Current critical</h3>
@@ -72,25 +70,6 @@
                 </article>
               </div>
               <p class="muted" style="margin-top:10px;font-size:12px">Full patient workflow is in the dedicated <strong>Patients</strong> dock tab.</p>
-            </div>
-
-            <div id="mview-fleet" class="mview active">
-              <div class="mgmtMainHeader">
-                <div class="mgmtMainTitle">Live Fleet Map</div>
-                <div class="row">
-                  <button id="dispatchFleetBtn">Dispatch</button>
-                  <button class="secondary" id="returnFleetBtn">Return</button>
-                </div>
-              </div>
-              <div class="mapWrap">
-            <div id="mapMgmt" class="gmapCanvas" aria-label="OpenStreetMap"></div>
-                <div id="mapErrorMgmt" class="mapError" style="display:none"></div>
-              </div>
-              <div class="row" style="margin-top:10px;gap:12px">
-                <span>🔴 Fleet</span>
-                <span>🔵 Patients</span>
-                <span>🟢 Resolved</span>
-              </div>
             </div>
 
             <div id="mview-staff" class="mview">
@@ -106,7 +85,7 @@
                     <button id="addStaffBtn">Mark On-Duty</button>
                     <button class="secondary" id="removeStaffBtn">Mark Off-Duty</button>
                   </div>
-                  <p class="muted" style="margin-top:12px;font-size:12px">Staff and fleet app logins are issued under the <strong>Credentials</strong> button in Fleet details.</p>
+                  <p class="muted" style="margin-top:12px;font-size:12px">Demo staff roster and duty controls are available here.</p>
                 </article>
               </div>
             </div>
@@ -125,7 +104,7 @@
               <span class="sysHealthText" id="sysHealthText">good</span>
             </div>
             <div class="muted" style="margin-top:14px" id="detailsText">
-              Tap a fleet marker or pick a unit from the list to manage it.
+              Select a patient or staff member to view details.
             </div>
           </aside>
         </div>
@@ -146,7 +125,6 @@
 
               <div class="row" style="gap:6px;flex-wrap:wrap">
                 <button type="button" class="secondary opsFilterBtn active" data-filter="all">All</button>
-                <button type="button" class="secondary opsFilterBtn" data-filter="fleet">Fleet</button>
                 <button type="button" class="secondary opsFilterBtn" data-filter="patients">Patients</button>
                 <button type="button" class="secondary opsFilterBtn" data-filter="staff">Staff</button>
               </div>
@@ -162,11 +140,6 @@
                 <span class="badge" id="opsFeedBadge">Pending: 0</span>
               </div>
               <div class="grid">
-                <article class="card card-accent-blue">
-                  <h3>Fleet updates</h3>
-                  <p class="stat" id="opsKpiFleet">—</p>
-                  <p class="stat-sub">Last 60 min (demo)</p>
-                </article>
                 <article class="card card-accent-amber">
                   <h3>Patient requests</h3>
                   <p class="stat" id="opsKpiPatients">—</p>
@@ -203,147 +176,49 @@
         </div>
       </section>
 
-      <!-- Fleet credentials modal (staff + fleet operator logins) -->
-      <div id="fleetCredModal" class="credModal" hidden aria-hidden="true">
-        <div class="credModalBackdrop" id="fleetCredModalBackdrop"></div>
-        <div class="credModalPanel" role="dialog" aria-labelledby="fleetCredModalTitle">
-          <div class="credModalHeader">
-            <h2 id="fleetCredModalTitle">Fleet · Staff &amp; fleet credentials</h2>
-            <button type="button" class="secondary" id="fleetCredModalClose">Close</button>
-          </div>
-          <p class="muted credModalIntro">Create, revoke, and reset logins used by <strong>Internal Comms / staff apps</strong> and the <strong>Fleet Portal</strong>. Demo only — stored in this browser session.</p>
-          <div class="credModalTabs row" style="margin:14px 0;gap:6px;flex-wrap:wrap">
-            <button type="button" class="credTabBtn active" data-credtab="create">Create</button>
-            <button type="button" class="credTabBtn secondary" data-credtab="revoke">Revoke</button>
-            <button type="button" class="credTabBtn secondary" data-credtab="reset">Reset</button>
-            <button type="button" class="credTabBtn secondary" data-credtab="logs">Logs</button>
-          </div>
-          <div id="credPanel-create" class="credPanel">
-            <div class="row" style="flex-direction:column;align-items:stretch;gap:10px">
-              <input id="fleetCredName" placeholder="Full name or call sign" />
-              <select id="fleetCredRole">
-                <option value="staff">Staff (doctor / worker app)</option>
-                <option value="fleet">Fleet operator (fleet portal)</option>
-              </select>
-              <button type="button" id="fleetCredCreateBtn">Create credential</button>
-            </div>
-            <p id="fleetCredCreateOut" class="muted" style="margin-top:10px"></p>
-          </div>
-          <div id="credPanel-revoke" class="credPanel" hidden>
-            <label class="muted" style="display:block;margin-bottom:6px">Select account</label>
-            <select id="fleetCredRevokeSelect" style="width:100%;margin-bottom:10px"></select>
-            <button type="button" class="danger" id="fleetCredRevokeBtn">Revoke access</button>
-          </div>
-          <div id="credPanel-reset" class="credPanel" hidden>
-            <label class="muted" style="display:block;margin-bottom:6px">Select active account</label>
-            <select id="fleetCredResetSelect" style="width:100%;margin-bottom:10px"></select>
-            <button type="button" id="fleetCredResetBtn">Reset password</button>
-            <p id="fleetCredResetOut" class="muted" style="margin-top:10px"></p>
-          </div>
-          <div id="credPanel-logs" class="credPanel" hidden>
-            <ul class="clean" id="fleetCredLogs" style="max-height:220px;overflow-y:auto;margin-top:0"></ul>
-          </div>
-        </div>
-      </div>
-
       <!-- ── Overview (same layout as Manage) ────────────── -->
       <section id="tab-overview" class="tabs active">
         <div class="mgmtLayout">
           <aside class="mgmtSidebar">
-            <div class="mgmtSideTop mgmtSideTop--ops">
-              <button class="ovNavBtn active" data-ovnav="map">Map</button>
-              <button class="ovNavBtn" data-ovnav="kpi">KPIs</button>
-              <button class="ovNavBtn" data-ovnav="zones">Zones</button>
-              <button class="ovNavBtn" data-ovnav="ai">Gemma</button>
-            </div>
             <div class="mgmtSideBlock">
-              <div class="muted" style="margin-bottom:8px">Quick stats</div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">Fleet</div>
-                <div class="sideUnitSub"><span id="ovFleetCount">—</span> units in district</div>
-              </div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">Patients</div>
-                <div class="sideUnitSub"><span id="ovPatientCount">—</span> tracked</div>
-              </div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">Beds free</div>
-                <div class="sideUnitSub"><span id="ovBedsFree">—</span> capacity</div>
-              </div>
-            </div>
-            <div class="mgmtSideBlock">
-              <div class="muted" style="margin-bottom:8px">Heat filters</div>
-              <label class="hexIconToggle" title="High inflow heat (green)" aria-label="High inflow heat (green)">
-                <input type="checkbox" id="hexFilterHigh" checked />
-                <span class="hexIconPill hexIconPill--high" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M12 4l7 7h-4v9H9v-9H5l7-7z"></path>
-                  </svg>
-                </span>
-              </label>
-              <label class="hexIconToggle" title="Low inflow heat (red)" aria-label="Low inflow heat (red)" style="margin-top:8px">
-                <input type="checkbox" id="hexFilterLow" checked />
-                <span class="hexIconPill hexIconPill--low" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M12 20l-7-7h4V4h6v9h4l-7 7z"></path>
-                  </svg>
-                </span>
-              </label>
+              <div class="muted" style="margin-bottom:8px">Zones</div>
+              <div id="ovZoneList" class="zoneRosterList" role="list" aria-label="Zones list"></div>
             </div>
           </aside>
 
           <section class="mgmtMain">
             <div class="mgmtMainHeader">
-              <div class="mgmtMainTitle">Overview map · Lucknow metro</div>
+              <div class="mgmtMainTitle">Overview map · Lucknow</div>
               <span class="badge">Realtime (demo)</span>
             </div>
             <div class="mapWrap mapWrap--hex">
-              <div id="mapMain" class="gmapCanvas mapMainDark" aria-label="Operations map"></div>
+              <div id="mapMain" class="gmapCanvas" aria-label="Operations map"></div>
               <div id="mapError" class="mapError" style="display:none"></div>
-            </div>
-            <div class="row hexMapLegend" style="margin-top:10px;gap:10px;flex-wrap:wrap;font-size:12px;color:#8a96b0">
-              <span class="hexLegendItem" title="Fleet">
-                <span class="hexLegendDot hexLegendDot--fleet" aria-hidden="true"></span>
-              </span>
-              <span class="hexLegendItem" title="Patients">
-                <span class="hexLegendDot hexLegendDot--patients" aria-hidden="true"></span>
-              </span>
-              <span class="hexLegendItem" title="Zone grid">
-                <svg class="hexLegendSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path d="M7 3h10l5 9-5 9H7L2 12l5-9zm2.1 2L4.3 12l4.8 7h5.8l4.8-7-4.8-7H9.1z"></path>
-                </svg>
-              </span>
-              <span class="hexLegendItem hexLegendItem--high" title="High inflow">
-                <span class="hexLegendSwatch hexLegendSwatch--high" aria-hidden="true"></span>
-              </span>
-              <span class="hexLegendItem hexLegendItem--low" title="Low inflow">
-                <span class="hexLegendSwatch hexLegendSwatch--low" aria-hidden="true"></span>
-              </span>
             </div>
           </section>
 
           <aside class="mgmtDetails">
             <div class="mgmtDetailsHeader">
-              <div>Zone / analytics</div>
+              <div>Overview</div>
               <div style="opacity:0.8">›</div>
             </div>
             <div class="grid" style="margin-top:12px">
               <article class="card" style="padding:14px">
-                <h3 style="margin-bottom:10px">Snapshot KPIs</h3>
-                <div class="row" style="justify-content:space-between">
-                  <span class="muted">Fleet</span><b id="ovFleetCount2">—</b>
+                <h3 style="margin-bottom:10px">Selected zone</h3>
+                <div class="row" style="justify-content:space-between;margin-top:8px">
+                  <span class="muted">Zone</span><b id="ovSelectedZoneName">—</b>
                 </div>
                 <div class="row" style="justify-content:space-between;margin-top:8px">
-                  <span class="muted">Patients</span><b id="ovPatientCount2">—</b>
+                  <span class="muted">Tier</span><b id="ovSelectedZoneTier">—</b>
                 </div>
                 <div class="row" style="justify-content:space-between;margin-top:8px">
-                  <span class="muted">Beds free</span><b id="ovBedsFree2">—</b>
+                  <span class="muted">Inflow (24h)</span><b id="ovSelectedZoneInflow">—</b>
                 </div>
               </article>
             </div>
             <article class="card" style="margin-top:12px">
               <h3>Zone detail</h3>
-              <p class="muted" id="hexZonePlaceholder">Click a hex cell on the map to load demographics and inflow for that zone.</p>
+              <p class="muted" id="hexZonePlaceholder">Click a hex cell on the map to load inflow + admissions for that zone.</p>
               <div id="hexZoneDetails" class="hexZoneDetails" hidden>
                 <div class="hexZoneTitleRow">
                   <span class="hexZoneName" id="hexZoneName"></span>
@@ -354,6 +229,14 @@
                   <span class="hexZoneStatValue" id="hexZoneInflow"></span>
                 </div>
                 <div class="hexZoneStat">
+                  <span class="hexZoneStatLabel">Recent admissions (6h)</span>
+                  <span class="hexZoneStatValue" id="hexZoneAdmCount"></span>
+                </div>
+                <div class="hexZoneStat">
+                  <span class="hexZoneStatLabel">Latest admission from</span>
+                  <span class="hexZoneStatValue" id="hexZoneAdmFrom"></span>
+                </div>
+                <div class="hexZoneStat">
                   <span class="hexZoneStatLabel">Population (est.)</span>
                   <span class="hexZoneStatValue" id="hexZonePop"></span>
                 </div>
@@ -362,22 +245,16 @@
                   <p class="hexZoneBody" id="hexZoneComplaints"></p>
                 </div>
                 <div class="hexZoneBlock">
-                  <div class="hexZoneStatLabel">Fleet &amp; EMS</div>
-                  <p class="hexZoneBody" id="hexZoneFleet"></p>
-                </div>
-                <div class="hexZoneBlock">
-                  <div class="hexZoneStatLabel">Demographics snapshot</div>
+                  <div class="hexZoneStatLabel">Operational note</div>
                   <p class="muted hexZoneBody" id="hexZoneDemo"></p>
                 </div>
               </div>
             </article>
             <article class="card" style="margin-top:12px">
-              <h3>Gemma 4 Demographic Insights</h3>
-              <p id="mapGemmaHint" style="color:#c5d0ec;line-height:1.5">
-                Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
+              <h3>Notes</h3>
+              <p class="muted" style="line-height:1.5;margin:0">
+                Fleet details stay inside <b>Manage</b>. This map is kept clean for patient/zone visibility (demo).
               </p>
-              <p class="muted" id="mapGemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
-              <button class="secondary" id="mapRefreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
             </article>
           </aside>
         </div>
@@ -601,19 +478,10 @@
     </div>
 
     <!-- Firebase JS SDK (compat) for Internal Comms + Presence -->
-    <!-- Replace YOUR_API_KEY etc. with real values from Firebase Console -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-    <script>
-      window.__FIREBASE_CONFIG__ = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "emergencyos-innovationx.firebaseapp.com",
-        projectId: "emergencyos-innovationx",
-        storageBucket: "emergencyos-innovationx.firebasestorage.app",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-      };
-    </script>
+    <!-- Auto-initialize Firebase on Hosting (no hardcoded keys). -->
+    <script src="/__/firebase/init.js"></script>
 
     <script src="./app.js"></script>
     <script src="./vendor/leaflet.js"></script>

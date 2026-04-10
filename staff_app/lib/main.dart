@@ -6,12 +6,10 @@ import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/auth_service.dart';
-import 'services/demo_session.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await DemoSession.hydrate();
   runApp(const StaffApp());
 }
 
@@ -49,65 +47,54 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
-    return ValueListenableBuilder<bool>(
-      valueListenable: DemoSession.activeNotifier,
-      builder: (context, demoActive, _) {
-        if (demoActive) {
-          return DashboardScreen(doctor: DemoSession.demoDoctor(), isDemo: true);
+    return StreamBuilder<User?>(
+      stream: authService.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0d0d1a),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Color(0xFF7c3aed)),
+                  SizedBox(height: 16),
+                  Text(
+                    'EmergencyOS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
-        return StreamBuilder<User?>(
-          stream: authService.authStateChanges,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+        final user = snapshot.data;
+        if (user == null) {
+          return const LoginScreen();
+        }
+
+        return FutureBuilder(
+          future: authService.fetchProfile(user.uid),
+          builder: (context, profileSnap) {
+            if (profileSnap.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: Color(0xFF0d0d1a),
                 body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Color(0xFF7c3aed)),
-                      SizedBox(height: 16),
-                      Text(
-                        'EmergencyOS',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
                 ),
               );
             }
-
-            final user = snapshot.data;
-            if (user == null) {
+            final doctor = profileSnap.data;
+            if (doctor == null) {
+              FirebaseAuth.instance.signOut();
               return const LoginScreen();
             }
-
-            // User is signed in — load their profile and go to dashboard
-            return FutureBuilder(
-              future: authService.fetchProfile(user.uid),
-              builder: (context, profileSnap) {
-                if (profileSnap.connectionState == ConnectionState.waiting) {
-                  return const Scaffold(
-                    backgroundColor: Color(0xFF0d0d1a),
-                    body: Center(
-                      child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
-                    ),
-                  );
-                }
-                final doctor = profileSnap.data;
-                if (doctor == null) {
-                  // Profile not found — sign out and show login
-                  FirebaseAuth.instance.signOut();
-                  return const LoginScreen();
-                }
-                return DashboardScreen(doctor: doctor);
-              },
-            );
+            return DashboardScreen(doctor: doctor);
           },
         );
       },

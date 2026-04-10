@@ -8,9 +8,6 @@
         "admin": [
           "emergencyos-innovationx"
         ],
-        "fleet": [
-          "emergencyos-innovationx-fleet"
-        ],
         "patient": [
           "emergencyos-innovationx-patient"
         ],
