@@ -4,15 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Goel Hospital – Admin Panel</title>
+    <link rel="icon" type="image/png" href="./assets/emergencyos-logo.png" />
     <link rel="stylesheet" href="./app.css" />
     <link rel="stylesheet" href="./vendor/leaflet.css" />
   </head>
   <body>
     <main class="page">
       <div class="titleRow">
-        <div>
-          <h1 id="pageTitle">Management</h1>
-          <p class="muted">Goel Hospital • Emergency Operations Admin Panel</p>
+        <div class="titleLeft">
+          <img class="brandLogo" src="./assets/emergencyos-logo.png" alt="EmergencyOS" />
+          <div>
+            <h1 id="pageTitle">Management</h1>
+            <p class="muted">Goel Hospital • Emergency Operations Admin Panel</p>
+          </div>
         </div>
         <div class="row" style="gap:8px">
           <span class="badge green" id="liveIndicator">● LIVE</span>
@@ -33,14 +37,7 @@
 
             <div class="mgmtSideBlock">
               <div class="muted" style="margin-bottom:8px">Units</div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">EMS-LKO-18</div>
-                <div class="sideUnitSub">Standby • available</div>
-              </div>
-              <div class="sideUnit">
-                <div class="sideUnitTitle">EMS-LKO-09</div>
-                <div class="sideUnitSub">Dispatched • en route</div>
-              </div>
+              <div id="mgmtFleetUnits"></div>
             </div>
           </aside>
 
@@ -57,17 +54,18 @@
             <div id="mapMgmt" class="gmapCanvas" aria-label="OpenStreetMap"></div>
                 <div id="mapErrorMgmt" class="mapError" style="display:none"></div>
               </div>
-              <div class="row" style="margin-top:10px;gap:12px">
+              <div class="row" style="margin-top:10px;gap:12px;flex-wrap:wrap">
                 <span>🔴 Fleet</span>
+                <span class="emgLegend">⬤ Emergency scene</span>
                 <span>🔵 Patients</span>
-                <span>🟢 Resolved</span>
+                <span>🟢 Resolved scene</span>
               </div>
             </div>
 
             <div id="mview-patients" class="mview">
               <div class="mgmtMainHeader">
                 <div class="mgmtMainTitle">Patients</div>
-                <span class="badge">Incoming: <b id="emergencyCount">7</b></span>
+                <span class="badge">Incoming: <b id="emergencyCount">9</b></span>
               </div>
               <div class="grid">
                 <article class="card">
@@ -129,18 +127,18 @@
               <div class="grid">
                 <article class="card">
                   <h3>ICU</h3>
-                  <p class="stat" id="icuText">9<span style="font-size:18px;color:#6a7899">/12</span></p>
-                  <div class="progressBar"><div class="fill" id="icuBar" style="width:75%"></div></div>
+                  <p class="stat" id="icuText">10<span style="font-size:18px;color:#6a7899">/12</span></p>
+                  <div class="progressBar"><div class="fill" id="icuBar" style="width:83%"></div></div>
                 </article>
                 <article class="card">
                   <h3>Emergency Room</h3>
-                  <p class="stat" id="erText">14<span style="font-size:18px;color:#6a7899">/20</span></p>
-                  <div class="progressBar"><div class="fill green" id="erBar" style="width:70%"></div></div>
+                  <p class="stat" id="erText">16<span style="font-size:18px;color:#6a7899">/20</span></p>
+                  <div class="progressBar"><div class="fill green" id="erBar" style="width:80%"></div></div>
                 </article>
                 <article class="card">
                   <h3>General Ward</h3>
-                  <p class="stat">38<span style="font-size:18px;color:#6a7899">/60</span></p>
-                  <div class="progressBar"><div class="fill green" style="width:63%"></div></div>
+                  <p class="stat" id="genWardText">41<span style="font-size:18px;color:#6a7899">/60</span></p>
+                  <div class="progressBar"><div class="fill green" id="genWardBar" style="width:68%"></div></div>
                 </article>
               </div>
             </div>
@@ -148,12 +146,37 @@
 
           <aside class="mgmtDetails">
             <div class="mgmtDetailsHeader">
-              <div>Details</div>
+              <div>Unit details</div>
               <div style="opacity:0.8">›</div>
             </div>
-            <p class="muted" style="margin-top:14px" id="detailsText">
-              Tap a fleet marker or pick a unit from the list to manage it.
+            <p class="muted fleetDetailsHint" id="fleetDetailsHint">
+              Select a fleet unit on the map or from the list to see dispatch status, ETA, and traffic.
             </p>
+            <div id="fleetDetailsContent" class="fleetDetailsContent" hidden>
+              <div class="fleetDetailsTitleRow">
+                <span class="fleetDetailsUnit" id="fleetDetailId"></span>
+                <span class="badge" id="fleetDetailStatusBadge"></span>
+              </div>
+              <div class="fleetDetailBlock">
+                <div class="fleetDetailLabel">Responding to</div>
+                <div class="fleetDetailValue fleetDetailValue--emg" id="fleetDetailEmergency"></div>
+              </div>
+              <div class="fleetDetailGrid">
+                <div class="fleetDetailCell">
+                  <div class="fleetDetailLabel">ETA (routing)</div>
+                  <div class="fleetDetailValue" id="fleetDetailEta">—</div>
+                </div>
+                <div class="fleetDetailCell">
+                  <div class="fleetDetailLabel">Traffic</div>
+                  <div class="fleetDetailValue fleetDetailTraffic" id="fleetDetailTraffic">—</div>
+                </div>
+              </div>
+              <div class="fleetDetailBlock">
+                <div class="fleetDetailLabel">Scene / drop-off</div>
+                <div class="fleetDetailValue muted" id="fleetDetailDest">—</div>
+              </div>
+              <p class="muted fleetDetailNote" id="fleetDetailNote"></p>
+            </div>
           </aside>
         </div>
       </section>
@@ -166,10 +189,11 @@
             <div id="mapMain" class="gmapCanvas" aria-label="OpenStreetMap"></div>
             <div id="mapError" class="mapError" style="display:none"></div>
           </div>
-          <div class="row" style="margin-top:8px;gap:12px">
+          <div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap">
             <span>🔴 Fleet</span>
+            <span class="emgLegend">⬤ Emergency</span>
             <span>🔵 Patients</span>
-            <span>🟢 Resolved</span>
+            <span>🟢 Resolved scene</span>
           </div>
         </article>
         <div class="grid">
@@ -213,8 +237,8 @@
           </article>
           <article class="card card-accent-red">
             <h3>Fleet Readiness</h3>
-            <p class="stat">83<span style="font-size:18px;color:#6a7899">%</span></p>
-            <div class="progressBar"><div class="fill green" style="width:83%"></div></div>
+            <p class="stat" id="kpiFleetReadiness">83<span style="font-size:18px;color:#6a7899">%</span></p>
+            <div class="progressBar"><div class="fill green" id="fleetReadinessBar" style="width:83%"></div></div>
           </article>
         </div>
 
@@ -239,18 +263,18 @@
         <div class="grid">
           <article class="card">
             <h3>Total Bills Today</h3>
-            <p class="stat">23</p>
-            <p class="stat-sub">INR 4,82,600 collected</p>
+            <p class="stat" id="billTodayCount">23</p>
+            <p class="stat-sub" id="billTodayInr">INR 4,82,600 collected</p>
           </article>
           <article class="card card-accent-amber">
             <h3>Pending Approvals</h3>
             <p class="stat" id="pendingApprovalCount">5</p>
-            <p class="stat-sub">Finance manager review</p>
+            <p class="stat-sub" id="billPendingSub">Finance manager review</p>
           </article>
           <article class="card card-accent-green">
             <h3>Fully Cleared</h3>
-            <p class="stat">18</p>
-            <p class="stat-sub">Admin final signed</p>
+            <p class="stat" id="billClearedCount">18</p>
+            <p class="stat-sub" id="billClearedSub">Admin final signed</p>
           </article>
         </div>
 
@@ -297,13 +321,13 @@
         <div class="grid" style="margin-bottom:14px">
           <article class="card card-accent-blue">
             <h3>Active Members</h3>
-            <p class="stat">34</p>
-            <p class="stat-sub">Doctors 12 · Workers 16 · Fleet 6</p>
+            <p class="stat" id="commsActiveMembersStat">34</p>
+            <p class="stat-sub" id="commsRoleBreakdown">Doctors 12 · Workers 16 · Fleet 6</p>
           </article>
           <article class="card card-accent-green">
             <h3>On-Duty Now</h3>
             <p class="stat" id="onDutyCount">28</p>
-            <p class="stat-sub">Last updated: just now</p>
+            <p class="stat-sub" id="onDutyUpdatedSub">Last updated: just now</p>
           </article>
           <article class="card">
             <h3>My Role</h3>
@@ -367,6 +391,7 @@
             <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
               <input id="loginEmail" placeholder="doctor3@goelhospital.com" type="email" />
               <input id="loginPassword" placeholder="Password" type="password" />
+              <button type="button" id="demoCredBtn" class="secondary" style="font-weight:700;border-color:#f59e0b;color:#fbbf24;background:rgba(251,191,36,0.12)">DEMO — fill &amp; login (doctor3)</button>
               <button id="loginBtn">Login</button>
             </div>
             <p id="loginMsg" class="muted">Not logged in.</p>

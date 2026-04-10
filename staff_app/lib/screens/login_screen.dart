@@ -199,7 +199,46 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                           onFieldSubmitted: (_) => _signIn(),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+
+                        // Demo — high contrast so it is visible on dark web (OutlinedButton was too subtle)
+                        SizedBox(
+                          height: 48,
+                          child: FilledButton.icon(
+                            onPressed: _loading ? null : _useDemoAndSignIn,
+                            icon: const Icon(Icons.bolt, size: 20, color: Color(0xFF0f172a)),
+                            label: Text(
+                              'DEMO — doctor3@goelhospital.com',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                letterSpacing: 0.2,
+                                color: const Color(0xFF0f172a),
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFfbbf24),
+                              foregroundColor: const Color(0xFF0f172a),
+                              disabledBackgroundColor: const Color(0xFF713f12),
+                              disabledForegroundColor: const Color(0xFF94a3b8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: const BorderSide(color: Color(0xFFf59e0b), width: 1.5),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'One tap fills demo password and signs in',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF78716c),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
 
                         // Sign in button
                         SizedBox(
@@ -231,31 +270,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontSize: 15,
                                     ),
                                   ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Demo credentials
-                        SizedBox(
-                          height: 44,
-                          child: OutlinedButton.icon(
-                            onPressed: _loading ? null : _useDemoAndSignIn,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFc4b5fd),
-                              side: const BorderSide(color: Color(0xFF1e1e3a)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: const Icon(Icons.auto_awesome, size: 18),
-                            label: Text(
-                              'Use Demo Credentials',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
                           ),
                         ),
                       ],

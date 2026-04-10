@@ -18,34 +18,118 @@ const tabTitles = {
 };
 const pageTitleEl = document.getElementById("pageTitle");
 
-// ── Demo dataset (so analytics/Gemma has context) ──────────────
+// ── Demo dataset (analytics, Gemma snapshot, dashboard KPIs) ────
 const demoState = {
   wards: {
-    ICU: { used: 9, total: 12 },
-    ER: { used: 14, total: 20 },
-    General: { used: 38, total: 60 },
+    ICU: { used: 10, total: 12 },
+    ER: { used: 16, total: 20 },
+    General: { used: 41, total: 60 },
   },
+  emergencies: [
+    {
+      id: "EMG-2026-0142",
+      title: "Cardiac arrest — Gomti Nagar",
+      address: "14, Vibhuti Khand, Gomti Nagar",
+      priority: "P1",
+      status: "active",
+      lat: 26.8682,
+      lng: 80.9954,
+    },
+    {
+      id: "EMG-2026-0155",
+      title: "RTA — Sitapur Road corridor",
+      address: "Near IT Crossing, Sitapur Rd",
+      priority: "P1",
+      status: "active",
+      lat: 26.8224,
+      lng: 80.9188,
+    },
+    {
+      id: "EMG-2026-0138",
+      title: "Domestic injury — Alambagh",
+      address: "Mawaiya bridge approach",
+      priority: "P3",
+      status: "resolved",
+      lat: 26.8331,
+      lng: 80.9042,
+    },
+  ],
   fleet: [
-    { id: "EMS-LKO-18", status: "standby", lat: 26.8467, lng: 80.9462 },
-    { id: "EMS-LKO-09", status: "dispatched", lat: 26.8585, lng: 80.9605 },
-    { id: "EMS-LKO-03", status: "available", lat: 26.8382, lng: 80.9341 },
-    { id: "EMS-LKO-12", status: "service", lat: 26.8721, lng: 80.9414 },
+    {
+      id: "EMS-LKO-18",
+      status: "standby",
+      lat: 26.8467,
+      lng: 80.9462,
+      respondingTo: null,
+      etaMin: null,
+      traffic: null,
+    },
+    {
+      id: "EMS-LKO-09",
+      status: "dispatched",
+      lat: 26.8585,
+      lng: 80.9605,
+      respondingTo: "EMG-2026-0142",
+      etaMin: 6,
+      traffic:
+        "Moderate congestion Hazratganj ring; clears after Kaiserbagh. Live detour via Janpath suggested.",
+    },
+    {
+      id: "EMS-LKO-03",
+      status: "dispatched",
+      lat: 26.8382,
+      lng: 80.9341,
+      respondingTo: "EMG-2026-0155",
+      etaMin: 11,
+      traffic: "Heavy near IT Crossing; left lane closed for utility work (+4 min vs optimal route).",
+    },
+    {
+      id: "EMS-LKO-12",
+      status: "service",
+      lat: 26.8721,
+      lng: 80.9414,
+      respondingTo: null,
+      etaMin: null,
+      traffic: null,
+    },
+    {
+      id: "EMS-LKO-21",
+      status: "available",
+      lat: 26.8512,
+      lng: 80.9721,
+      respondingTo: null,
+      etaMin: null,
+      traffic: null,
+    },
   ],
   patients: [
     { name: "Anjali Patel", zone: "Ward A", severity: "stable", age: 44, lat: 26.8460, lng: 80.9490 },
     { name: "Ravi Kumar", zone: "Trauma Desk", severity: "critical", age: 52, lat: 26.8526, lng: 80.9412 },
     { name: "Meera Singh", zone: "Ward C", severity: "stable", age: 38, lat: 26.8397, lng: 80.9542 },
     { name: "Sanjay Verma", zone: "ER Bay 2", severity: "critical", age: 61, lat: 26.8602, lng: 80.9521 },
+    { name: "Priya Nair", zone: "ER Bay 4", severity: "critical", age: 29, lat: 26.8488, lng: 80.9388 },
+    { name: "Imran Qureshi", zone: "ICU step-down", severity: "stable", age: 55, lat: 26.8445, lng: 80.9512 },
+    { name: "Kavita Joshi", zone: "Ward B", severity: "stable", age: 67, lat: 26.8555, lng: 80.9475 },
   ],
   billings: [
+    { id: "BL-2026-0084", patient: "Imran Qureshi", amount: 22400, status: "cleared" },
+    { id: "BL-2026-0088", patient: "Kavita Joshi", amount: 9800, status: "cleared" },
     { id: "BL-2026-0090", patient: "Anjali Patel", amount: 12500, status: "cleared" },
     { id: "BL-2026-0091", patient: "Ravi Kumar", amount: 35600, status: "pending_finance" },
     { id: "BL-2026-0092", patient: "Meera Singh", amount: 8900, status: "pending_admin" },
+    { id: "BL-2026-0093", patient: "Priya Nair", amount: 41200, status: "pending_finance" },
+    { id: "BL-2026-0094", patient: "Sanjay Verma", amount: 28900, status: "pending_finance" },
+    { id: "BL-2026-0095", patient: "EMS scene EMG-0142", amount: 1500, status: "cleared" },
   ],
   comms: {
     alerts: 6,
     shifts: 4,
     handshake: 2,
+    activeMembers: 37,
+    doctors: 13,
+    workers: 17,
+    fleet: 7,
+    onDuty: 31,
   },
 };
 
@@ -100,7 +184,7 @@ mgmtBtns.forEach((b) => b.addEventListener("click", () => switchMgmtView(b.datas
 let staffCount = 42;
 let fleetCount = 10;
 let dispatched = 2;
-let emergencyCount = 7;
+let emergencyCount = 9;
 let credCounter = 3;
 
 const staffCountEl   = document.getElementById("staffCount");
@@ -156,10 +240,14 @@ resolveEmergencyBtn && resolveEmergencyBtn.addEventListener("click", () => {
 document.getElementById("refreshWardsBtn") && document.getElementById("refreshWardsBtn").addEventListener("click", () => {
   const icu = 8 + Math.floor(Math.random() * 4);
   const er  = 12 + Math.floor(Math.random() * 7);
+  const gen = 36 + Math.floor(Math.random() * 10);
   document.getElementById("icuText").innerHTML = icu + '<span style="font-size:18px;color:#6a7899">/12</span>';
   document.getElementById("erText").innerHTML  = er  + '<span style="font-size:18px;color:#6a7899">/20</span>';
+  const genEl = document.getElementById("genWardText");
+  if (genEl) genEl.innerHTML = gen + '<span style="font-size:18px;color:#6a7899">/60</span>';
   setBar("icuBar", Math.round(icu / 12 * 100));
   setBar("erBar",  Math.round(er  / 20 * 100));
+  setBar("genWardBar", Math.round(gen / 60 * 100));
 });
 
 const genCredBtn = document.getElementById("genCredBtn");
@@ -241,10 +329,174 @@ let osmMain;
 let osmMgmt;
 let osmMarkersMain = [];
 let osmMarkersMgmt = [];
-const demoMarkers = [
-  ...demoState.fleet.map((f) => ({ type: "fleet", label: f.id + " (" + f.status + ")", lat: f.lat, lng: f.lng })),
-  ...demoState.patients.map((p) => ({ type: "patient", label: "Patient: " + p.name + " (" + p.severity + ")", lat: p.lat, lng: p.lng })),
-];
+let mgmtResponseLine = null;
+let fleetMarkersByIdMgmt = Object.create(null);
+let fleetMarkersByIdMain = Object.create(null);
+
+function getFleetIcon() {
+  if (!window.L) return null;
+  return L.icon({
+    iconUrl: "./assets/fleet-marker.png",
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -12],
+    className: "fleetMarkerIcon",
+  });
+}
+
+function findEmergency(id) {
+  return demoState.emergencies.find((e) => e.id === id);
+}
+
+function findFleet(id) {
+  return demoState.fleet.find((f) => f.id === id);
+}
+
+function fleetStatusLabel(f) {
+  if (f.status === "dispatched" && f.respondingTo) {
+    return "Dispatched • en route → " + f.respondingTo;
+  }
+  if (f.status === "standby") return "Standby • available";
+  if (f.status === "available") return "Available • in district";
+  if (f.status === "service") return "Off-line • workshop / service";
+  return f.status;
+}
+
+function buildDemoMarkersFromState() {
+  const m = [];
+  demoState.emergencies.forEach((e) => {
+    const type = e.status === "resolved" ? "resolved_scene" : "emergency";
+    m.push({
+      type,
+      id: e.id,
+      label: e.id + " · " + e.title + (e.status === "resolved" ? " (cleared)" : ""),
+      lat: e.lat,
+      lng: e.lng,
+    });
+  });
+  demoState.fleet.forEach((f) => {
+    m.push({
+      type: "fleet",
+      id: f.id,
+      label: f.id + " (" + f.status + ")",
+      lat: f.lat,
+      lng: f.lng,
+    });
+  });
+  demoState.patients.forEach((p) => {
+    m.push({
+      type: "patient",
+      label: "Patient: " + p.name + " (" + p.severity + ")",
+      lat: p.lat,
+      lng: p.lng,
+    });
+  });
+  return m;
+}
+
+function renderMgmtFleetSidebar() {
+  const el = document.getElementById("mgmtFleetUnits");
+  if (!el) return;
+  el.innerHTML = "";
+  demoState.fleet.forEach((f) => {
+    const div = document.createElement("div");
+    div.className = "sideUnit sideUnitClick";
+    div.dataset.fleetId = f.id;
+    div.innerHTML = '<div class="sideUnitTitle"></div><div class="sideUnitSub"></div>';
+    div.querySelector(".sideUnitTitle").textContent = f.id;
+    div.querySelector(".sideUnitSub").textContent = fleetStatusLabel(f);
+    div.addEventListener("click", () => selectFleetOnMap(f.id));
+    el.appendChild(div);
+  });
+}
+
+function clearMgmtResponseLine() {
+  if (mgmtResponseLine && osmMgmt) {
+    try {
+      osmMgmt.removeLayer(mgmtResponseLine);
+    } catch (_) {}
+    mgmtResponseLine = null;
+  }
+}
+
+function highlightSidebarFleet(fleetId) {
+  document.querySelectorAll(".sideUnitClick").forEach((n) => {
+    n.classList.toggle("sideUnitActive", !!fleetId && n.dataset.fleetId === fleetId);
+  });
+}
+
+function selectFleetOnMap(fleetId) {
+  const fleet = findFleet(fleetId);
+  if (!fleet) return;
+  clearMgmtResponseLine();
+  highlightSidebarFleet(fleetId);
+
+  // Visual feedback: open the marker popup when possible.
+  const mm = fleetMarkersByIdMgmt && fleetMarkersByIdMgmt[fleetId];
+  if (mm && mm.openPopup) {
+    try { mm.openPopup(); } catch (_) {}
+  }
+
+  const hint = document.getElementById("fleetDetailsHint");
+  const content = document.getElementById("fleetDetailsContent");
+  if (hint) hint.hidden = true;
+  if (content) content.hidden = false;
+
+  const idEl = document.getElementById("fleetDetailId");
+  const badge = document.getElementById("fleetDetailStatusBadge");
+  const emgEl = document.getElementById("fleetDetailEmergency");
+  const etaEl = document.getElementById("fleetDetailEta");
+  const trEl = document.getElementById("fleetDetailTraffic");
+  const destEl = document.getElementById("fleetDetailDest");
+  const noteEl = document.getElementById("fleetDetailNote");
+
+  if (idEl) idEl.textContent = fleet.id;
+  if (badge) {
+    badge.textContent = fleet.status;
+    badge.className =
+      "badge " +
+      (fleet.status === "dispatched" ?
+        "amber"
+      : fleet.status === "standby" || fleet.status === "available" ? "green"
+      : fleet.status === "service" ? "muted"
+      : "");
+  }
+  if (fleet.respondingTo) {
+    const emg = findEmergency(fleet.respondingTo);
+    if (emgEl) emgEl.textContent = emg ? emg.id + " — " + emg.title : fleet.respondingTo;
+    if (etaEl) etaEl.textContent = fleet.etaMin != null ? String(fleet.etaMin) + " min" : "—";
+    if (trEl) trEl.textContent = fleet.traffic || "—";
+    if (destEl) destEl.textContent = emg ? emg.address : "—";
+    if (noteEl) {
+      noteEl.textContent =
+        emg ?
+          "Demo routing: red markers are live emergency scenes; dashed line shows approach."
+        : "";
+    }
+    if (emg && osmMgmt && window.L) {
+      mgmtResponseLine = L.polyline(
+        [
+          [fleet.lat, fleet.lng],
+          [emg.lat, emg.lng],
+        ],
+        { color: "#ff5252", weight: 3, dashArray: "10 8", opacity: 0.9 }
+      ).addTo(osmMgmt);
+      osmMgmt.fitBounds(L.latLngBounds([fleet.lat, fleet.lng], [emg.lat, emg.lng]), { padding: [48, 48], maxZoom: 13 });
+    }
+  } else {
+    if (emgEl) emgEl.textContent = "No active dispatch — unit not assigned to a live scene.";
+    if (etaEl) etaEl.textContent = "—";
+    if (trEl) trEl.textContent = "—";
+    if (destEl) destEl.textContent = "—";
+    if (noteEl) {
+      noteEl.textContent =
+        fleet.status === "service" ?
+          "Unit is in maintenance; excluded from live dispatch pool until workshop clears."
+        : "Choose a dispatched unit to see ETA and traffic toward the scene.";
+    }
+    if (osmMgmt && window.L) osmMgmt.setView([fleet.lat, fleet.lng], 13);
+  }
+}
 
 function showMapError(id, msg) {
   const el = document.getElementById(id);
@@ -273,23 +525,81 @@ function clearLeafletMarkers(arr) {
   arr.length = 0;
 }
 
+function resetFleetMarkerMaps() {
+  fleetMarkersByIdMgmt = Object.create(null);
+  fleetMarkersByIdMain = Object.create(null);
+}
+
 function markerColor(type) {
   if (type === "fleet") return "#ff5252";
   if (type === "patient") return "#4da8ff";
+  if (type === "emergency") return "#d50000";
+  if (type === "resolved_scene") return "#00c853";
   return "#4ddb8e";
 }
 
-function addLeafletMarkers(map, arr) {
+function markerRadiusFor(type) {
+  if (type === "emergency") return 12;
+  if (type === "resolved_scene") return 9;
+  return 8;
+}
+
+function addLeafletMarkers(map, arr, opts) {
+  const interactiveFleet = !!(opts && opts.interactiveFleet);
   clearLeafletMarkers(arr);
-  demoMarkers.forEach((p) => {
-    const marker = L.circleMarker([p.lat, p.lng], {
-      radius: 8,
-      color: markerColor(p.type),
-      fillColor: markerColor(p.type),
-      fillOpacity: 0.9,
-      weight: 2,
-    }).addTo(map);
-    marker.bindPopup("<b>" + p.label + "</b>");
+  resetFleetMarkerMaps();
+  const fleetIcon = getFleetIcon();
+  buildDemoMarkersFromState().forEach((p) => {
+    let marker;
+    if (p.type === "fleet" && fleetIcon) {
+      marker = L.marker([p.lat, p.lng], { icon: fleetIcon }).addTo(map);
+      marker.bindPopup("<b>" + String(p.label).replace(/</g, "&lt;") + "</b>");
+      if (map === osmMgmt) fleetMarkersByIdMgmt[p.id] = marker;
+      if (map === osmMain) fleetMarkersByIdMain[p.id] = marker;
+      if (interactiveFleet && map === osmMgmt) {
+        marker.on("click", () => selectFleetOnMap(p.id));
+      }
+    } else {
+      marker = L.circleMarker([p.lat, p.lng], {
+        radius: markerRadiusFor(p.type),
+        color: markerColor(p.type),
+        fillColor: markerColor(p.type),
+        fillOpacity: p.type === "emergency" ? 0.95 : 0.88,
+        weight: p.type === "emergency" ? 3 : 2,
+        className: p.type === "emergency" ? "leaflet-emergency-marker" : "",
+      }).addTo(map);
+      marker.bindPopup("<b>" + String(p.label).replace(/</g, "&lt;") + "</b>");
+    }
+    if (interactiveFleet && map === osmMgmt && p.type === "emergency") {
+      marker.on("click", () => {
+        const emg = findEmergency(p.id);
+        if (!emg) return;
+        const hint = document.getElementById("fleetDetailsHint");
+        const content = document.getElementById("fleetDetailsContent");
+        if (hint) hint.hidden = true;
+        if (content) content.hidden = false;
+        highlightSidebarFleet("");
+        clearMgmtResponseLine();
+        const idEl = document.getElementById("fleetDetailId");
+        const badge = document.getElementById("fleetDetailStatusBadge");
+        const emgEl = document.getElementById("fleetDetailEmergency");
+        const etaEl = document.getElementById("fleetDetailEta");
+        const trEl = document.getElementById("fleetDetailTraffic");
+        const destEl = document.getElementById("fleetDetailDest");
+        const noteEl = document.getElementById("fleetDetailNote");
+        if (idEl) idEl.textContent = emg.id;
+        if (badge) {
+          badge.textContent = emg.priority + " · scene";
+          badge.className = "badge red";
+        }
+        if (emgEl) emgEl.textContent = emg.title;
+        if (etaEl) etaEl.textContent = "N/A (scene)";
+        if (trEl) trEl.textContent = "Local traffic at scene — see dispatched units for approach ETAs.";
+        if (destEl) destEl.textContent = emg.address;
+        if (noteEl) noteEl.textContent = "Click a fleet unit to see which ambulance is routing here.";
+        if (osmMgmt) osmMgmt.setView([emg.lat, emg.lng], 14);
+      });
+    }
     arr.push(marker);
   });
 }
@@ -313,8 +623,9 @@ function initLeafletMap(id, errorId) {
 function initOpenSourceMaps() {
   osmMain = initLeafletMap("mapMain", "mapError");
   osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt");
-  if (osmMain) addLeafletMarkers(osmMain, osmMarkersMain);
-  if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt);
+  if (osmMain) addLeafletMarkers(osmMain, osmMarkersMain, { interactiveFleet: false });
+  if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt, { interactiveFleet: true });
+  renderMgmtFleetSidebar();
   tryResizeMapsSoon();
 }
 
@@ -356,6 +667,7 @@ async function askGemma4(prompt) {
   // Compact snapshot so the model can do better answers
   const snapshot = {
     wards: demoState.wards,
+    emergencies: demoState.emergencies,
     fleet: demoState.fleet,
     patients: demoState.patients,
     billings: demoState.billings,
@@ -435,9 +747,107 @@ let currentBill = "";
 let financeOk = false;
 const billLogsEl = document.getElementById("billLogs");
 function addBillLog(text) {
+  if (!billLogsEl) return;
   const li = document.createElement("li");
   li.textContent = "[" + new Date().toLocaleTimeString() + "] " + text;
   billLogsEl.prepend(li);
+}
+
+function syncDashboardFromDemo() {
+  const w = demoState.wards;
+  const fmtBed = (used, total) =>
+    used + '<span style="font-size:18px;color:#6a7899">/' + total + "</span>";
+  const icuEl = document.getElementById("icuText");
+  if (icuEl) icuEl.innerHTML = fmtBed(w.ICU.used, w.ICU.total);
+  const erEl = document.getElementById("erText");
+  if (erEl) erEl.innerHTML = fmtBed(w.ER.used, w.ER.total);
+  const genEl = document.getElementById("genWardText");
+  if (genEl) genEl.innerHTML = fmtBed(w.General.used, w.General.total);
+  setBar("icuBar", Math.round((w.ICU.used / w.ICU.total) * 100));
+  setBar("erBar", Math.round((w.ER.used / w.ER.total) * 100));
+  setBar("genWardBar", Math.round((w.General.used / w.General.total) * 100));
+
+  const freeBeds =
+    (w.ICU.total - w.ICU.used) + (w.ER.total - w.ER.used) + (w.General.total - w.General.used);
+  const kpiBedsEl = document.getElementById("kpiBeds");
+  if (kpiBedsEl) kpiBedsEl.textContent = String(freeBeds);
+  const bedBar = document.getElementById("bedBar");
+  if (bedBar) {
+    const cap = w.ICU.total + w.ER.total + w.General.total;
+    const occ = w.ICU.used + w.ER.used + w.General.used;
+    bedBar.style.width = String(Math.max(8, Math.round((1 - occ / cap) * 100))) + "%";
+  }
+
+  const queue =
+    demoState.patients.length + demoState.emergencies.filter((e) => e.status === "active").length;
+  const kpiQ = document.getElementById("kpiQueue");
+  if (kpiQ) kpiQ.textContent = String(queue);
+
+  const kpiResp = document.getElementById("kpiResponse");
+  if (kpiResp) kpiResp.textContent = "06 min";
+  const respCard = kpiResp && kpiResp.closest(".card");
+  const respFill = respCard && respCard.querySelector(".progressBar .fill");
+  if (respFill) respFill.style.width = "68%";
+
+  const fleet = demoState.fleet;
+  const readinessPct = Math.round(
+    (fleet.filter((f) => f.status !== "service").length / fleet.length) * 100
+  );
+  const fr = document.getElementById("kpiFleetReadiness");
+  if (fr) fr.innerHTML = readinessPct + '<span style="font-size:18px;color:#6a7899">%</span>';
+  const frBar = document.getElementById("fleetReadinessBar");
+  if (frBar) frBar.style.width = String(readinessPct) + "%";
+
+  const bills = demoState.billings;
+  const clearedRows = bills.filter((b) => b.status === "cleared").length;
+  const pendingRows = bills.filter((b) => b.status !== "cleared").length;
+  const baseSum = bills.reduce((a, b) => a + b.amount, 0);
+  const headlineInr = baseSum + 321800;
+  const todayCount = bills.length + 19;
+
+  const elToday = document.getElementById("billTodayCount");
+  if (elToday) elToday.textContent = String(todayCount);
+  const elInr = document.getElementById("billTodayInr");
+  if (elInr) elInr.textContent = "INR " + headlineInr.toLocaleString("en-IN") + " collected";
+  const pend = document.getElementById("pendingApprovalCount");
+  if (pend) pend.textContent = String(Math.max(pendingRows, 6));
+  const subP = document.getElementById("billPendingSub");
+  if (subP) subP.textContent = pendingRows + " open line items · finance queue";
+  const clr = document.getElementById("billClearedCount");
+  if (clr) clr.textContent = String(Math.max(clearedRows + 10, 18));
+  const subC = document.getElementById("billClearedSub");
+  if (subC) subC.textContent = "Rolling 48h · admin-signed";
+
+  const cm = demoState.comms;
+  const cms = document.getElementById("commsActiveMembersStat");
+  if (cms) cms.textContent = String(cm.activeMembers);
+  const rb = document.getElementById("commsRoleBreakdown");
+  if (rb) rb.textContent = "Doctors " + cm.doctors + " · Workers " + cm.workers + " · Fleet " + cm.fleet;
+  const od = document.getElementById("onDutyCount");
+  if (od) od.textContent = String(cm.onDuty);
+  const oud = document.getElementById("onDutyUpdatedSub");
+  if (oud) {
+    oud.textContent =
+      "Synced with ops roster · " +
+      new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+}
+
+function seedBillLogsFromDemo() {
+  if (!billLogsEl) return;
+  [
+    "[09:42] UPI settlement batch #4481 — ER desk 2",
+    "[09:27] Finance queued BL-2026-0094 (₹28,900) — cardiology consult add-on",
+    "[09:11] Admin waived copay flag on BL-2026-0084 — ICU step-down",
+    "[08:55] NEFT receipt matched — BL-2026-0090 (Anjali Patel)",
+    "[08:31] Created BL-2026-0095 — EMS scene surcharge EMG-0142",
+    "[08:14] Insurance pre-auth submitted — BL-2026-0091",
+    "[07:58] Overnight hold released — BL-2026-0088",
+  ].forEach((t) => {
+    const li = document.createElement("li");
+    li.textContent = t;
+    billLogsEl.appendChild(li);
+  });
 }
 
 document.getElementById("createBillBtn").addEventListener("click", () => {
@@ -474,6 +884,9 @@ document.getElementById("adminApproveBtn").addEventListener("click", () => {
   const c = Number(document.getElementById("pendingApprovalCount").textContent);
   if (c > 0) document.getElementById("pendingApprovalCount").textContent = String(c - 1);
 });
+
+syncDashboardFromDemo();
+seedBillLogsFromDemo();
 
 // ── Internal Comms ────────────────────────────────────────────
 let commsActiveChannel = "announcements";
@@ -850,15 +1263,29 @@ startPresenceHeartbeat();
 // ── Auth & Security ───────────────────────────────────────────
 const auditLogsEl = document.getElementById("auditLogs");
 function addAudit(text) {
+  if (!auditLogsEl) return;
   const li = document.createElement("li");
   li.textContent = "[" + new Date().toLocaleTimeString() + "] " + text;
   auditLogsEl.prepend(li);
 }
 addAudit("System: Auth monitor started. All policies active.");
+[
+  "[06:02] MFA challenge passed — admin-console · session extended",
+  "[05:47] API key rotation reminder queued — Gemini integration",
+  "[05:12] Failed login (2) — unknown host 203.0.113.44",
+  "[04:58] Role elevation approved — fleet_operator → shift_lead",
+  "[04:33] EMS handshake token renewed — Sitapur corridor fleet",
+  "[03:41] Audit export BL-2026-009x range — finance@goelhospital.com",
+].forEach((line) => {
+  if (!auditLogsEl) return;
+  const li = document.createElement("li");
+  li.textContent = line;
+  auditLogsEl.prepend(li);
+});
 
-document.getElementById("loginBtn").addEventListener("click", () => {
+function runHospitalLogin() {
   const email = document.getElementById("loginEmail").value.trim();
-  const pass  = document.getElementById("loginPassword").value;
+  const pass = document.getElementById("loginPassword").value;
   const msgEl = document.getElementById("loginMsg");
   if (email === "doctor3@goelhospital.com" && pass === "GH@1004") {
     msgEl.textContent = "✓ Logged in as doctor3 (Doctor role)";
@@ -872,4 +1299,15 @@ document.getElementById("loginBtn").addEventListener("click", () => {
     msgEl.style.color = "#ff8a8a";
     addAudit("Failed login: " + (email || "empty"));
   }
-});
+}
+
+document.getElementById("loginBtn").addEventListener("click", runHospitalLogin);
+
+const demoCredBtn = document.getElementById("demoCredBtn");
+if (demoCredBtn) {
+  demoCredBtn.addEventListener("click", () => {
+    document.getElementById("loginEmail").value = "doctor3@goelhospital.com";
+    document.getElementById("loginPassword").value = "GH@1004";
+    runHospitalLogin();
+  });
+}
