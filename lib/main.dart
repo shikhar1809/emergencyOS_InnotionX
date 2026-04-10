@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Very basic student-style UI.\nTwo small debug-practice bugs are intentionally added.',
+              'Very basic student-style UI.\nTwo small debug pratice bugs are intentionally added.',
               textAlign: TextAlign.center,
             ),
           ],
