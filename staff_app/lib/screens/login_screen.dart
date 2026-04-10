@@ -81,14 +81,39 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d1a),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Always visible: users were missing the in-card demo button (scroll / session / cache).
+          Material(
+            color: const Color(0xFFfbbf24),
+            child: InkWell(
+              onTap: _loading ? null : _useDemoAndSignIn,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                child: Text(
+                  'DEMO CREDENTIALS — TAP HERE (doctor3 + auto sign-in)',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    height: 1.25,
+                    color: const Color(0xFF0f172a),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                 // Logo / header
                 Container(
                   width: 72,
@@ -157,7 +182,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: const Color(0xFF6b7280),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
+
+                        // In-card duplicate (same action as yellow bar)
+                        SizedBox(
+                          height: 46,
+                          child: FilledButton(
+                            onPressed: _loading ? null : _useDemoAndSignIn,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFf59e0b),
+                              foregroundColor: const Color(0xFF0f172a),
+                              disabledBackgroundColor: const Color(0xFF713f12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'DEMO CREDENTIALS (same as top bar)',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
 
                         // Email
                         _label('Email address'),
@@ -285,10 +334,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: const Color(0xFF4b5563),
                   ),
                 ),
-              ],
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
