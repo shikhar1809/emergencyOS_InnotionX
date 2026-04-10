@@ -86,19 +86,8 @@
       const textEl = document.getElementById("pageText");
 
       function showPage(pageNo) {
-        // Intentional beginner mistake: page 4 opens as page 5.
-        if (pageNo === 4) {
-          pageNo = 5;
-        }
-
         titleEl.textContent = "Page " + pageNo;
-
-        // Intentional beginner mistake: page 6 text shows page 5.
-        if (pageNo === 6) {
-          textEl.textContent = "This is content for page 5.";
-        } else {
-          textEl.textContent = "This is content for page " + pageNo + ".";
-        }
+        textEl.textContent = "This is content for page " + pageNo + ".";
       }
     </script>
   </body>
