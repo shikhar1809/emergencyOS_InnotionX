@@ -12,8 +12,14 @@
     },
     {
       "target": "fleet",
-      "public": "web_fleet",
+      "public": "fleet_app/build/web",
       "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -24,6 +30,58 @@
       "target": "staff",
       "public": "staff_app/build/web",
       "cleanUrls": true,
+      "headers": [
+        {
+          "source": "/index.html",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/flutter_service_worker.js",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/version.json",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/flutter_bootstrap.js",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ]
+    },
+    {
+      "target": "staffx",
+      "public": "staff_app/build/web",
+      "cleanUrls": true,
+      "headers": [
+        {
+          "source": "/index.html",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/flutter_service_worker.js",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/version.json",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        },
+        {
+          "source": "/flutter_bootstrap.js",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        }
+      ],
       "rewrites": [
         {
           "source": "**",

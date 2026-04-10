@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
+import '../services/demo_session.dart';
 import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,6 +13,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const _cardBorder = Color(0xFF1e1e3a);
+  static const _muted = Color(0xFF6b7280);
+
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -68,52 +72,36 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _useDemoAndSignIn() async {
+  Future<void> _demo() async {
     if (_loading) return;
     setState(() {
       _emailCtrl.text = _demoEmail;
       _passCtrl.text = _demoPassword;
     });
-    await _signIn();
+    await DemoSession.enable();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => DashboardScreen(
+          doctor: DemoSession.demoDoctor(),
+          isDemo: true,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d1a),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Always visible: users were missing the in-card demo button (scroll / session / cache).
-          Material(
-            color: const Color(0xFFfbbf24),
-            child: InkWell(
-              onTap: _loading ? null : _useDemoAndSignIn,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                child: Text(
-                  'DEMO CREDENTIALS — TAP HERE (doctor3 + auto sign-in)',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    height: 1.25,
-                    color: const Color(0xFF0f172a),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 // Logo / header
                 Container(
                   width: 72,
@@ -158,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF13132a),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF1e1e3a)),
+                    border: Border.all(color: _cardBorder),
                   ),
                   padding: const EdgeInsets.all(28),
                   child: Form(
@@ -179,34 +167,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Use your hospital credentials',
                           style: GoogleFonts.inter(
                             fontSize: 13,
-                            color: const Color(0xFF6b7280),
+                            color: _muted,
                           ),
                         ),
-                        const SizedBox(height: 16),
-
-                        // In-card duplicate (same action as yellow bar)
-                        SizedBox(
-                          height: 46,
-                          child: FilledButton(
-                            onPressed: _loading ? null : _useDemoAndSignIn,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFFf59e0b),
-                              foregroundColor: const Color(0xFF0f172a),
-                              disabledBackgroundColor: const Color(0xFF713f12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'DEMO CREDENTIALS (same as top bar)',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
                         // Email
                         _label('Email address'),
@@ -248,46 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                           onFieldSubmitted: (_) => _signIn(),
                         ),
-                        const SizedBox(height: 20),
-
-                        // Demo — high contrast so it is visible on dark web (OutlinedButton was too subtle)
-                        SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            onPressed: _loading ? null : _useDemoAndSignIn,
-                            icon: const Icon(Icons.bolt, size: 20, color: Color(0xFF0f172a)),
-                            label: Text(
-                              'DEMO — doctor3@goelhospital.com',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                                letterSpacing: 0.2,
-                                color: const Color(0xFF0f172a),
-                              ),
-                            ),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFFfbbf24),
-                              foregroundColor: const Color(0xFF0f172a),
-                              disabledBackgroundColor: const Color(0xFF713f12),
-                              disabledForegroundColor: const Color(0xFF94a3b8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: const BorderSide(color: Color(0xFFf59e0b), width: 1.5),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'One tap fills demo password and signs in',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: const Color(0xFF78716c),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 28),
 
                         // Sign in button
                         SizedBox(
@@ -321,6 +246,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+
+                        // One demo control only — mirrors Fleet Portal (OutlinedButton)
+                        SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: _loading ? null : _demo,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF9ca3af),
+                              side: const BorderSide(color: _cardBorder),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'Use demo credentials',
+                              style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -334,13 +279,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: const Color(0xFF4b5563),
                   ),
                 ),
-                    ],
-                  ),
-                ),
-              ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

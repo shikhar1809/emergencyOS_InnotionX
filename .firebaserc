@@ -13,6 +13,9 @@
         ],
         "staff": [
           "emergencyos-innovation-staff"
+        ],
+        "staffx": [
+          "emergencyos-innovationx-staff"
         ]
       }
     }

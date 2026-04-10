@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/auth_service.dart';
+import 'services/demo_session.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,10 +48,10 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
-    return StreamBuilder<User?>(
-      stream: authService.authStateChanges,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return FutureBuilder<bool>(
+      future: DemoSession.isEnabled(),
+      builder: (context, demoSnap) {
+        if (demoSnap.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: Color(0xFF0d0d1a),
             body: Center(
@@ -73,30 +74,62 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-        final user = snapshot.data;
-        if (user == null) {
-          return const LoginScreen();
+        if (demoSnap.data == true) {
+          return DashboardScreen(doctor: DemoSession.demoDoctor(), isDemo: true);
         }
 
-        // User is signed in — load their profile and go to dashboard
-        return FutureBuilder(
-          future: authService.fetchProfile(user.uid),
-          builder: (context, profileSnap) {
-            if (profileSnap.connectionState == ConnectionState.waiting) {
+        return StreamBuilder<User?>(
+          stream: authService.authStateChanges,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: Color(0xFF0d0d1a),
                 body: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF7c3aed)),
+                      SizedBox(height: 16),
+                      Text(
+                        'EmergencyOS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
-            final doctor = profileSnap.data;
-            if (doctor == null) {
-              // Profile not found — sign out and show login
-              FirebaseAuth.instance.signOut();
+
+            final user = snapshot.data;
+            if (user == null) {
               return const LoginScreen();
             }
-            return DashboardScreen(doctor: doctor);
+
+            // User is signed in — load their profile and go to dashboard
+            return FutureBuilder(
+              future: authService.fetchProfile(user.uid),
+              builder: (context, profileSnap) {
+                if (profileSnap.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    backgroundColor: Color(0xFF0d0d1a),
+                    body: Center(
+                      child: CircularProgressIndicator(color: Color(0xFF7c3aed)),
+                    ),
+                  );
+                }
+                final doctor = profileSnap.data;
+                if (doctor == null) {
+                  // Profile not found — sign out and show login
+                  FirebaseAuth.instance.signOut();
+                  return const LoginScreen();
+                }
+                return DashboardScreen(doctor: doctor);
+              },
+            );
           },
         );
       },

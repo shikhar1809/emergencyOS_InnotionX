@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/doctor_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/demo_session.dart';
 import 'shift_screen.dart';
 import 'ward_screen.dart';
 import 'duty_screen.dart';
@@ -13,7 +14,8 @@ import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
   final DoctorModel doctor;
-  const DashboardScreen({super.key, required this.doctor});
+  final bool isDemo;
+  const DashboardScreen({super.key, required this.doctor, this.isDemo = false});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -65,6 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _startPresenceLoop(DoctorModel doctor) {
+    if (widget.isDemo) return;
     // Avoid restarting timer excessively.
     if (_presenceTimer != null) return;
 
@@ -78,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _stopPresenceLoopAndSetOffline(DoctorModel doctor) async {
+    if (widget.isDemo) return;
     _presenceTimer?.cancel();
     _presenceTimer = null;
     await _firestoreService.setPresenceOffline(doctor: doctor);
@@ -85,6 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (widget.isDemo) return;
     final doc = _latestDoctor ?? widget.doctor;
     if (state == AppLifecycleState.resumed) {
       _firestoreService.setPresenceOnline(doctor: doc, state: 'online');
@@ -128,7 +133,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (confirmed == true) {
       final doc = _latestDoctor ?? widget.doctor;
       await _stopPresenceLoopAndSetOffline(doc);
-      await _authService.signOut();
+      if (widget.isDemo) {
+        await DemoSession.disable();
+      } else {
+        await _authService.signOut();
+      }
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -139,6 +148,13 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isDemo) {
+      final doctor = widget.doctor;
+      _latestDoctor = doctor;
+      final screens = _buildScreens(doctor);
+      return _buildScaffold(doctor: doctor, screens: screens);
+    }
+
     return StreamBuilder<DoctorModel>(
       stream: _firestoreService.doctorStream(widget.doctor.uid),
       initialData: widget.doctor,
@@ -148,7 +164,16 @@ class _DashboardScreenState extends State<DashboardScreen>
         _startPresenceLoop(doctor);
         final screens = _buildScreens(doctor);
 
-        return Scaffold(
+        return _buildScaffold(
+          doctor: doctor,
+          screens: screens,
+        );
+      },
+    );
+  }
+
+  Widget _buildScaffold({required DoctorModel doctor, required List<Widget> screens}) {
+    return Scaffold(
           backgroundColor: const Color(0xFF0d0d1a),
           appBar: AppBar(
             backgroundColor: const Color(0xFF13132a),
@@ -178,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
                     Text(
-                      'Staff Portal',
+                      widget.isDemo ? 'Staff Portal · DEMO' : 'Staff Portal',
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: const Color(0xFF6b7280),
@@ -328,7 +353,5 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
         );
-      },
-    );
   }
 }

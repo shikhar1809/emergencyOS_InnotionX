@@ -30,6 +30,24 @@
     };
     firebase.initializeApp(firebaseConfig);
   </script>
+
+  <!-- Kill-switch for stale Flutter PWA caches from older deployments -->
+  <script>
+    (function () {
+      if (!("serviceWorker" in navigator)) return;
+      window.addEventListener("load", async () => {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        } catch (_) {}
+        try {
+          if (!("caches" in window)) return;
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        } catch (_) {}
+      });
+    })();
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
