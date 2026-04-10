@@ -11,22 +11,21 @@
     <main class="page">
       <div class="titleRow">
         <div>
-          <h1 id="pageTitle">Management</h1>
+          <h1 id="pageTitle">Overview</h1>
           <p class="muted">Goel Hospital • Emergency Operations Admin Panel</p>
-        </div>
-        <div class="row" style="gap:8px">
-          <span class="badge green" id="liveIndicator">● LIVE</span>
-          <span class="badge" id="headerDate">--</span>
         </div>
       </div>
 
       <!-- ── Management ─────────────────────────────────── -->
-      <section id="tab-management" class="tabs active">
+      <section id="tab-management" class="tabs">
         <div class="mgmtLayout">
           <aside class="mgmtSidebar">
-            <div class="mgmtSideTop mgmtSideTop--two">
+            <div class="mgmtSideTop mgmtSideTop--five">
+              <button class="mgmtNavBtn" data-mview="patients">Patients</button>
               <button class="mgmtNavBtn active" data-mview="fleet">Fleet</button>
               <button class="mgmtNavBtn" data-mview="staff">Staff</button>
+              <button class="mgmtNavBtn" data-mview="wards">Ward</button>
+              <button class="mgmtNavBtn" data-mview="beds">Bed</button>
             </div>
 
             <div class="mgmtSideBlock">
@@ -36,6 +35,25 @@
           </aside>
 
           <section class="mgmtMain">
+            <div id="mview-patients" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Patients (quick view)</div>
+                <span class="badge">Incoming: <b id="mgmtIncomingCount">7</b></span>
+              </div>
+              <div class="grid">
+                <article class="card">
+                  <h3>Current critical</h3>
+                  <p class="stat" id="mgmtCriticalCount">2</p>
+                  <p class="stat-sub">Triage + ER bays (demo)</p>
+                </article>
+                <article class="card">
+                  <h3>Recent tracked</h3>
+                  <ul class="clean" id="mgmtPatientsMiniList" style="max-height:200px;overflow-y:auto"></ul>
+                </article>
+              </div>
+              <p class="muted" style="margin-top:10px;font-size:12px">Full patient workflow is in the dedicated <strong>Patients</strong> dock tab.</p>
+            </div>
+
             <div id="mview-fleet" class="mview active">
               <div class="mgmtMainHeader">
                 <div class="mgmtMainTitle">Live Fleet Map</div>
@@ -71,6 +89,57 @@
                   </div>
                   <p class="muted" style="margin-top:12px;font-size:12px">Staff and fleet app logins are issued under <strong>Fleet → Manage credentials</strong>.</p>
                 </article>
+                <article class="card">
+                  <div class="row" style="justify-content:space-between;gap:10px;flex-wrap:wrap">
+                    <h3 style="margin:0">Staff roster (demo)</h3>
+                    <span class="muted" id="staffRosterHint" style="font-size:12px">Click any staff member to view details →</span>
+                  </div>
+                  <div class="staffRosterSearch">
+                    <input id="staffSearch" placeholder="Search staff by name / role / ward…" />
+                  </div>
+                  <div id="mgmtStaffList" class="staffRosterList" role="list" aria-label="Staff roster"></div>
+                </article>
+              </div>
+            </div>
+
+            <div id="mview-wards" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Ward status</div>
+                <button class="secondary" type="button" id="mgmtWardRefreshBtn">Refresh</button>
+              </div>
+              <div class="grid">
+                <article class="card">
+                  <h3>ICU</h3>
+                  <p class="stat" id="mgmtIcuText">9<span style="font-size:18px;color:#6a7899">/12</span></p>
+                  <div class="progressBar"><div class="fill" id="mgmtIcuBar" style="width:75%"></div></div>
+                </article>
+                <article class="card">
+                  <h3>ER</h3>
+                  <p class="stat" id="mgmtErText">14<span style="font-size:18px;color:#6a7899">/20</span></p>
+                  <div class="progressBar"><div class="fill green" id="mgmtErBar" style="width:70%"></div></div>
+                </article>
+                <article class="card">
+                  <h3>General</h3>
+                  <p class="stat" id="mgmtGenText">38<span style="font-size:18px;color:#6a7899">/60</span></p>
+                  <div class="progressBar"><div class="fill green" id="mgmtGenBar" style="width:63%"></div></div>
+                </article>
+              </div>
+            </div>
+
+            <div id="mview-beds" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Bed board (demo)</div>
+                <span class="badge">Live</span>
+              </div>
+              <div class="grid grid-2">
+                <article class="card">
+                  <h3>ICU beds</h3>
+                  <ul class="clean" id="bedBoardIcu" style="max-height:220px;overflow-y:auto"></ul>
+                </article>
+                <article class="card">
+                  <h3>ER bays</h3>
+                  <ul class="clean" id="bedBoardEr" style="max-height:220px;overflow-y:auto"></ul>
+                </article>
               </div>
             </div>
           </section>
@@ -80,40 +149,280 @@
               <div>Details</div>
               <div style="opacity:0.8">›</div>
             </div>
-            <p class="muted" style="margin-top:14px" id="detailsText">
+            <div class="sysHealth sysHealth--details good" style="margin-top:12px" title="System Health">
+              <span class="sysHealthLabel">System load</span>
+              <div class="sysHealthBar" aria-label="System health">
+                <div class="sysHealthFill" id="sysHealthFill"></div>
+              </div>
+              <span class="sysHealthText" id="sysHealthText">good</span>
+            </div>
+            <div class="muted" style="margin-top:14px" id="detailsText">
               Tap a fleet marker or pick a unit from the list to manage it.
-            </p>
+            </div>
           </aside>
         </div>
       </section>
 
-      <!-- ── Map & Demographics ─────────────────────────── -->
-      <section id="tab-map" class="tabs">
+      <!-- ── Operations (same layout as Management) ───────── -->
+      <section id="tab-operations" class="tabs">
+        <div class="mgmtLayout">
+          <aside class="mgmtSidebar">
+            <div class="mgmtSideTop mgmtSideTop--ops">
+              <button class="opsNavBtn active" data-oview="overview">Overview</button>
+              <button class="opsNavBtn" data-oview="incidents">Incidents</button>
+              <button class="opsNavBtn" data-oview="analytics">Analytics</button>
+              <button class="opsNavBtn" data-oview="logs">Logs</button>
+            </div>
+            <div class="mgmtSideBlock">
+              <div class="muted" style="margin-bottom:8px">Ops queue</div>
+              <div id="opsQueueList"></div>
+            </div>
+          </aside>
+
+          <section class="mgmtMain">
+            <div id="oview-overview" class="mview active">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Operations overview</div>
+                <span class="badge">Realtime (demo)</span>
+              </div>
+              <div class="grid">
+                <article class="card card-accent-blue">
+                  <h3>Dispatch load</h3>
+                  <p class="stat" id="opsDispatchLoad">62<span style="font-size:18px;color:#6a7899">%</span></p>
+                  <div class="progressBar"><div class="fill" id="opsDispatchBar" style="width:62%"></div></div>
+                </article>
+                <article class="card card-accent-amber">
+                  <h3>Open incidents</h3>
+                  <p class="stat" id="opsOpenIncidents">5</p>
+                  <p class="stat-sub">P1/P2 active tickets</p>
+                </article>
+                <article class="card card-accent-green">
+                  <h3>Handshake OK</h3>
+                  <p class="stat" id="opsHandshakeOk">91<span style="font-size:18px;color:#6a7899">%</span></p>
+                  <div class="progressBar"><div class="fill green" id="opsHandshakeBar" style="width:91%"></div></div>
+                </article>
+              </div>
+              <p class="sectionTitle" style="margin-top:14px">Quick notes</p>
+              <article class="card">
+                <ul class="clean" id="opsQuickNotes"></ul>
+              </article>
+            </div>
+
+            <div id="oview-incidents" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Incidents</div>
+                <span class="badge red">Hot</span>
+              </div>
+              <article class="card">
+                <ul class="clean" id="opsIncidentList" style="max-height:320px;overflow-y:auto"></ul>
+              </article>
+            </div>
+
+            <div id="oview-analytics" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Operational analytics</div>
+                <span class="badge">Last 24h</span>
+              </div>
+              <div class="grid">
+                <article class="card">
+                  <h3>Throughput</h3>
+                  <p class="stat" id="opsThroughput">118</p>
+                  <p class="stat-sub">Patients processed (demo)</p>
+                </article>
+                <article class="card">
+                  <h3>Average ETA</h3>
+                  <p class="stat" id="opsEta">09<span style="font-size:18px;color:#6a7899"> min</span></p>
+                  <div class="progressBar"><div class="fill" style="width:58%"></div></div>
+                </article>
+              </div>
+              <article class="card" style="margin-top:14px">
+                <h3>Notes</h3>
+                <p class="muted" id="opsAnalyticsNote" style="line-height:1.5">
+                  Demo analytics: congestion peak 19:00–22:00; add one standby unit near Gomti Nagar for P1 coverage.
+                </p>
+              </article>
+            </div>
+
+            <div id="oview-logs" class="mview">
+              <div class="mgmtMainHeader">
+                <div class="mgmtMainTitle">Ops logs</div>
+                <button class="secondary" type="button" id="opsAddLogBtn">Add log</button>
+              </div>
+              <article class="card">
+                <ul class="clean" id="opsLogs" style="max-height:320px;overflow-y:auto"></ul>
+              </article>
+            </div>
+          </section>
+
+          <aside class="mgmtDetails">
+            <div class="mgmtDetailsHeader">
+              <div>Ops detail</div>
+              <div style="opacity:0.8">›</div>
+            </div>
+            <div class="muted" style="margin-top:14px" id="opsDetailsText">
+              Select an incident from the left to see response plan and analytics notes.
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Fleet credentials modal (staff + fleet operator logins) -->
+      <div id="fleetCredModal" class="credModal" hidden aria-hidden="true">
+        <div class="credModalBackdrop" id="fleetCredModalBackdrop"></div>
+        <div class="credModalPanel" role="dialog" aria-labelledby="fleetCredModalTitle">
+          <div class="credModalHeader">
+            <h2 id="fleetCredModalTitle">Fleet · Staff &amp; fleet credentials</h2>
+            <button type="button" class="secondary" id="fleetCredModalClose">Close</button>
+          </div>
+          <p class="muted credModalIntro">Create, revoke, and reset logins used by <strong>Internal Comms / staff apps</strong> and the <strong>Fleet Portal</strong>. Demo only — stored in this browser session.</p>
+          <div class="credModalTabs row" style="margin:14px 0;gap:6px;flex-wrap:wrap">
+            <button type="button" class="credTabBtn active" data-credtab="create">Create</button>
+            <button type="button" class="credTabBtn secondary" data-credtab="revoke">Revoke</button>
+            <button type="button" class="credTabBtn secondary" data-credtab="reset">Reset</button>
+            <button type="button" class="credTabBtn secondary" data-credtab="logs">Logs</button>
+          </div>
+          <div id="credPanel-create" class="credPanel">
+            <div class="row" style="flex-direction:column;align-items:stretch;gap:10px">
+              <input id="fleetCredName" placeholder="Full name or call sign" />
+              <select id="fleetCredRole">
+                <option value="staff">Staff (doctor / worker app)</option>
+                <option value="fleet">Fleet operator (fleet portal)</option>
+              </select>
+              <button type="button" id="fleetCredCreateBtn">Create credential</button>
+            </div>
+            <p id="fleetCredCreateOut" class="muted" style="margin-top:10px"></p>
+          </div>
+          <div id="credPanel-revoke" class="credPanel" hidden>
+            <label class="muted" style="display:block;margin-bottom:6px">Select account</label>
+            <select id="fleetCredRevokeSelect" style="width:100%;margin-bottom:10px"></select>
+            <button type="button" class="danger" id="fleetCredRevokeBtn">Revoke access</button>
+          </div>
+          <div id="credPanel-reset" class="credPanel" hidden>
+            <label class="muted" style="display:block;margin-bottom:6px">Select active account</label>
+            <select id="fleetCredResetSelect" style="width:100%;margin-bottom:10px"></select>
+            <button type="button" id="fleetCredResetBtn">Reset password</button>
+            <p id="fleetCredResetOut" class="muted" style="margin-top:10px"></p>
+          </div>
+          <div id="credPanel-logs" class="credPanel" hidden>
+            <ul class="clean" id="fleetCredLogs" style="max-height:220px;overflow-y:auto;margin-top:0"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Patients (dedicated) ───────────────────────── -->
+      <section id="tab-patients" class="tabs">
+        <div class="grid" style="margin-bottom:14px">
+          <article class="card card-accent-red">
+            <h3>Incoming / triage</h3>
+            <p class="stat" id="patientsIncomingStat">7</p>
+            <p class="stat-sub">Ambulance + walk-in queue (demo)</p>
+          </article>
+          <article class="card card-accent-amber">
+            <h3>Critical now</h3>
+            <p class="stat" id="patientsCriticalStat">—</p>
+            <p class="stat-sub">From tracked list</p>
+          </article>
+          <article class="card card-accent-green">
+            <h3>Tracked on map</h3>
+            <p class="stat" id="patientsTrackedStat">—</p>
+            <p class="stat-sub">Linked to Map &amp; demographics</p>
+          </article>
+        </div>
+        <div class="grid grid-2">
+          <article class="card">
+            <h3>Patient roster (demo)</h3>
+            <ul class="clean" id="patientsRosterList" style="max-height:200px;overflow-y:auto"></ul>
+          </article>
+          <article class="card">
+            <h3>Track patient</h3>
+            <div class="row" style="flex-direction:column;align-items:stretch;gap:10px">
+              <input id="patientsPatientName" placeholder="Patient name" />
+              <input id="patientsPatientZone" placeholder="Ward / zone / bay" />
+              <button type="button" id="patientsAddPatientBtn">Add to tracking</button>
+            </div>
+            <ul class="clean" id="patientsPatientList" style="margin-top:10px;max-height:160px;overflow-y:auto"></ul>
+          </article>
+        </div>
+        <article class="card" style="margin-top:14px">
+          <h3>Gemma 4 · Demographics &amp; flow</h3>
+          <p id="patientsGemmaHint" style="color:#c5d0ec;line-height:1.5">
+            Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
+          </p>
+          <p class="muted" id="patientsGemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
+          <button type="button" class="secondary" id="patientsRefreshGemmaBtn" style="margin-top:10px">Refresh insight</button>
+        </article>
+      </section>
+
+      <!-- ── Overview (Map + Demographics + Analytics) ───── -->
+      <section id="tab-overview" class="tabs active">
+        <div class="grid" style="margin-bottom:14px">
+          <article class="card card-accent-blue">
+            <h3>Total fleet</h3>
+            <p class="stat" id="ovFleetCount">—</p>
+            <p class="stat-sub">Units in district (demo)</p>
+          </article>
+          <article class="card card-accent-amber">
+            <h3>Patients tracked</h3>
+            <p class="stat" id="ovPatientCount">—</p>
+            <p class="stat-sub">Including critical</p>
+          </article>
+          <article class="card card-accent-green">
+            <h3>Bed capacity</h3>
+            <p class="stat" id="ovBedsFree">—</p>
+            <p class="stat-sub">Free beds (ICU+ER+General)</p>
+          </article>
+        </div>
         <div class="mapHexLayout">
           <article class="card mapHexMapCard">
-            <h3>Hex zone coverage · Lucknow metro</h3>
-            <p class="muted mapHexSub">Click any cell for zone analytics. Heat overlays are demo triage inflow (24h).</p>
-            <div class="hexMapToolbar row" style="flex-wrap:wrap;margin:12px 0;gap:16px;align-items:center">
-              <span class="hexToolbarLabel">Heat filters</span>
-              <label class="hexFilterLabel">
+            <h3>Overview map · Lucknow metro</h3>
+            <p class="muted mapHexSub">Fleet + patients + zone grid. Click any cell for demographics &amp; inflow.</p>
+            <div class="hexMapToolbar row" style="flex-wrap:wrap;margin:12px 0;gap:10px;align-items:center">
+              <span class="hexToolbarIcon" title="Heat filters" aria-label="Heat filters">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z"></path>
+                </svg>
+              </span>
+
+              <label class="hexIconToggle" title="High inflow heat (green)" aria-label="High inflow heat (green)">
                 <input type="checkbox" id="hexFilterHigh" checked />
-                High inflow (green)
+                <span class="hexIconPill hexIconPill--high" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 4l7 7h-4v9H9v-9H5l7-7z"></path>
+                  </svg>
+                </span>
               </label>
-              <label class="hexFilterLabel">
+
+              <label class="hexIconToggle" title="Low inflow heat (red)" aria-label="Low inflow heat (red)">
                 <input type="checkbox" id="hexFilterLow" checked />
-                Low inflow (red)
+                <span class="hexIconPill hexIconPill--low" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 20l-7-7h4V4h6v9h4l-7 7z"></path>
+                  </svg>
+                </span>
               </label>
             </div>
             <div class="mapWrap mapWrap--hex">
               <div id="mapMain" class="gmapCanvas mapMainDark" aria-label="Operations map"></div>
               <div id="mapError" class="mapError" style="display:none"></div>
             </div>
-            <div class="row hexMapLegend" style="margin-top:10px;gap:14px;flex-wrap:wrap;font-size:12px;color:#8a96b0">
-              <span>🔴 Fleet</span>
-              <span>🔵 Patients</span>
-              <span>⬡ Zone grid</span>
-              <span class="hexLegHigh">■ High inflow</span>
-              <span class="hexLegLow">■ Low inflow</span>
+            <div class="row hexMapLegend" style="margin-top:10px;gap:10px;flex-wrap:wrap;font-size:12px;color:#8a96b0">
+              <span class="hexLegendItem" title="Fleet">
+                <span class="hexLegendDot hexLegendDot--fleet" aria-hidden="true"></span>
+              </span>
+              <span class="hexLegendItem" title="Patients">
+                <span class="hexLegendDot hexLegendDot--patients" aria-hidden="true"></span>
+              </span>
+              <span class="hexLegendItem" title="Zone grid">
+                <svg class="hexLegendSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M7 3h10l5 9-5 9H7L2 12l5-9zm2.1 2L4.3 12l4.8 7h5.8l4.8-7-4.8-7H9.1z"></path>
+                </svg>
+              </span>
+              <span class="hexLegendItem hexLegendItem--high" title="High inflow">
+                <span class="hexLegendSwatch hexLegendSwatch--high" aria-hidden="true"></span>
+              </span>
+              <span class="hexLegendItem hexLegendItem--low" title="Low inflow">
+                <span class="hexLegendSwatch hexLegendSwatch--low" aria-hidden="true"></span>
+              </span>
             </div>
           </article>
           <aside class="card hexZonePanel">
@@ -323,60 +632,21 @@
         </div>
       </section>
 
-      <!-- ── Auth & Security ────────────────────────────── -->
-      <section id="tab-security" class="tabs">
-        <div class="grid">
-          <article class="card">
-            <h3>Hospital Login</h3>
-            <p class="muted" style="margin:0 0 8px;font-size:12px">Demo: tap the yellow bar first — it fills fields and logs in.</p>
-            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
-              <button type="button" id="demoCredBtn" style="width:100%;box-sizing:border-box;padding:14px 14px;font-size:14px;font-weight:900;background:#fbbf24;color:#0f172a;border:3px solid #f59e0b;border-radius:10px;cursor:pointer;line-height:1.25">DEMO CREDENTIALS — TAP HERE (doctor3 + auto login)</button>
-              <input id="loginEmail" placeholder="doctor3@goelhospital.com" type="email" />
-              <input id="loginPassword" placeholder="Password" type="password" />
-              <button id="loginBtn">Login</button>
-            </div>
-            <p id="loginMsg" class="muted">Not logged in.</p>
-          </article>
-          <article class="card">
-            <h3>Security Policies</h3>
-            <table class="secTable">
-              <thead><tr><th>Feature</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr><td>Role Guard</td><td><span class="badge green">Active</span></td></tr>
-                <tr><td>Session Timeout</td><td>30 min</td></tr>
-                <tr><td>Activity Logging</td><td><span class="badge green">Active</span></td></tr>
-                <tr><td>EMS Handshake</td><td><span class="badge green">Active</span></td></tr>
-                <tr><td>Credential Rotation</td><td>Monthly</td></tr>
-              </tbody>
-            </table>
-          </article>
-          <article class="card">
-            <h3>Recent Audit Logs</h3>
-            <ul class="clean" id="auditLogs" style="max-height:220px;overflow-y:auto"></ul>
-          </article>
-        </div>
-      </section>
     </main>
 
     <!-- ── Taskbar ─────────────────────────────────────── -->
     <div class="taskbar">
       <div></div>
       <nav class="dock">
-        <button class="dockBtn active" data-tab="management">Management</button>
-        <button class="dockBtn" data-tab="map">Map & Demographics</button>
+        <button class="dockBtn active" data-tab="overview">Overview</button>
+        <button class="dockBtn" data-tab="management">Management</button>
+        <button class="dockBtn" data-tab="operations">Operations</button>
+        <button class="dockBtn" data-tab="patients">Patients</button>
         <button class="dockBtn" data-tab="insights">Insights And Analytics</button>
         <button class="dockBtn" data-tab="billings">Billings</button>
         <button class="dockBtn" data-tab="comms">Internal Comms</button>
-        <button class="dockBtn" data-tab="security">Auth & Security</button>
-        <a href="./fleet-operator.html" style="display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:600;color:#004592;text-decoration:none;border-left:1px solid rgba(0,0,0,0.1)">Fleet Portal ↗</a>
       </nav>
       <div class="tray">
-        <div class="trayIcons">
-          <span title="Hide icons">^</span>
-          <span title="Network">📶</span>
-          <span title="Volume">🔊</span>
-          <span title="Battery">🔋</span>
-        </div>
         <div class="clockBox">
           <div class="time" id="trayTime">--:--</div>
           <div class="date" id="trayDate">--/--/----</div>
