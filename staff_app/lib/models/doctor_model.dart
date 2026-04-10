@@ -22,7 +22,20 @@ class DoctorModel {
   });
 
   factory DoctorModel.fromDoc(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final raw = doc.data();
+    if (!doc.exists || raw == null || raw is! Map<String, dynamic>) {
+      return DoctorModel(
+        uid: doc.id,
+        name: '',
+        email: '',
+        role: 'Doctor',
+        wardId: '',
+        shiftId: '',
+        onDuty: false,
+        department: '',
+      );
+    }
+    final data = raw;
     return DoctorModel(
       uid: doc.id,
       name: data['name'] ?? '',

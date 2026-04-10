@@ -37,6 +37,16 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
       'patient': 'Farah Khan',
       'detail': 'Obstetrics consult — patient en route; confirm bed readiness.',
     },
+    {
+      'id': 'local-demo-allot-3',
+      'patient': 'Sanjay Verma',
+      'detail': 'Cardiology escalation — STEMI rule-out; review ECG in 15 min.',
+    },
+    {
+      'id': 'local-demo-allot-4',
+      'patient': 'Anjali Patel',
+      'detail': 'General medicine callback — ward A bed assignment pending.',
+    },
   ];
 
   @override
@@ -158,6 +168,8 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
                     controller: _scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                     children: [
+                      _demoShiftCard(context),
+                      const SizedBox(height: 16),
                       Text(
                         'Patient allotments (Firestore)',
                         style: GoogleFonts.inter(
@@ -209,12 +221,34 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      if (msgs.isEmpty)
+                      if (msgs.isEmpty) ...[
                         Text(
-                          'No broadcast messages in #alerts yet.',
-                          style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 12),
-                        )
-                      else
+                          'Demo: broadcast #alerts (offline)',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFFf5a623),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _demoBroadcastTile(
+                          context,
+                          sender: 'Ops Desk (demo)',
+                          text:
+                              'Surge protocol: ER wait > 45m — prioritize ESI-1/2 to bays 1–3. Fleet EMS-LKO-09 rerouted via Hazratganj.',
+                        ),
+                        _demoBroadcastTile(
+                          context,
+                          sender: 'Bed management (demo)',
+                          text: 'ICU 2 beds opening after transfer ~19:00. Confirm handoff with Dr. Isha Tandon.',
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Live Firebase messages replace this block when comms are connected.',
+                          style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 11, height: 1.35),
+                        ),
+                      ] else
                         ...msgs.map((m) => _commsMessageTile(context, m)),
                     ],
                   );
@@ -224,6 +258,138 @@ class _AlertsOnlyScreenState extends State<AlertsOnlyScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _demoShiftCard(BuildContext context) {
+    final d = widget.doctor;
+    final now = DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day, 8, 0);
+    final dayEnd = DateTime(now.year, now.month, now.day, 16, 0);
+    final eveStart = DateTime(now.year, now.month, now.day, 16, 0);
+    final eveEnd = DateTime(now.year, now.month, now.day, 23, 59);
+    final ward = d.department.isNotEmpty ? d.department : (d.role.toLowerCase().contains('icu') ? 'ICU' : 'ER');
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF13132a),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF3f7cff).withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1e1b4b),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFF7c3aed).withOpacity(0.45)),
+                ),
+                child: Text(
+                  'DEMO SHIFTS',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFc4b5fd),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.schedule, color: const Color(0xFF7c3aed).withOpacity(0.9), size: 20),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Today · $ward coverage',
+            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${d.name} — you are on the demo roster as ${d.role}.',
+            style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 12, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          _shiftRow('Day block', dayStart, dayEnd, 'Triage, consults, handoff notes 15:45'),
+          const SizedBox(height: 8),
+          _shiftRow('Evening overlap', eveStart, eveEnd, 'On-call backup + ICU cross-cover (demo)'),
+          const SizedBox(height: 10),
+          Text(
+            'Real assignments sync from Firestore `shifts` when your hospital enables them.',
+            style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 11, height: 1.35),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _shiftRow(String label, DateTime start, DateTime end, String note) {
+    String fmt(TimeOfDay t) {
+      final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+      final m = t.minute.toString().padLeft(2, '0');
+      final s = t.period == DayPeriod.am ? 'AM' : 'PM';
+      return '$h:$m $s';
+    }
+
+    final a = TimeOfDay.fromDateTime(start);
+    final b = TimeOfDay.fromDateTime(end);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0d0d1a),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF1e1e3a)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: GoogleFonts.inter(color: const Color(0xFFa78bfa), fontWeight: FontWeight.w700, fontSize: 11)),
+          const SizedBox(height: 4),
+          Text(
+            '${fmt(a)} – ${fmt(b)}',
+            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(note, style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 11, height: 1.35)),
+        ],
+      ),
+    );
+  }
+
+  Widget _demoBroadcastTile(BuildContext context, {required String sender, required String text}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF13132a),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFf5a623).withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                sender,
+                style: GoogleFonts.inter(color: const Color(0xFFfbbf24), fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+              const Spacer(),
+              Text(
+                'demo',
+                style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            text,
+            style: GoogleFonts.inter(color: const Color(0xFFd1d5db), fontSize: 13, height: 1.35),
+          ),
+        ],
+      ),
     );
   }
 

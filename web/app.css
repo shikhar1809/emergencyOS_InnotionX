@@ -234,8 +234,25 @@ ul.clean li {
 }
 
 .mapWrap--hex {
-  height: min(52vh, 440px);
+  /* Explicit height so Leaflet gets non-zero size (percent heights need this). */
+  height: clamp(320px, 52vh, 480px);
   min-height: 320px;
+  width: 100%;
+}
+
+/* Overview map: Leaflet mounts on #mapMain and adds .leaflet-container */
+#mapMain {
+  min-height: 300px;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  z-index: 0;
+}
+
+#mapMain.leaflet-container {
+  min-height: 300px;
+  background: #0a0f18;
+  border-radius: 10px;
 }
 
 .mapHexLayout {
@@ -433,14 +450,32 @@ ul.clean li {
   color: #c5d0ec;
 }
 
-/* White/light map across the app */
+/* Default Leaflet surface (Manage tab uses OSM light tiles) */
 .leaflet-container {
   background: #ffffff;
   font: inherit;
 }
 
+#mapMgmt.leaflet-container {
+  background: #ffffff;
+}
+
 path.hexMapCell {
   cursor: pointer;
+}
+
+.leaflet-tooltip.hexCellTooltip {
+  background: rgba(15, 24, 40, 0.94) !important;
+  color: #e5e7eb !important;
+  border: 1px solid #2b4070 !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+.leaflet-tooltip.hexCellTooltip::before {
+  border-top-color: rgba(15, 24, 40, 0.94) !important;
 }
 
 .mapError {

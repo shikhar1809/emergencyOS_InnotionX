@@ -1,12 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/doctor_model.dart';
-import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'alerts_only_screen.dart';
 import 'comms_screen.dart';
-import 'login_screen.dart';
-import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
   final DoctorModel doctor;
@@ -19,10 +18,10 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with WidgetsBindingObserver {
   int _selectedIndex = 0;
-  final _authService = AuthService();
   final _firestoreService = FirestoreService();
   Timer? _presenceTimer;
-  DoctorModel? _latestDoctor;
+  StreamSubscription<DoctorModel>? _doctorSub;
+  late DoctorModel _doctor;
   bool _dutyPromptShown = false;
   bool _togglingDuty = false;
 
@@ -81,12 +80,15 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
 
     if (goOnDuty == true) {
+      final before = _doctor;
+      setState(() => _doctor = _doctor.copyWith(onDuty: true));
       try {
-        await _firestoreService.setDutyStatus(doctor.uid, true);
+        await _firestoreService.setDutyStatus(before.uid, true);
         if (!mounted) return;
         setState(() => _selectedIndex = 0);
       } catch (e) {
         if (!mounted) return;
+        setState(() => _doctor = before);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to go On Duty: $e'),
@@ -98,21 +100,26 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  Future<void> _toggleDuty(DoctorModel doctor) async {
+  Future<void> _toggleDuty() async {
     if (_togglingDuty) return;
-    setState(() => _togglingDuty = true);
+    final current = _doctor;
+    final wantOn = !current.onDuty;
+    setState(() {
+      _togglingDuty = true;
+      _doctor = current.copyWith(onDuty: wantOn);
+    });
     try {
-      await _firestoreService.setDutyStatus(doctor.uid, !doctor.onDuty);
-      // Stream will update the UI; we just show quick feedback.
+      await _firestoreService.setDutyStatus(current.uid, wantOn);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(doctor.onDuty ? 'Marked Off Duty' : 'Marked On Duty'),
+          content: Text(wantOn ? 'Marked On Duty' : 'Marked Off Duty'),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      setState(() => _doctor = current);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update duty: $e'),
@@ -129,25 +136,32 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _doctor = widget.doctor;
+    _doctorSub = _firestoreService.doctorStream(widget.doctor.uid).listen(
+      (d) {
+        if (mounted) setState(() => _doctor = d);
+      },
+      onError: (_) {
+        // No auth / rules: keep the fixed demo profile and local duty state.
+      },
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _doctorSub?.cancel();
     _presenceTimer?.cancel();
     super.dispose();
   }
 
   void _startPresenceLoop(DoctorModel doctor) {
-    // Avoid restarting timer excessively.
     if (_presenceTimer != null) return;
 
-    // Mark online immediately.
     _firestoreService.setPresenceOnline(doctor: doctor);
 
     _presenceTimer = Timer.periodic(const Duration(seconds: 45), (_) {
-      final doc = _latestDoctor ?? doctor;
-      _firestoreService.heartbeatPresence(doctor: doc);
+      _firestoreService.heartbeatPresence(doctor: _doctor);
     });
   }
 
@@ -159,82 +173,76 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final doc = _latestDoctor ?? widget.doctor;
+    final doc = _doctor;
     if (state == AppLifecycleState.resumed) {
       _firestoreService.setPresenceOnline(doctor: doc, state: 'online');
       _presenceTimer ??= Timer.periodic(const Duration(seconds: 45), (_) {
-        final d = _latestDoctor ?? doc;
-        _firestoreService.heartbeatPresence(doctor: d, state: 'online');
+        _firestoreService.heartbeatPresence(doctor: _doctor, state: 'online');
       });
     } else if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      // Best-effort: mark offline when app isn't usable.
       _firestoreService.setPresenceOffline(doctor: doc);
       _presenceTimer?.cancel();
       _presenceTimer = null;
     }
   }
 
-  Future<void> _signOut() async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _showDemoInfo() async {
+    if (!mounted) return;
+    await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF13132a),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Text('Sign out?',
-            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+        title: Text(
+          'Demo mode',
+          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
         content: Text(
-          'You will be marked as Off Duty and signed out.',
+          'This portal opens without sign-in. Alerts and comms still use Firestore; '
+          'if rules require authentication, some data may be empty. Duty toggles stay '
+          'on this device when writes are blocked.',
           style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 14),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF6b7280))),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Sign Out', style: GoogleFonts.inter(color: const Color(0xFFf87171))),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('OK', style: GoogleFonts.inter(color: const Color(0xFF7c3aed))),
           ),
         ],
       ),
     );
-    if (confirmed == true) {
-      final doc = _latestDoctor ?? widget.doctor;
-      await _stopPresenceLoopAndSetOffline(doc);
-      await _authService.signOut();
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    }
+  }
+
+  Future<void> _markOfflineFromMenu() async {
+    final doc = _doctor;
+    await _stopPresenceLoopAndSetOffline(doc);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Marked offline (demo)'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DoctorModel>(
-      stream: _firestoreService.doctorStream(widget.doctor.uid),
-      initialData: widget.doctor,
-      builder: (context, snapshot) {
-        final doctor = snapshot.data ?? widget.doctor;
-        _latestDoctor = doctor;
-        _startPresenceLoop(doctor);
-        _maybePromptDuty(doctor);
-        final screens = _buildScreens(doctor);
-        final safeIndex = _selectedIndex.clamp(0, screens.length - 1);
-        if (safeIndex != _selectedIndex) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _selectedIndex = safeIndex);
-          });
-        }
+    final doctor = _doctor;
+    _startPresenceLoop(doctor);
+    _maybePromptDuty(doctor);
+    final screens = _buildScreens(doctor);
+    final safeIndex = _selectedIndex.clamp(0, screens.length - 1);
+    if (safeIndex != _selectedIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedIndex = safeIndex);
+      });
+    }
 
-        return _buildScaffold(
-          doctor: doctor,
-          screens: screens,
-          selectedIndex: safeIndex,
-        );
-      },
+    return _buildScaffold(
+      doctor: doctor,
+      screens: screens,
+      selectedIndex: safeIndex,
     );
   }
 
@@ -285,7 +293,6 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
             actions: [
-              // Duty: single toggle immediately left of profile (matches admin “duty” concept, no extra tab).
               Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Row(
@@ -320,7 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 value: doctor.onDuty,
                                 onChanged: (wantOn) {
                                   if (wantOn != doctor.onDuty) {
-                                    _toggleDuty(doctor);
+                                    _toggleDuty();
                                   }
                                 },
                                 activeTrackColor: const Color(0xFF14532d),
@@ -333,7 +340,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ],
                 ),
               ),
-              // Doctor avatar / name
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: PopupMenuButton<String>(
@@ -344,7 +350,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                   offset: const Offset(0, 40),
                   onSelected: (v) {
-                    if (v == 'signout') _signOut();
+                    if (v == 'about') _showDemoInfo();
+                    if (v == 'offline') _markOfflineFromMenu();
                   },
                   itemBuilder: (_) => [
                     PopupMenuItem(
@@ -365,14 +372,26 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     const PopupMenuDivider(),
                     PopupMenuItem(
-                      value: 'signout',
+                      value: 'offline',
                       child: Row(
                         children: [
-                          const Icon(Icons.logout, color: Color(0xFFf87171), size: 16),
+                          const Icon(Icons.cloud_off_outlined, color: Color(0xFF9ca3af), size: 16),
                           const SizedBox(width: 8),
-                          Text('Sign Out',
+                          Text('Mark offline',
                               style: GoogleFonts.inter(
-                                  color: const Color(0xFFf87171), fontSize: 13)),
+                                  color: const Color(0xFFe5e7eb), fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'about',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Color(0xFF7c3aed), size: 16),
+                          const SizedBox(width: 8),
+                          Text('About demo',
+                              style: GoogleFonts.inter(
+                                  color: const Color(0xFFe5e7eb), fontSize: 13)),
                         ],
                       ),
                     ),

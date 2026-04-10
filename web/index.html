@@ -187,7 +187,10 @@
         <div class="mgmtLayout">
           <aside class="mgmtSidebar">
             <div class="mgmtSideBlock">
-              <div class="muted" style="margin-bottom:8px">Zones</div>
+              <div class="muted" style="margin-bottom:8px">Zones (Lucknow hex grid)</div>
+              <p class="muted" style="font-size:11px;line-height:1.35;margin:0 0 8px">
+                Each cell is a lettered zone (A, B, C…). Select a row or click a hex on the map.
+              </p>
               <div id="ovZoneList" class="zoneRosterList" role="list" aria-label="Zones list"></div>
             </div>
           </aside>
@@ -228,7 +231,7 @@
             </div>
             <article class="card" style="margin-top:12px">
               <h3>Zone detail</h3>
-              <p class="muted" id="hexZonePlaceholder">Click a hex cell on the map to load inflow + admissions for that zone.</p>
+              <p class="muted" id="hexZonePlaceholder">Click a hex on the Lucknow map or pick a lettered zone on the left to load inflow and admissions.</p>
               <div id="hexZoneDetails" class="hexZoneDetails" hidden>
                 <div class="hexZoneTitleRow">
                   <span class="hexZoneName" id="hexZoneName"></span>
@@ -295,6 +298,18 @@
           </article>
         </div>
 
+        <p class="sectionTitle">Demo roster &amp; shifts</p>
+        <div class="grid grid-2">
+          <article class="card">
+            <h3>Today’s shift blocks</h3>
+            <ul id="adminDemoShiftList" class="clean"></ul>
+          </article>
+          <article class="card">
+            <h3>Handoffs &amp; reminders</h3>
+            <ul id="adminDemoHandoffList" class="clean"></ul>
+          </article>
+        </div>
+
         <p class="sectionTitle">Gemma 4 Analytics Agent</p>
         <article class="card">
           <div class="row" style="margin-bottom:10px">
@@ -321,7 +336,7 @@
           </article>
           <article class="card card-accent-amber">
             <h3>Pending Approvals</h3>
-            <p class="stat" id="pendingApprovalCount">5</p>
+            <p class="stat" id="pendingApprovalCount">7</p>
             <p class="stat-sub">Finance manager review</p>
           </article>
           <article class="card card-accent-green">

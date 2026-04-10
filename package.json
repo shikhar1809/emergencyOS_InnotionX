@@ -1,0 +1,17 @@
+{
+  "name": "emergencyos-innovationx",
+  "private": true,
+  "description": "Local dev servers for admin (web), patient_app, and staff_app",
+  "scripts": {
+    "dev:admin": "serve web -s -l 3000",
+    "dev:patient": "serve patient_app/build/web -s -l 3001",
+    "dev:staff": "serve staff_app/build/web -s -l 3002",
+    "dev:all": "concurrently -n admin,patient,staff -c blue,magenta,green \"npm run dev:admin\" \"npm run dev:patient\" \"npm run dev:staff\"",
+    "build:patient": "cd patient_app && flutter build web",
+    "build:staff": "cd staff_app && flutter build web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "serve": "^14.2.4"
+  }
+}

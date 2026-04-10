@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -21,6 +23,7 @@ class PatientHomeScreen extends StatefulWidget {
 class _PatientHomeScreenState extends State<PatientHomeScreen> {
   final _auth = PatientAuthService();
   final _appointments = AppointmentService();
+  final _billingPush = BillingPushService();
 
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -29,14 +32,33 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   String _department = 'Emergency';
   String _serviceId = 'consult_general';
   bool _submitting = false;
+  int _bottomIndex = 0;
+  String? _dismissedBillingPushToken;
+
   /// Local-only preview so reviewers can see slot + QR without Firestore approval.
   AppointmentModel? _demoAppointment;
+  /// Extra demo fields (visit id, queue, bay) shown with the QR card.
+  Map<String, String>? _demoBookingDetails;
 
   @override
   void initState() {
     super.initState();
     _nameCtrl.text = widget.patient.name;
     _phoneCtrl.text = widget.patient.phone;
+    _loadBillingPushDismissed();
+  }
+
+  Future<void> _loadBillingPushDismissed() async {
+    final p = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _dismissedBillingPushToken = p.getString('eos_billing_push_dismissed'));
+  }
+
+  Future<void> _dismissBillingPushBanner(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('eos_billing_push_dismissed', token);
+    if (!mounted) return;
+    setState(() => _dismissedBillingPushToken = token);
   }
 
   @override
@@ -132,7 +154,36 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   void _showDemoSlotAndQr() {
     final now = DateTime.now();
     final name = _nameCtrl.text.trim().isEmpty ? widget.patient.name : _nameCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim().isEmpty ? widget.patient.phone : _phoneCtrl.text.trim();
+    final visitId = 'VIS-LKO-${(now.millisecondsSinceEpoch % 900000) + 100000}';
+    final queueNo = '${65 + (name.hashCode.abs() % 30)}';
+    final bay = _department == 'Emergency' ? 'ER Triage — Desk A' : 'OPD — Counter 2';
+    final start = now.add(const Duration(minutes: 8));
+    final end = now.add(const Duration(minutes: 38));
+    final doctorLabel = 'Dr. Aanya Verma';
+    final payload = <String, dynamic>{
+      'v': 1,
+      'demo': true,
+      'hospital': 'Goel Hospital — Lucknow (demo)',
+      'visitId': visitId,
+      'queue': queueNo,
+      'patient': name,
+      'phoneLast4': phone.length >= 4 ? phone.substring(phone.length - 4) : phone,
+      'department': _department,
+      'service': _serviceId,
+      'assigned': doctorLabel,
+      'windowStart': start.toIso8601String(),
+      'windowEnd': end.toIso8601String(),
+    };
+    final qrPayload = jsonEncode(payload);
     setState(() {
+      _demoBookingDetails = {
+        'visitId': visitId,
+        'queue': queueNo,
+        'bay': bay,
+        'window': '${_fmtSlot(start)} – ${_fmtSlot(end)}',
+        'instructions': 'Bring photo ID. Arrive 10 minutes before your window. This pass is demo-only.',
+      };
       _demoAppointment = AppointmentModel(
         id: 'demo-local-preview',
         patientUid: widget.patient.uid,
@@ -140,25 +191,27 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         serviceId: _serviceId,
         department: _department,
         doctorUid: 'demo-staff',
-        doctorNameSnapshot: 'Dr. Aanya Verma (demo)',
+        doctorNameSnapshot: '$doctorLabel (demo)',
         status: 'scheduled',
         createdAt: now,
-        scheduledStart: now.add(const Duration(minutes: 5)),
-        scheduledEnd: now.add(const Duration(minutes: 25)),
-        receptionQrToken:
-            'DEMO-QR-LKO-${widget.patient.uid.hashCode.abs()}-${now.millisecondsSinceEpoch % 100000}',
+        scheduledStart: start,
+        scheduledEnd: end,
+        receptionQrToken: qrPayload,
       );
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Demo: showing a sample slot and reception QR (not saved to the server).'),
+        content: Text('Demo generated: slot, visit ID, queue, and QR (not saved to the server).'),
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
   void _clearDemoPreview() {
-    setState(() => _demoAppointment = null);
+    setState(() {
+      _demoAppointment = null;
+      _demoBookingDetails = null;
+    });
   }
 
   String _fmtSlot(DateTime dt) {
@@ -167,6 +220,40 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     final m = t.minute.toString().padLeft(2, '0');
     final suffix = t.period == DayPeriod.am ? 'AM' : 'PM';
     return '$h:$m $suffix';
+  }
+
+  String _serviceLabel(String id) {
+    switch (id) {
+      case 'followup':
+        return 'Follow-up';
+      case 'consult_general':
+      default:
+        return 'Consultation';
+    }
+  }
+
+  Widget _demoDetailRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 118,
+            child: Text(
+              k,
+              style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              v,
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -222,13 +309,62 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           child: Container(height: 1, color: const Color(0xFF1e1e3a)),
         ),
       ),
-      body: StreamBuilder<AppointmentModel?>(
-        stream: _appointments.latestAppointmentForPatient(widget.patient.uid),
-        builder: (context, snap) {
-          final appt = _demoAppointment ?? snap.data;
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
+      body: IndexedStack(
+        index: _bottomIndex,
+        children: [
+          _buildHomeTab(),
+          _buildBillsTab(),
+        ],
+      ),
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          navigationBarTheme: NavigationBarThemeData(
+            indicatorColor: const Color(0xFF4c1d95),
+            labelTextStyle: WidgetStateProperty.resolveWith(
+              (s) => GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: s.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
+                color: s.contains(WidgetState.selected) ? Colors.white : const Color(0xFF9ca3af),
+              ),
+            ),
+            iconTheme: WidgetStateProperty.resolveWith(
+              (s) => IconThemeData(
+                color: s.contains(WidgetState.selected) ? const Color(0xFFc4b5fd) : const Color(0xFF6b7280),
+              ),
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          backgroundColor: const Color(0xFF13132a),
+          surfaceTintColor: Colors.transparent,
+          height: 64,
+          selectedIndex: _bottomIndex,
+          onDestinationSelected: (i) => setState(() => _bottomIndex = i),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long),
+              label: 'Bills',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeTab() {
+    return StreamBuilder<AppointmentModel?>(
+      stream: _appointments.latestAppointmentForPatient(widget.patient.uid),
+      builder: (context, snap) {
+        final appt = _demoAppointment ?? snap.data;
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
               _sectionTitle('Your details'),
               const SizedBox(height: 10),
               _card(
@@ -321,7 +457,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       child: Text(
-                        'Demo: show slot & QR',
+                        'Generate demo QR & slot',
                         style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                     ),
@@ -380,9 +516,25 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                '${appt.department} · ${appt.serviceId} · ${_fmtSlot(appt.scheduledStart)}',
+                                '${appt.department} · ${_serviceLabel(appt.serviceId)}',
                                 style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
                               ),
+                              if (_demoBookingDetails != null) ...[
+                                const SizedBox(height: 12),
+                                _demoDetailRow('Visit ID', _demoBookingDetails!['visitId']!),
+                                _demoDetailRow('Queue #', _demoBookingDetails!['queue']!),
+                                _demoDetailRow('Check-in desk', _demoBookingDetails!['bay']!),
+                                _demoDetailRow('Slot window', _demoBookingDetails!['window']!),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _demoBookingDetails!['instructions']!,
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF9ca3af),
+                                    fontSize: 12,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 14),
                               Center(
                                 child: Container(
@@ -398,9 +550,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               Text(
-                                'This QR is for UI demo only. Use “Request slot” for a real hospital request.',
+                                'QR encodes JSON (demo). Reception scan would validate visitId + queue in production.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 11, height: 1.35),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Not saved to the server — use Request slot for a real request.',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 12, height: 1.35),
                               ),
@@ -497,7 +655,149 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             ],
           );
         },
-      ),
+      );
+  }
+
+  Widget _buildBillsTab() {
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: _billingPush.patientPushStream(),
+      builder: (context, pushSnap) {
+        final push = pushSnap.data;
+        final token = push == null ? null : push['token']?.toString();
+        final showPushBanner = push != null &&
+            token != null &&
+            token.isNotEmpty &&
+            token != _dismissedBillingPushToken;
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _sectionTitle('Check bills'),
+            const SizedBox(height: 10),
+            if (pushSnap.hasError)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Could not load billing messages (Firestore). Demo bill below still works offline.',
+                  style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 12, height: 1.4),
+                ),
+              ),
+            if (showPushBanner)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Material(
+                  color: const Color(0xFF1e1b4b),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.campaign_outlined, color: Color(0xFFa78bfa), size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                push['message']?.toString() ?? 'Update from billing',
+                                style: GoogleFonts.inter(color: Colors.white, fontSize: 13, height: 1.4),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _dismissBillingPushBanner(token),
+                              icon: const Icon(Icons.close, color: Color(0xFF9ca3af), size: 20),
+                              tooltip: 'Dismiss',
+                            ),
+                          ],
+                        ),
+                        if (push['billRef'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 32, top: 6),
+                            child: Text(
+                              '${push['billRef']} · INR ${push['amountInr'] ?? '—'}',
+                              style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 12),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            _card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Cardiac consultation',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF422006),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFf59e0b)),
+                        ),
+                        child: Text(
+                          'Pending',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFFfbbf24),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'BL-2026-0091 · Cardiology / ER',
+                    style: GoogleFonts.inter(color: const Color(0xFF9ca3af), fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Initial consult, ECG, and physician review (demo line item).',
+                    style: GoogleFonts.inter(color: const Color(0xFFd1d5db), fontSize: 13, height: 1.4),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Amount due',
+                        style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 12),
+                      ),
+                      Text(
+                        'INR 8,450',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'When the hospital sends a request from Admin → Billings, it appears above (requires Firestore rules for demo_billing).',
+              style: GoogleFonts.inter(color: const Color(0xFF6b7280), fontSize: 11, height: 1.4),
+            ),
+          ],
+        );
+      },
     );
   }
 

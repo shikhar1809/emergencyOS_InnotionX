@@ -268,6 +268,8 @@ const demoState = {
     { id: "BL-2026-0090", patient: "Anjali Patel", amount: 12500, status: "cleared" },
     { id: "BL-2026-0091", patient: "Ravi Kumar", amount: 35600, status: "pending_finance" },
     { id: "BL-2026-0092", patient: "Meera Singh", amount: 8900, status: "pending_admin" },
+    { id: "BL-2026-0093", patient: "Mohit Yadav", amount: 12400, status: "pending_finance" },
+    { id: "BL-2026-0094", patient: "Farah Khan", amount: 5600, status: "pending_admin" },
   ],
   comms: {
     alerts: 6,
@@ -908,10 +910,66 @@ function seedOpsFeed() {
 }
 
 const DEMO_ADMIN_ALERTS = [
-  { id: "da-1", text: "Demo: 2 patient requests awaiting Operations approval." },
-  { id: "da-2", text: "Demo: EMS-LKO-03 available — assign to Zone 12 surge." },
-  { id: "da-3", text: "Demo: Staff handoff ICU at 18:30 — confirm in Manage › Staff." },
+  { id: "da-1", text: "Demo: Patient requests in Operations — approve to assign staff + reception QR." },
+  { id: "da-2", text: "Demo: EMS-LKO-03 available — surge coverage for Zone 12 / Hazratganj corridor." },
+  { id: "da-3", text: "Demo: ICU handoff 18:30 — vent rounds; confirm in Manage › Staff roster." },
+  { id: "da-4", text: "Demo: Billings — 3 incidents in sidebar; push sample notice to patient app from detail panel." },
+  { id: "da-5", text: "Demo: Report tab shows shift blocks + Gemma analytics (optional API key)." },
+  { id: "da-6", text: "Demo: Comms #alerts / #announcements mirror staff when Firestore rules allow." },
 ];
+
+const ADMIN_DEMO_SHIFTS = [
+  {
+    label: "ER day block",
+    time: "08:00–16:00",
+    ward: "ER",
+    staff: "Dr. Aanya Verma · Nurse Priya Mishra · Tech Arjun Rao",
+  },
+  {
+    label: "ICU extended",
+    time: "07:00–19:00",
+    ward: "ICU",
+    staff: "Nurse Kavya Singh · Dr. Isha Tandon · Nurse Shreya Gupta",
+  },
+  {
+    label: "General wards",
+    time: "09:00–17:00",
+    ward: "General",
+    staff: "Dr. Neha Kapoor · support nursing pool (demo)",
+  },
+];
+
+const ADMIN_DEMO_HANDOFFS = [
+  "18:30 ICU: highlight Bed 7 insulin infusion — night team to confirm rate.",
+  "ER: ESI-1/2 wait target 15m; open second triage line if queue > 8 (demo playbook).",
+  "Lab: stat troponin queue depth 4 — Tech Saurabh Jain covering ER desk.",
+  "Fleet: EMS-LKO-09 +6m ETA via Hazratganj; EMS-LKO-18 standby Kaiserbagh.",
+];
+
+function renderAdminDemoShiftPanels() {
+  const ul = document.getElementById("adminDemoShiftList");
+  const ul2 = document.getElementById("adminDemoHandoffList");
+  if (ul) {
+    ul.innerHTML = ADMIN_DEMO_SHIFTS.map(function (s) {
+      return (
+        "<li style=\"margin-bottom:10px\"><strong>" +
+        billingEscapeHtml(s.label) +
+        "</strong> · " +
+        billingEscapeHtml(s.time) +
+        " · <span class=\"muted\">" +
+        billingEscapeHtml(s.ward) +
+        "</span><br/><span class=\"muted\" style=\"font-size:12px;line-height:1.4\">" +
+        billingEscapeHtml(s.staff) +
+        "</span></li>"
+      );
+    }).join("");
+  }
+  if (ul2) {
+    ul2.innerHTML = ADMIN_DEMO_HANDOFFS.map(function (line) {
+      return "<li style=\"margin-bottom:8px\">" + billingEscapeHtml(line) + "</li>";
+    }).join("");
+  }
+}
 
 function renderDemoAdminAlertStrip() {
   const host = document.getElementById("demoAlertStrip");
@@ -963,6 +1021,7 @@ renderOpsFeed();
 renderOpsDetailById(opsState.selectedId);
 refreshOpsKpis();
 renderDemoAdminAlertStrip();
+renderAdminDemoShiftPanels();
 
 // ── Management side navigation (Patients / Staff) ──
 const mgmtBtns = Array.from(document.querySelectorAll(".mgmtNavBtn"));
@@ -1716,15 +1775,23 @@ function hexVerticesPointy(centerLat, centerLng, Rm) {
 }
 
 // Lucknow overview hex grid (shared spacing for zone centers + polygon size).
-const LUCKNOW_HEX_SPACING_M = 520;
-const LUCKNOW_HEX_DISK_RING = 2;
+const LUCKNOW_HEX_SPACING_M = 460;
+const LUCKNOW_HEX_DISK_RING = 3;
+
+function lucknowZoneLetterName(index) {
+  if (index < 26) return "Zone " + String.fromCharCode(65 + index);
+  return "Zone Z" + (index - 25);
+}
 
 function buildLucknowHexZones() {
   const centerLat = 26.8467;
   const centerLng = 80.9462;
   const hexSpacingM = LUCKNOW_HEX_SPACING_M;
   const cells = hexDiskRadius(LUCKNOW_HEX_DISK_RING);
-  const inflows = [12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22];
+  const inflows = [
+    12, 47, 8, 36, 5, 51, 18, 42, 7, 39, 14, 44, 9, 33, 49, 11, 28, 41, 22,
+    31, 16, 45, 23, 38, 6, 52, 19, 27, 35, 13, 40, 21, 29, 17, 46, 10, 34, 24,
+  ];
   const pops = ["~48k", "~22k", "~61k", "~31k", "~19k", "~55k"];
   const complaintSets = [
     ["Chest pain / cardiac workup", "Hypertensive urgency", "Syncope"],
@@ -1756,7 +1823,7 @@ function buildLucknowHexZones() {
   ];
   const zones = cells.map(([q, r], i) => {
     const [lat, lng] = axialToCenterLatLng(q, r, centerLat, centerLng, hexSpacingM);
-    const name = "Zone " + String(i + 1).padStart(2, "0");
+    const name = lucknowZoneLetterName(i);
     const inflow = inflows[i] != null ? inflows[i] : 16 + i;
     const recentAdm = Math.max(0, Math.round(inflow / 10) + ((i % 3) - 1));
     const admFrom = ["ER Bay 2", "Trauma Desk", "Ward A", "Ward C", "ICU", "Registration"].at(i % 6);
@@ -1966,6 +2033,11 @@ function addHexGridToMainMap(map) {
     const verts = hexVerticesPointy(z.lat, z.lng, hexSpacingM * 0.97);
     const poly = L.polygon(verts, hexStyleForZone(z)).addTo(hexPolyLayer);
     poly._hexZone = z;
+    poly.bindTooltip(z.name, {
+      sticky: true,
+      direction: "center",
+      className: "hexCellTooltip",
+    });
     poly.on("click", (e) => {
       L.DomEvent.stopPropagation(e);
       setSelectedZone(z);
@@ -2048,9 +2120,29 @@ function addLeafletMarkers(map, arr, opts) {
 }
 
 function ensureLeafletGlobal() {
-  // Leaflet 1.9 dist bundled here attaches to `window.leaflet`, not `window.L`.
+  // Bundled Leaflet 1.9 UMD sets window.L; older copy might only set window.leaflet.
   if (typeof window !== "undefined" && !window.L && window.leaflet) {
     window.L = window.leaflet;
+  }
+}
+
+function bindMapResizeHelpers(map, el) {
+  if (!map || !el) return;
+  function inv() {
+    try {
+      map.invalidateSize({ animate: false });
+    } catch (_) {}
+  }
+  requestAnimationFrame(inv);
+  setTimeout(inv, 50);
+  setTimeout(inv, 200);
+  setTimeout(inv, 600);
+  if (typeof ResizeObserver !== "undefined") {
+    try {
+      const ro = new ResizeObserver(() => inv());
+      ro.observe(el);
+      el._eosMapResizeObserver = ro;
+    } catch (_) {}
   }
 }
 
@@ -2058,7 +2150,10 @@ function initLeafletMap(id, errorId, useDarkBasemap) {
   ensureLeafletGlobal();
   const el = document.getElementById(id);
   if (!el) return null;
-  if (!window.L) {
+  if (el._leaflet_id) {
+    return null;
+  }
+  if (!window.L || typeof window.L.map !== "function") {
     showMapError(errorId, "Leaflet library failed to load.");
     return null;
   }
@@ -2077,23 +2172,30 @@ function initLeafletMap(id, errorId, useDarkBasemap) {
       attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>',
     }).addTo(map);
   }
+  bindMapResizeHelpers(map, el);
   return map;
 }
 
 function initOpenSourceMaps() {
   ensureLeafletGlobal();
-  osmMain = initLeafletMap("mapMain", "mapError", false);
-  osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false);
-  if (osmMain) {
-    addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: true, includePatients: true });
-    addHexGridToMainMap(osmMain);
+  const mainEl = document.getElementById("mapMain");
+  if (!osmMain && mainEl && !mainEl._leaflet_id) {
+    // Dark basemap reads better on the admin shell; hex colors stay visible.
+    osmMain = initLeafletMap("mapMain", "mapError", true);
+    if (osmMain) {
+      addLeafletMarkers(osmMain, osmMarkersMain, { includeFleet: true, includePatients: true });
+      addHexGridToMainMap(osmMain);
+    }
   }
-  // Manage map: keep fleet + patients.
-  if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt, { includeFleet: false, includePatients: true });
+  const mgmtEl = document.getElementById("mapMgmt");
+  if (!osmMgmt && mgmtEl && !mgmtEl._leaflet_id) {
+    osmMgmt = initLeafletMap("mapMgmt", "mapErrorMgmt", false);
+    if (osmMgmt) addLeafletMarkers(osmMgmt, osmMarkersMgmt, { includeFleet: false, includePatients: true });
+  }
   renderMgmtFleetSidebar();
   renderMgmtStaffList();
   tryResizeMapsSoon();
-  [120, 450, 900].forEach((ms) => setTimeout(() => tryResizeMapsSoon(), ms));
+  [120, 450, 900, 1800].forEach((ms) => setTimeout(() => tryResizeMapsSoon(), ms));
 }
 
 // Leaflet loads via script tag; run after DOM is ready
@@ -2343,6 +2445,34 @@ const BILLING_DEMO_INCIDENTS = [
     billRef: "BL-2026-0092",
     amountInr: 18900,
     notes: "Patient share collected. TPA pending for MRI component; finance flagged partial clearance.",
+  },
+  {
+    id: "INC-2026-0155",
+    title: "Diagnostics bundle · Lab + imaging",
+    status: "pending",
+    patient: "Mohit Yadav",
+    mrn: "MRN-10821",
+    openedAt: "2026-04-10 10:22",
+    department: "Lab / ER",
+    chiefComplaint: "Shortness of breath — rule out PE",
+    triage: "ESI-3",
+    billRef: "BL-2026-0093",
+    amountInr: 12400,
+    notes: "D-dimer elevated; CTA pending insurance auth. Demo incident for multi-line billing.",
+  },
+  {
+    id: "INC-2026-0156",
+    title: "Obstetrics urgent consult",
+    status: "pending",
+    patient: "Farah Khan",
+    mrn: "MRN-10677",
+    openedAt: "2026-04-10 11:05",
+    department: "Obstetrics / ER",
+    chiefComplaint: "Antepartum bleed — stable vitals",
+    triage: "ESI-2",
+    billRef: "BL-2026-0094",
+    amountInr: 5600,
+    notes: "Ultrasound slot held; consent documented. Demo workflow for specialty routing.",
   },
 ];
 
