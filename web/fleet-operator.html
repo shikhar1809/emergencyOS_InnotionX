@@ -814,7 +814,9 @@
         if (!email.toLowerCase().endsWith('.goelhospital.com')) return false;
         const num = extractNumber(email);
         if (!num) return false;
-        if (password !== 'GH@' + num) return false;
+        const n = Number(num);
+        const ok = password === ('GH@' + (1000 + n)) || password === ('GH@' + n);
+        if (!ok) return false;
         return true;
       }
 

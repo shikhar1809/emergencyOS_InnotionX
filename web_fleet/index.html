@@ -186,13 +186,15 @@
         font-weight: 700;
         text-align: center;
         letter-spacing: -0.02em;
+        line-height: 1.15;
       }
       .login-title span { color: var(--secondary); }
       .login-sub {
         text-align: center;
         font-size: 0.85rem;
         color: var(--on-surface-variant);
-        margin-top: -1rem;
+        margin-top: 0.35rem;
+        line-height: 1.35;
       }
       #login-error {
         background: var(--secondary-container);
@@ -201,6 +203,12 @@
         border-radius: 4px;
         font-size: 0.85rem;
         display: none;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border: 1.5px solid var(--outline-variant);
+        color: var(--on-surface);
       }
 
       .operator-strip {
@@ -386,6 +394,7 @@
         </div>
 
         <button class="btn btn-primary" id="login-btn">Login</button>
+        <button class="btn btn-secondary" id="demo-btn" type="button">Use demo credentials</button>
 
         <p style="text-align:center;font-size:0.75rem;color:var(--on-surface-variant);">
           Credentials are issued by hospital admin
@@ -516,14 +525,14 @@
         localStorage.setItem(STORAGE_ON_DUTY, JSON.stringify(map));
       }
       function extractNumber(email) {
-        const m = email.match(/fleet(\\d+)@/i);
+        const m = email.match(/fleet(\d+)@/i);
         return m ? m[1] : null;
       }
       function formatEmail(email) {
         return email.length > 32 ? email.slice(0, 30) + '…' : email;
       }
       function deriveDisplayName(email) {
-        const m = email.match(/^fleet\\d+@([^.]+)/i);
+        const m = email.match(/^fleet\d+@([^.]+)/i);
         if (m) {
           const alias = m[1];
           return alias.charAt(0).toUpperCase() + alias.slice(1) + ' (Fleet)';
@@ -583,7 +592,9 @@
         if (!email.toLowerCase().endsWith('.goelhospital.com')) return false;
         const num = extractNumber(email);
         if (!num) return false;
-        return password === 'GH@' + num;
+        const n = Number(num);
+        // Admin panel generates passwords like GH@(1000 + n)
+        return password === ('GH@' + (1000 + n)) || password === ('GH@' + n);
       }
 
       document.getElementById('login-btn').addEventListener('click', () => {
@@ -596,6 +607,14 @@
         sessionStorage.setItem('fleet_operator_email', email);
         const duty = getOnDuty();
         if (duty[email] === true) enterWaiting(); else enterOffDuty();
+      });
+
+      document.getElementById('demo-btn').addEventListener('click', () => {
+        const demoEmail = 'fleet4@driver.goelhospital.com';
+        const demoPass = 'GH@1004';
+        document.getElementById('login-email').value = demoEmail;
+        document.getElementById('login-pass').value = demoPass;
+        document.getElementById('login-btn').click();
       });
 
       document.getElementById('duty-toggle').addEventListener('click', () => enterWaiting());

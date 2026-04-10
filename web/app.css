@@ -330,7 +330,7 @@ ul.clean li {
 /* ── Discord-style comms ───────────────────────────── */
 .commsLayout {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 240px 1fr 280px;
   gap: 12px;
   height: 400px;
 }
@@ -341,6 +341,13 @@ ul.clean li {
   border-radius: 12px;
   padding: 10px;
   overflow-y: auto;
+}
+
+.commsSideHeader {
+  font-weight: 800;
+  color: #eef2ff;
+  letter-spacing: 0.2px;
+  margin: 4px 2px 12px;
 }
 
 .channelSidebar h4 {
@@ -378,10 +385,177 @@ ul.clean li {
   padding: 12px;
 }
 
+.commsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #1a2a42;
+}
+
+.commsHeaderTitle {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  color: #eef2ff;
+}
+
+.commsHeaderSub {
+  font-size: 12px;
+  color: #6a7899;
+  margin-top: 3px;
+}
+
 .commsFeedArea .feedScroll {
   flex: 1;
   overflow-y: auto;
   margin-bottom: 10px;
+}
+
+.commsFeed li {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0 0 10px;
+}
+
+.commsMsgGroup {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+}
+
+.commsAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #16284a;
+  border: 1px solid #223a61;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  color: #c5d0ec;
+  font-size: 13px;
+}
+
+.commsMsgMeta {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.commsMsgSender {
+  font-weight: 800;
+  color: #c4b5fd;
+  font-size: 13px;
+}
+
+.commsMsgRole {
+  font-size: 11px;
+  color: #6a7899;
+}
+
+.commsMsgTime {
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.commsMsgText {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #0a1220;
+  border: 1px solid #1a2a42;
+  color: #dde4f0;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.commsMsgText.hazard {
+  background: rgba(185, 28, 28, 0.16);
+  border-color: rgba(239, 68, 68, 0.32);
+  color: #ffd0d0;
+}
+
+.commsRoster {
+  background: #0a1220;
+  border: 1px solid #1d2e47;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.commsRosterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #1a2a42;
+}
+
+.commsRosterTitle {
+  font-weight: 900;
+  color: #eef2ff;
+  letter-spacing: 0.2px;
+}
+
+.commsRosterScroll {
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.commsRosterGroupTitle {
+  margin: 10px 2px 6px;
+  color: #5a6a8a;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-weight: 800;
+}
+
+.commsRosterRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 8px;
+  border-radius: 10px;
+}
+
+.commsRosterRow:hover {
+  background: #111e35;
+}
+
+.presenceDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.14);
+  flex: 0 0 auto;
+}
+
+.presenceDot.idle {
+  background: #fbbf24;
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.14);
+}
+
+.commsRosterName {
+  font-weight: 800;
+  color: #eef2ff;
+  font-size: 13px;
+}
+
+.commsRosterMeta {
+  font-size: 11px;
+  color: #6a7899;
+  margin-top: 2px;
 }
 
 /* ── Progress bars ─────────────────────────────────── */
@@ -490,4 +664,5 @@ ul.clean li {
   .dock { overflow-x: auto; max-width: calc(100vw - 160px); }
   .dock button { min-width: 120px; font-size: 12px; }
   .commsLayout { grid-template-columns: 1fr; height: auto; }
+  .commsRoster { display: none; }
 }

@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Goel Hospital – Admin Panel</title>
     <link rel="stylesheet" href="./app.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
+    <link rel="stylesheet" href="./vendor/leaflet.css" />
   </head>
   <body>
     <main class="page">
@@ -78,19 +73,19 @@
                 <article class="card">
                   <h3>Track Patient</h3>
                   <div class="row">
-                    <input id="patientName" placeholder="Patient name" style="flex:1" />
-                    <input id="patientZone" placeholder="Ward/Zone" style="flex:1" />
-                    <button id="addPatientBtn">Track</button>
+                    <input id="mgmtPatientName" placeholder="Patient name" style="flex:1" />
+                    <input id="mgmtPatientZone" placeholder="Ward/Zone" style="flex:1" />
+                    <button id="mgmtAddPatientBtn">Track</button>
                   </div>
-                  <ul class="clean" id="patientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
+                  <ul class="clean" id="mgmtPatientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
                 </article>
                 <article class="card">
                   <h3>Gemma 4 Demographics</h3>
-                  <p id="gemmaHint" style="color:#c5d0ec;line-height:1.5">
+                  <p id="mgmtGemmaHint" style="color:#c5d0ec;line-height:1.5">
                     Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
                   </p>
-                  <p class="muted" id="gemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
-                  <button class="secondary" id="refreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
+                  <p class="muted" id="mgmtGemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
+                  <button class="secondary" id="mgmtRefreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
                 </article>
               </div>
             </div>
@@ -181,19 +176,19 @@
           <article class="card">
             <h3>Track Patient / Vehicle</h3>
             <div class="row">
-              <input id="patientName" placeholder="Name / unit" style="flex:1" />
-              <input id="patientZone" placeholder="Zone / ward" style="flex:1" />
-              <button id="addPatientBtn">Track</button>
+              <input id="mapPatientName" placeholder="Name / unit" style="flex:1" />
+              <input id="mapPatientZone" placeholder="Zone / ward" style="flex:1" />
+              <button id="mapAddPatientBtn">Track</button>
             </div>
-            <ul class="clean" id="patientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
+            <ul class="clean" id="mapPatientList" style="margin-top:10px;max-height:180px;overflow-y:auto"></ul>
           </article>
           <article class="card">
             <h3>Gemma 4 Demographic Insights</h3>
-            <p id="gemmaHint" style="color:#c5d0ec;line-height:1.5">
+            <p id="mapGemmaHint" style="color:#c5d0ec;line-height:1.5">
               Age 40-60 trend high in central district. Cardiac and trauma cases peak between 7 PM–11 PM.
             </p>
-            <p class="muted" id="gemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
-            <button class="secondary" id="refreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
+            <p class="muted" id="mapGemmaTs" style="margin-top:6px">Model: Gemma 4 · Updated just now</p>
+            <button class="secondary" id="mapRefreshGemmaBtn" style="margin-top:10px">Refresh Insight</button>
           </article>
         </div>
       </section>
@@ -327,25 +322,40 @@
 
         <div class="commsLayout">
           <div class="channelSidebar">
-            <h4>Channels</h4>
-            <button class="channelItem active" data-channel="#alerts"># alerts</button>
-            <button class="channelItem" data-channel="#shift-updates"># shift-updates</button>
-            <button class="channelItem" data-channel="#ems-handshake"># ems-handshake</button>
-            <button class="channelItem" data-channel="#admin"># admin</button>
-            <button class="channelItem" data-channel="#fleet-ops"># fleet-ops</button>
-            <h4 style="margin-top:14px">Direct</h4>
-            <button class="channelItem" data-channel="@chief-doctor">@ chief-doctor</button>
-            <button class="channelItem" data-channel="@finance-mgr">@ finance-mgr</button>
+            <div class="commsSideHeader">Internal Comms</div>
+            <h4>Announcements</h4>
+            <button class="channelItem active" data-channel="announcements"># announcements</button>
+            <button class="channelItem" data-channel="alerts"># alerts</button>
+            <h4 style="margin-top:14px">Staff Comms</h4>
+            <button class="channelItem" data-channel="shift-updates"># shift-updates</button>
+            <button class="channelItem" data-channel="ems-handshake"># ems-handshake</button>
+            <button class="channelItem" data-channel="admin"># admin</button>
           </div>
           <div class="commsFeedArea">
+            <div class="commsHeader">
+              <div>
+                <div class="commsHeaderTitle" id="commsChannelTitle"># announcements</div>
+                <div class="commsHeaderSub" id="commsChannelDesc">Broadcast updates and critical notices.</div>
+              </div>
+              <div class="badge" id="commsMemberCount">-- online</div>
+            </div>
             <div class="feedScroll">
-              <ul class="clean" id="commsFeed"></ul>
+              <ul class="clean commsFeed" id="commsFeed"></ul>
             </div>
             <div class="row">
-              <input id="commsInput" placeholder="Message #alerts…" style="flex:1" id="commsInput" />
+              <input id="commsInput" placeholder="Message #announcements…" style="flex:1" />
               <button id="sendCommsBtn">Send</button>
             </div>
           </div>
+          <aside class="commsRoster">
+            <div class="commsRosterHeader">
+              <div class="commsRosterTitle">Online staff</div>
+              <div class="muted" id="commsRosterSub">Live presence</div>
+            </div>
+            <div class="commsRosterScroll">
+              <div id="commsRosterGroups"></div>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -408,11 +418,23 @@
       </div>
     </div>
 
+    <!-- Firebase JS SDK (compat) for Internal Comms + Presence -->
+    <!-- Replace YOUR_API_KEY etc. with real values from Firebase Console -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script>
+      window.__FIREBASE_CONFIG__ = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "emergencyos-innovationx.firebaseapp.com",
+        projectId: "emergencyos-innovationx",
+        storageBucket: "emergencyos-innovationx.firebasestorage.app",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+    </script>
+
     <script src="./app.js"></script>
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+    <script src="./vendor/leaflet.js"></script>
   </body>
 </html>

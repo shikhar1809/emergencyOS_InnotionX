@@ -24,6 +24,12 @@
       "target": "staff",
       "public": "staff_app/build/web",
       "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",
