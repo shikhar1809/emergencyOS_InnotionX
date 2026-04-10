@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo Pages</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #121212;
+        color: #f1f1f1;
+      }
+      .wrap {
+        max-width: 700px;
+        margin: 30px auto 80px;
+        padding: 16px;
+      }
+      .card {
+        background: #1f1f1f;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .btnRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .pageBtn {
+        border: 1px solid #4a4d5e;
+        background: #2f3240;
+        color: #fff;
+        border-radius: 6px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      .taskbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 52px;
+        background: #1b1c22;
+        border-top: 1px solid #2f313b;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 10px;
+        z-index: 9999;
+      }
+      .backBtn {
+        color: #fff;
+        text-decoration: none;
+        border: 1px solid #4a4d5e;
+        background: #30323d;
+        border-radius: 6px;
+        padding: 6px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h2>Demo Pages</h2>
+        <div class="btnRow">
+          <button class="pageBtn" onclick="showPage(1)">Page 1</button>
+          <button class="pageBtn" onclick="showPage(2)">Page 2</button>
+          <button class="pageBtn" onclick="showPage(3)">Page 3</button>
+          <button class="pageBtn" onclick="showPage(4)">Page 4</button>
+          <button class="pageBtn" onclick="showPage(5)">Page 5</button>
+          <button class="pageBtn" onclick="showPage(6)">Page 6</button>
+        </div>
+        <p id="pageTitle">Page 1</p>
+        <p id="pageText">This is content for page 1.</p>
+      </div>
+    </div>
+
+    <div class="taskbar">
+      <a class="backBtn" href="./index.html">Back</a>
+    </div>
+
+    <script>
+      const titleEl = document.getElementById("pageTitle");
+      const textEl = document.getElementById("pageText");
+
+      function showPage(pageNo) {
+        // Intentional beginner mistake: page 4 opens as page 5.
+        if (pageNo === 4) {
+          pageNo = 5;
+        }
+
+        titleEl.textContent = "Page " + pageNo;
+
+        // Intentional beginner mistake: page 6 text shows page 5.
+        if (pageNo === 6) {
+          textEl.textContent = "This is content for page 5.";
+        } else {
+          textEl.textContent = "This is content for page " + pageNo + ".";
+        }
+      }
+    </script>
+  </body>
+</html>

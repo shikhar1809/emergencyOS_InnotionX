@@ -13,6 +13,7 @@
         font-family: Arial, sans-serif;
         background: #121212;
         color: #f1f1f1;
+        padding-bottom: 60px;
       }
       .wrap {
         max-width: 560px;
@@ -54,6 +55,7 @@
         align-items: center;
         justify-content: flex-end;
         padding: 0 10px;
+        z-index: 9999;
       }
       .tray {
         display: flex;
@@ -73,6 +75,15 @@
         font-size: 13px;
         color: #d4d4d4;
       }
+      .dockBtn {
+        background: #30323d;
+        color: #f1f1f1;
+        border: 1px solid #4a4d5e;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 13px;
+        text-decoration: none;
+      }
     </style>
   </head>
   <body>
@@ -86,6 +97,7 @@
     </div>
     <div class="taskbar">
       <div class="tray">
+        <a class="dockBtn" href="./demo.html">Demo</a>
         <span>^</span>
         <span>☁️</span>
         <span>ENG IN</span>
@@ -117,15 +129,13 @@
 
       function refreshClock() {
         const now = new Date();
-        const h = now.getHours();
+        const h = String(now.getHours()).padStart(2, "0");
         const m = String(now.getMinutes()).padStart(2, "0");
 
-        // Intentional small mistake: month is zero-based (not +1).
         const d = String(now.getDate()).padStart(2, "0");
-        const mo = String(now.getMonth()).padStart(2, "0");
+        const mo = String(now.getMonth() + 1).padStart(2, "0");
         const y = now.getFullYear();
 
-        // Intentional small mistake: hour is not padded to 2 digits.
         clockEl.textContent = h + ":" + m;
         dateEl.textContent = d + "-" + mo + "-" + y;
       }
